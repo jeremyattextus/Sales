@@ -130,6 +130,7 @@ table { border-collapse: collapse; width: 100%; }
 .chip.hs { background: var(--warn-soft); color: var(--warn); }
 .chip.bad { background: var(--bad-soft); color: var(--bad); }
 .chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.info { background: var(--info-soft); color: var(--info); }
 .credit { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px dashed var(--accent); border-radius: 4px; background: var(--accent-soft); }
 .credit .big { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1; }
 .result-list { margin: 0; padding-left: 18px; font-size: 13px; }
@@ -185,6 +186,17 @@ tr.detail > td { background: var(--surface-2); padding: 0 10px 14px 46px; }
 .acts label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .acts input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
 .calls-note { font-size: 11px; color: var(--muted); }
+.view { display: grid; gap: 18px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-top: -6px; }
+.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 14px; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); cursor: pointer; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab-count { font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--muted); }
+.od-filters { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .od-filters { grid-template-columns: minmax(0, 1fr); } }
+.od-bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 10px 12px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); }
+.od-table { min-width: 760px; }
+.od-table tr.sel td { background: var(--accent-soft); }
+.od-table input[type="checkbox"], #od-all { width: 16px; height: 16px; accent-color: var(--accent); }
 .seq { margin-top: 6px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
 .import { display: grid; gap: 10px; padding: 12px; margin-block: 4px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
 .import.banner { display: block; border: 0; border-left: 3px solid var(--info); }
@@ -207,6 +219,13 @@ a { color: var(--info); }
       <div class="viewer" id="viewer"></div>
     </div>
   </header>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button type="button" role="tab" id="tab-today" data-tab="today" aria-selected="true">Today</button>
+    <button type="button" role="tab" id="tab-ondeck" data-tab="ondeck" aria-selected="false">On-Deck Targets <span class="tab-count" id="ondeck-count"></span></button>
+  </nav>
+
+  <div class="view" id="view-today">
 
   <section class="panel" aria-labelledby="intake-h">
     <div class="panel-head">
@@ -277,6 +296,55 @@ a { color: var(--info); }
       </table>
     </div>
   </section>
+  </div>
+
+  <div class="view" id="view-ondeck" hidden>
+    <section class="panel" aria-labelledby="ondeck-h">
+      <div class="panel-head">
+        <div>
+          <h2 id="ondeck-h">On-Deck Targets</h2>
+          <div class="small muted">Target accounts waiting their turn. Tick 1–2, choose an owner and send them to Today for enrichment.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="file" id="od-file" accept=".csv,text/csv" hidden>
+          <button class="btn" type="button" id="od-import">Import list (CSV)</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="od-banner"></div>
+        <div id="od-preview"></div>
+        <div class="filters od-filters">
+          <label class="field" for="od-q">Search company
+            <input type="search" id="od-q" placeholder="Company name">
+          </label>
+          <label class="field" for="od-status">Show
+            <select id="od-status">
+              <option value="ondeck">Not started</option>
+              <option value="started">Started</option>
+              <option value="added">Added to tracker</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+          <label class="field" for="od-sub">Sub-industry
+            <select id="od-sub"><option value="all">All sub-industries</option></select>
+          </label>
+          <label class="field" for="od-list">List
+            <select id="od-list"><option value="all">All lists</option></select>
+          </label>
+        </div>
+        <div class="od-bar" id="od-bar"></div>
+      </div>
+      <div class="ledger-wrap">
+        <table class="ledger od-table">
+          <thead><tr>
+            <th style="width:36px"><input type="checkbox" id="od-all" aria-label="Select all shown"></th>
+            <th>Company</th><th>Sub-industry</th><th class="n">Employees</th><th>List</th><th>Status</th>
+          </tr></thead>
+          <tbody id="od-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
 
@@ -456,6 +524,7 @@ a { color: var(--info); }
     job.company = co; job.options = [];
     const existing = S.companies.get("zi-" + co.id);
     job.state = existing ? "dup" : "company";
+    if (existing) linkOndeck(job, existing.id);
     renderJobs();
   }
 
@@ -659,8 +728,9 @@ a { color: var(--info); }
       job.state = "review"; job.error = dbErrText(e) + " Enrichment already ran, so trying again will not use new credits for these contacts.";
       renderJobs(); return;
     }
+    linkOndeck(job, companyId);
     job.state = "saved";
-    job.result = { status, qualified: qualified.length, unqualified, failed, notes, creditsOut };
+    job.result ={ status, qualified: qualified.length, unqualified, failed, notes, creditsOut };
     renderJobs();
   }
 
@@ -926,6 +996,7 @@ a { color: var(--info); }
       ? `<div class="job-head"><span class="name">${esc(co.name)}</span><span class="small muted">Owner: <b>${esc(job.owner)}</b> · from “${esc(job.input)}”</span></div>
          <div class="facts"><span><b>${esc(co.domain || "no domain")}</b></span><span>${esc([co.city, co.state, co.country].filter(Boolean).join(", "))}</span><span><b>${fmtInt(co.employees)}</b> employees</span><span>ZoomInfo ID <b class="mono">${esc(co.id)}</b></span></div>`
       : `<div class="job-head"><span class="name">${esc(job.input)}</span><span class="small muted">Owner: <b>${esc(job.owner)}</b></span></div>`;
+    const listNote = job.listInfo ? `<div class="facts"><span>From On-Deck list: <b>${esc(job.listInfo.sub || "no sub-industry")}</b></span><span><b>${fmtInt(job.listInfo.emp)}</b> employees on the list</span></div>` : "";
     const err = job.error ? `<div class="banner bad">${esc(job.error)}</div>` : "";
     const remove = `<button class="btn ghost sm" data-act="remove" data-job="${job.key}" type="button">Remove</button>`;
     let body = "";
@@ -961,7 +1032,7 @@ a { color: var(--info); }
         break;
       }
     }
-    return `<div class="job">${head}${err}${body}</div>`;
+    return `<div class="job">${head}${listNote}${err}${body}</div>`;
   }
 
   function reviewHtml(job) {
@@ -1271,11 +1342,242 @@ a { color: var(--info); }
     const o = store.get("owner"); if (OWNERS.includes(o)) $("owner").value = o;
   }
 
+  // ---------- On-Deck targets ----------
+  S.ondeck = new Map(); S.loaded.od = false;
+  S.odSel = new Set(); S.odPreview = null; S.odBusy = false;
+  S.odFilters = Object.assign({ q: "", status: "ondeck", sub: "all", list: "all" }, store.get("odFilters") || {});
+  const slug = (s) => norm(s).replace(/ /g, "-").slice(0, 80) || "x";
+  const companyByName = () => { const m = new Map(); for (const c of S.companies.values()) m.set(norm(c.name), c); return m; };
+  function odState(o, byName) {
+    const co = (o.tracker_company_id && S.companies.get(o.tracker_company_id)) || (byName || companyByName()).get(norm(o.name));
+    if (co) return { key: "added", label: co.hubspot_company_id ? "In HubSpot" : "Added to tracker", tone: co.hubspot_company_id ? "ok" : "info", co };
+    if (o.started_at) return { key: "started", label: "Started", tone: "hs" };
+    return { key: "ondeck", label: "On deck", tone: "" };
+  }
+
+  // CSV parsing (quoted fields, embedded commas/newlines, CRLF).
+  function parseCsv(text) {
+    const rows = []; let row = [], f = "", q = false;
+    text = text.replace(/^﻿/, "");
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(f); f = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+      else f += ch;
+    }
+    if (f !== "" || row.length) { row.push(f); rows.push(row); }
+    return rows.filter((r) => r.some((c) => String(c).trim() !== ""));
+  }
+  function pickCol(headers, patterns) {
+    const h = headers.map((x) => norm(x));
+    for (const p of patterns) { const i = h.findIndex((x) => p.test(x)); if (i >= 0) return i; }
+    return -1;
+  }
+  function readTargetCsv(text, fileName) {
+    const rows = parseCsv(text);
+    if (rows.length < 2) return { error: "The file has no data rows." };
+    const head = rows[0];
+    const iName = pickCol(head, [/^company( name)?$/, /^account( name)?$/, /^company/, /^name$/]);
+    const iSub = pickCol(head, [/^sub ?industry$/, /sub ?industry/, /^industry$/, /industry/]);
+    const iEmp = pickCol(head, [/^est employees$/, /employees?( count)?$/, /employee/, /headcount/, /^size$/]);
+    const iRank = pickCol(head, [/^$/, /^rank$/, /^no$/]);
+    if (iName < 0) return { error: "Couldn't find a Company column. The first row must be headers, with a column named Company." };
+    const list = String(fileName || "Uploaded list").replace(/\.csv$/i, "").replace(/_/g, " ").trim().slice(0, 120);
+    const existing = new Set([...S.ondeck.values()].map((o) => norm(o.name)));
+    const onTracker = companyByName();
+    const seen = new Set();
+    const add = [], skipped = [];
+    rows.slice(1).forEach((r, idx) => {
+      const name = String(r[iName] || "").trim();
+      if (!name) return;
+      const key = norm(name);
+      if (seen.has(key)) { skipped.push({ name, why: "repeated in this file" }); return; }
+      seen.add(key);
+      if (existing.has(key)) { skipped.push({ name, why: "already on deck" }); return; }
+      if (onTracker.has(key)) { skipped.push({ name, why: "already on the tracker" }); return; }
+      add.push({ name, sub_industry: iSub >= 0 ? String(r[iSub] || "").trim() : "", employee_count: iEmp >= 0 ? num(r[iEmp]) : null, rank: iRank >= 0 ? num(r[iRank]) ?? idx + 1 : idx + 1 });
+    });
+    return { list, add, skipped, cols: { sub: iSub >= 0 ? head[iSub] : "", emp: iEmp >= 0 ? head[iEmp] : "" } };
+  }
+  async function saveOndeck(pre) {
+    if (!canEdit() || S.odBusy) return;
+    S.odBusy = true; renderOdPreview();
+    const ts = nowIso(), by = (S.me && S.me.id) || null;
+    let ok = 0, fail = 0, lastErr = null;
+    const queue = pre.add.slice();
+    const worker = async () => {
+      while (queue.length) {
+        const r = queue.shift();
+        let id = "od-" + slug(r.name); if (S.ondeck.has(id)) id += "-" + Math.random().toString(36).slice(2, 6);
+        try { await S.db.doc("ondeck/" + id).set({ id, name: r.name, sub_industry: r.sub_industry, employee_count: r.employee_count, rank: r.rank, list_name: pre.list, created_at: ts, created_by: by }); ok++; }
+        catch (e) { fail++; lastErr = e; if (e && (e.code === "invalid_argument" || e.code === "quota_exceeded" || e.code === "revoked")) { queue.length = 0; } }
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    S.odBusy = false; S.odPreview = null; renderOdPreview();
+    toast(fail ? `Added ${ok} companies; ${fail} failed. ${dbErrText(lastErr)}` : `Added ${ok} companies to On-Deck.`);
+    S.odFilters.list = pre.list; S.odFilters.status = "ondeck"; bindOdFilterValues(); renderOndeck();
+  }
+  function renderOdPreview() {
+    const el = $("od-preview"); const p = S.odPreview;
+    if (!p) { el.innerHTML = ""; return; }
+    if (p.error) { el.innerHTML = `<div class="banner bad"><strong>Couldn't read that file</strong>${esc(p.error)} <button class="btn ghost sm" type="button" data-od="preview-close">Close</button></div>`; return; }
+    const sample = p.add.slice(0, 5).map((r) => `<li>${esc(r.name)} <span class="muted">· ${esc(r.sub_industry || "no sub-industry")} · ${r.employee_count == null ? "no size" : fmtInt(r.employee_count) + " employees"}</span></li>`).join("");
+    el.innerHTML = `<div class="import">
+      <div><b>${esc(p.list)}</b> <span class="small muted">· ${p.add.length} new compan${p.add.length === 1 ? "y" : "ies"} to add${p.skipped.length ? ` · ${p.skipped.length} skipped (${esc([...new Set(p.skipped.map((s) => s.why))].join(", "))})` : ""}</span></div>
+      <div class="small muted">Reading Company${p.cols.sub ? `, ${esc(p.cols.sub)}` : " (no sub-industry column found)"}${p.cols.emp ? `, ${esc(p.cols.emp)}` : " (no employee column found)"}.</div>
+      ${sample ? `<ul class="result-list">${sample}${p.add.length > 5 ? `<li class="muted">…and ${p.add.length - 5} more</li>` : ""}</ul>` : ""}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" type="button" data-od="preview-save" ${p.add.length && canEdit() && !S.odBusy ? "" : "disabled"}>${S.odBusy ? `<span class="spinner"></span> Adding…` : `Add ${p.add.length} to On-Deck`}</button>
+        <button class="btn" type="button" data-od="preview-close" ${S.odBusy ? "disabled" : ""}>Cancel</button>
+      </div></div>`;
+  }
+
+  function odVisible() {
+    const f = S.odFilters, q = norm(f.q), byName = companyByName();
+    return [...S.ondeck.values()].map((o) => ({ o, st: odState(o, byName) })).filter(({ o, st }) =>
+      (f.status === "all" || st.key === f.status) &&
+      (f.sub === "all" || o.sub_industry === f.sub) &&
+      (f.list === "all" || o.list_name === f.list) &&
+      (!q || norm(o.name).includes(q))
+    ).sort((a, b) => String(a.o.list_name).localeCompare(String(b.o.list_name)) || (a.o.rank ?? 1e9) - (b.o.rank ?? 1e9) || String(a.o.name).localeCompare(String(b.o.name)));
+  }
+  function fillOdOptions() {
+    const subs = [...new Set([...S.ondeck.values()].map((o) => o.sub_industry).filter(Boolean))].sort();
+    const lists = [...new Set([...S.ondeck.values()].map((o) => o.list_name).filter(Boolean))].sort();
+    $("od-sub").innerHTML = `<option value="all">All sub-industries</option>` + subs.map((s) => `<option>${esc(s)}</option>`).join("");
+    $("od-list").innerHTML = `<option value="all">All lists</option>` + lists.map((s) => `<option>${esc(s)}</option>`).join("");
+    bindOdFilterValues();
+  }
+  function bindOdFilterValues() {
+    for (const [k, id] of [["q", "od-q"], ["status", "od-status"], ["sub", "od-sub"], ["list", "od-list"]]) {
+      const el = $(id); el.value = S.odFilters[k];
+      if (el.value !== S.odFilters[k]) { S.odFilters[k] = k === "q" ? "" : k === "status" ? "ondeck" : "all"; el.value = S.odFilters[k]; }
+    }
+  }
+  function renderOndeck() {
+    const byName = companyByName();
+    const waiting = [...S.ondeck.values()].filter((o) => odState(o, byName).key === "ondeck").length;
+    $("ondeck-count").textContent = S.ondeck.size ? `${waiting}` : "";
+    const rows = $("od-rows");
+    const banner = !S.db ? `<div class="banner bad"><strong>Shared list unavailable</strong>Open the tracker in claude.ai while signed in.</div>` : !canEdit() ? `<div class="banner">You have view-only access, so you can't import lists or send targets to Today.</div>` : "";
+    $("od-banner").innerHTML = banner;
+    $("od-import").disabled = !canEdit();
+    if (!S.db || !S.loaded.od) { rows.innerHTML = `<tr><td colspan="6"><div class="empty">${S.db ? `<span class="spinner"></span> Loading On-Deck targets…` : "Not available in this view."}</div></td></tr>`; renderOdBar([]); return; }
+    const vis = odVisible();
+    for (const id of [...S.odSel]) { const o = S.ondeck.get(id); if (!o || odState(o, byName).key === "added") S.odSel.delete(id); }
+    renderOdBar(vis);
+    if (!S.ondeck.size) { rows.innerHTML = `<tr><td colspan="6"><div class="empty"><b>No On-Deck targets yet</b>Click Import list (CSV) and choose a spreadsheet with a Company column. Sub-industry and employee columns are picked up when present.</div></td></tr>`; return; }
+    if (!vis.length) { rows.innerHTML = `<tr><td colspan="6"><div class="empty"><b>Nothing matches these filters</b>Switch Show to All, or clear the search.</div></td></tr>`; return; }
+    rows.innerHTML = vis.map(({ o, st }) => {
+      const sel = S.odSel.has(o.id);
+      const pickable = st.key !== "added";
+      const statusCell = st.key === "added"
+        ? `<span class="chip ${st.tone}">${esc(st.label)}</span> <span class="small muted">${esc(st.co.owner || "")}${st.co.created_at ? " · " + esc(fmtDate(st.co.created_at)) : ""}</span>`
+        : st.key === "started" ? `<span class="chip hs">Started</span> <span class="small muted">${esc(o.owner || "")} · ${esc(fmtDate(o.started_at))}</span>`
+        : `<span class="chip">On deck</span>`;
+      return `<tr class="${sel ? "sel" : ""}">
+        <td><input type="checkbox" data-od-pick="${esc(o.id)}" aria-label="Select ${esc(o.name)}" ${sel ? "checked" : ""} ${pickable && canEdit() ? "" : "disabled"}></td>
+        <td><b>${esc(o.name)}</b></td>
+        <td>${esc(o.sub_industry || "—")}</td>
+        <td class="n num">${fmtInt(o.employee_count)}</td>
+        <td class="small muted">${esc(o.list_name || "")}</td>
+        <td>${statusCell}</td>
+      </tr>`;
+    }).join("");
+    const pickableShown = vis.filter(({ st }) => st.key !== "added");
+    $("od-all").checked = pickableShown.length > 0 && pickableShown.every(({ o }) => S.odSel.has(o.id));
+    $("od-all").disabled = !pickableShown.length || !canEdit();
+  }
+  function renderOdBar(vis) {
+    const n = S.odSel.size;
+    const ownerSel = $("od-owner") ? $("od-owner").value : (store.get("owner") || "");
+    const why = !sourcingReady() ? "Adding targets is off until ZoomInfo and HubSpot are connected (see Today)." : "";
+    $("od-bar").innerHTML = `
+      <b>${n} selected</b>
+      <label class="small" for="od-owner" style="display:inline-flex;gap:6px;align-items:center;font-weight:600;color:var(--muted)">Owner
+        <select id="od-owner" style="width:auto"><option value="">Choose…</option>${OWNERS.map((o) => `<option ${o === ownerSel ? "selected" : ""}>${o}</option>`).join("")}</select>
+      </label>
+      <button class="btn primary" type="button" data-od="send" ${n && sourcingReady() && canEdit() ? "" : "disabled"}>Send ${n || ""} to Today</button>
+      ${n ? `<button class="btn ghost sm" type="button" data-od="clear">Clear selection</button>` : ""}
+      <span class="small muted">${esc(why || (n > 2 ? "Guidance is 1–2 companies per rep per day." : "Selected companies start a ZoomInfo lookup on the Today tab."))}</span>`;
+  }
+  async function sendToToday() {
+    const owner = $("od-owner").value;
+    if (!owner) { toast("Choose an owner first."); $("od-owner").focus(); return; }
+    if (!sourcingReady() || !S.odSel.size) return;
+    store.set("owner", owner);
+    const picks = [...S.odSel].map((id) => S.ondeck.get(id)).filter(Boolean);
+    S.odSel.clear();
+    const ts = nowIso();
+    for (const o of picks) {
+      const job = newJob(o.name, owner);
+      job.ondeckId = o.id; job.listInfo = { sub: o.sub_industry, emp: o.employee_count };
+      S.jobs.unshift(job);
+      resolveJob(job);
+      writeDoc("ondeck/" + o.id, { started_at: ts, started_by: (S.me && S.me.id) || null, owner });
+    }
+    setTab("today");
+    renderJobs();
+    $("jobs").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function linkOndeck(job, trackerId) {
+    if (!job.ondeckId || !S.ondeck.has(job.ondeckId) || !canEdit()) return;
+    writeDoc("ondeck/" + job.ondeckId, { tracker_company_id: trackerId, added_at: nowIso() });
+  }
+
+  // tabs
+  function setTab(t) {
+    const on = t === "ondeck" ? "ondeck" : "today";
+    $("view-today").hidden = on !== "today"; $("view-ondeck").hidden = on !== "ondeck";
+    $("tab-today").setAttribute("aria-selected", String(on === "today")); $("tab-ondeck").setAttribute("aria-selected", String(on === "ondeck"));
+    store.set("tab", on);
+    if (on === "ondeck") renderOndeck();
+  }
+  document.querySelector(".tabs").addEventListener("click", (ev) => { const b = ev.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
+  $("od-import").addEventListener("click", () => { $("od-file").value = ""; $("od-file").click(); });
+  $("od-file").addEventListener("change", async () => {
+    const f = $("od-file").files && $("od-file").files[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { S.odPreview = { error: "That file is over 5 MB. Export just the target list as CSV." }; renderOdPreview(); return; }
+    let text = "";
+    try { text = await f.text(); } catch { S.odPreview = { error: "The file couldn't be read." }; renderOdPreview(); return; }
+    if (!/\.csv$/i.test(f.name) && !/,/.test(text.split(/\r?\n/)[0] || "")) { S.odPreview = { error: "Save the spreadsheet as CSV (File → Save as / Download → .csv) and import that." }; renderOdPreview(); return; }
+    S.odPreview = readTargetCsv(text, f.name); renderOdPreview();
+  });
+  $("od-preview").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-od]"); if (!b) return;
+    if (b.dataset.od === "preview-close") { S.odPreview = null; renderOdPreview(); }
+    else if (b.dataset.od === "preview-save" && S.odPreview && S.odPreview.add) saveOndeck(S.odPreview);
+  });
+  $("od-bar").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-od]"); if (!b) return;
+    if (b.dataset.od === "send") sendToToday();
+    else if (b.dataset.od === "clear") { S.odSel.clear(); renderOndeck(); }
+  });
+  $("od-rows").addEventListener("change", (ev) => {
+    const c = ev.target.closest("[data-od-pick]"); if (!c) return;
+    c.checked ? S.odSel.add(c.dataset.odPick) : S.odSel.delete(c.dataset.odPick);
+    renderOndeck();
+  });
+  $("od-all").addEventListener("change", () => {
+    const byName = companyByName();
+    for (const { o } of odVisible()) if (odState(o, byName).key !== "added") $("od-all").checked ? S.odSel.add(o.id) : S.odSel.delete(o.id);
+    renderOndeck();
+  });
+  for (const [k, id] of [["q", "od-q"], ["status", "od-status"], ["sub", "od-sub"], ["list", "od-list"]]) {
+    $(id).addEventListener(k === "q" ? "input" : "change", () => { S.odFilters[k] = $(id).value; store.set("odFilters", S.odFilters); renderOndeck(); });
+  }
+
   // ---------- boot ----------
   let contactsReady = null;
   const contactsLoaded = new Promise((r) => (contactsReady = r));
   bindFilters();
-  renderConn(); renderIntakeBanner(); renderJobs(); renderDash();
+  bindOdFilterValues();
+  setTab(/^#ondeck$/.test(location.hash) ? "ondeck" : /^#today$/.test(location.hash) ? "today" : store.get("tab") || "today");
+  renderConn(); renderIntakeBanner(); renderJobs(); renderDash(); renderOndeck();
 
   (async () => {
     const [db, user, mcp] = await Promise.all([use("db"), use("user"), use("mcp")]);
@@ -1289,12 +1591,13 @@ a { color: var(--info); }
     }
     if (db) {
       const onErr = (e) => { S.dbError = e && e.code === "revoked" ? "Your access to this tracker changed. Reload the page." : "The shared list stopped updating. Reload the page."; renderDash(); };
-      db.collection("companies").limit(1000).onSnapshot((snap) => { S.companies = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.co = true; renderDash(); renderJobs(); }, onErr);
+      db.collection("companies").limit(1000).onSnapshot((snap) => { S.companies = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.co = true; renderDash(); renderJobs(); renderOndeck(); }, onErr);
+      db.collection("ondeck").limit(1000).onSnapshot((snap) => { S.ondeck = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.od = true; fillOdOptions(); renderOndeck(); }, onErr);
       db.collection("contacts").limit(1000).onSnapshot((snap) => { S.contacts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.ct = true; renderDash(); if (contactsReady) { contactsReady(); contactsReady = null; } }, onErr);
     }
     renderIntakeBanner(); renderDash();
     await checkConnectors();
-    renderConn(); renderIntakeBanner(); renderJobs(); renderSyncBar(); renderDash();
+    renderConn(); renderIntakeBanner(); renderJobs(); renderSyncBar(); renderDash(); renderOndeck();
     if (db && S.conn[HS].state === "ok") { await contactsLoaded; syncHubspot(false); }
   })();
 })();
