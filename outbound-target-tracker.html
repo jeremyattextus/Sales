@@ -150,7 +150,7 @@ table { border-collapse: collapse; width: 100%; }
 
 /* Ledger */
 .ledger-wrap { overflow-x: auto; }
-.ledger { min-width: 980px; }
+.ledger { min-width: 1080px; }
 .ledger th { position: sticky; top: 0; background: var(--surface-2); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .ledger td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 .ledger td.n, .ledger th.n { text-align: right; }
@@ -185,6 +185,10 @@ tr.detail > td { background: var(--surface-2); padding: 0 10px 14px 46px; }
 .acts label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .acts input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
 .calls-note { font-size: 11px; color: var(--muted); }
+.seq { margin-top: 6px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.import { display: grid; gap: 10px; padding: 12px; margin-block: 4px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+.import.banner { display: block; border: 0; border-left: 3px solid var(--info); }
+.import.banner.bad { border-left-color: var(--bad); }
 .empty { padding: 36px 16px; text-align: center; color: var(--muted); }
 .empty b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
 .toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: min(420px, calc(100vw - 32px)); background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: var(--radius); font-size: 13px; z-index: 20; }
@@ -233,7 +237,10 @@ a { color: var(--info); }
   <section class="panel" aria-labelledby="list-h">
     <div class="panel-head">
       <h2 id="list-h">Target companies</h2>
-      <span class="small muted" id="count"></span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center">
+        <span class="small muted" id="count"></span>
+        <div id="sync" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
+      </div>
     </div>
     <div class="panel-body" style="padding-bottom:0">
       <div class="filters">
@@ -264,7 +271,7 @@ a { color: var(--info); }
       <table class="ledger" id="ledger">
         <thead><tr>
           <th>Company</th><th>Sub-industry</th><th class="n">Employees</th><th>Owner</th><th>Status</th>
-          <th class="n">Contacts</th><th class="n">In sequence</th><th class="n">LinkedIn sent</th><th>Added</th>
+          <th class="n">Contacts</th><th class="n">In sequence</th><th class="n">LinkedIn sent</th><th>HubSpot</th><th>Added</th>
         </tr></thead>
         <tbody id="rows"></tbody>
       </table>
@@ -294,6 +301,10 @@ a { color: var(--info); }
   const ENRICH_FIELDS = ["firstName", "lastName", "jobTitle", "email", "phone", "mobilePhone", "directPhoneDoNotCall", "mobilePhoneDoNotCall", "externalUrls", "contactAccuracyScore", "lastUpdatedDate", "validDate"];
   const ZI_INTENT = "Build a short outbound working list of HR contacts at a target company for one sales rep";
   const HS_INSIGHTS = { userIntent: "Read-only duplicate check of a target company and its contacts before outbound", satisfaction: "NEUTRAL" };
+  // HubSpot owner IDs for the tracker's owners (portal 517572). New records the tracker creates are owned by the company's tracker owner.
+  const HS_OWNER_IDS = { Jeremy: "92239065", David: "96822192" };
+  const HS_OWNER_NAMES = { Jeremy: "Jeremy O'Hara", David: "David Walker" };
+  const SEQ_PROPS = ["email", "hs_sequences_is_enrolled", "hs_latest_sequence_enrolled", "hs_latest_sequence_enrolled_date", "hs_latest_sequence_ended_date", "hs_sequences_enrolled_count"];
 
   // Persona rules (priority order). Exclusions win over everything.
   const RX_EXCLUDE = /recruit|talent acq|\bTA\b|sourc(er|ing)|hris|hr tech|technolog|technical|\bIT\b|information|systems|software|engineer|developer|analytic|\bdata\b|procure|purchas|category manager|buyer/i;
@@ -314,6 +325,8 @@ a { color: var(--info); }
     companies: new Map(), contacts: new Map(), loaded: { co: false, ct: false }, dbError: "",
     conn: { [ZI]: { state: "checking", msg: "" }, [HS]: { state: "checking", msg: "" } },
     jobs: [], expanded: new Set(), names: {},
+    imports: new Map(),          // company id -> { state: planning|confirm|running|done|error, plan, msg }
+    seq: { names: {}, checkedAt: 0, running: false, error: "" },
     filters: { q: "", owner: "all", co: "all", ct: "all", li: "all", from: "", to: "" },
   };
   let jobSeq = 0;
@@ -660,6 +673,187 @@ a { color: var(--info); }
     }
   }
 
+  // ---------- HubSpot import (creates new records only; never edits existing ones) ----------
+  const lc = (s) => String(s || "").trim().toLowerCase();
+  async function hsFindCompanyId(co) {
+    const groups = [];
+    if (co.domain) groups.push({ filters: [{ propertyName: "domain", operator: "EQ", value: co.domain }] });
+    groups.push({ filters: [{ propertyName: "name", operator: "EQ", value: co.name }] });
+    const p = await readTool(HS, "search_crm_objects", { objectType: "COMPANY", filterGroups: groups, properties: ["name", "domain"], limit: 10, chatInsights: HS_INSIGHTS });
+    const rs = (p && p.results) || [];
+    const hit = rs.find((r) => co.domain && lc(r.properties && r.properties.domain) === co.domain) || rs[0];
+    return hit ? String(hit.id) : "";
+  }
+  async function hsIdsByEmail(emails) {
+    const out = {};
+    const list = [...new Set(emails.map(lc).filter(Boolean))];
+    for (let i = 0; i < list.length; i += 100) {
+      const p = await readTool(HS, "search_crm_objects", { objectType: "CONTACT", filterGroups: [{ filters: [{ propertyName: "email", operator: "IN", values: list.slice(i, i + 100) }] }], properties: ["email"], limit: 200, chatInsights: HS_INSIGHTS });
+      for (const r of (p && p.results) || []) { const e = lc(r.properties && r.properties.email); if (e && !out[e]) out[e] = String(r.id); }
+    }
+    return out;
+  }
+  // Pull created record ids out of a create response without assuming its exact shape.
+  function createdRecords(p) {
+    const out = [];
+    const walk = (v, depth) => {
+      if (!v || typeof v !== "object" || depth > 6) return;
+      if (Array.isArray(v)) { v.forEach((x) => walk(x, depth + 1)); return; }
+      const id = v.id ?? v.objectId ?? v.hs_object_id ?? (v.properties && v.properties.hs_object_id);
+      if (id != null && /^\d+$/.test(String(id))) out.push({ id: String(id), props: v.properties || {} });
+      for (const k of Object.keys(v)) if (k !== "properties") walk(v[k], depth + 1);
+    };
+    walk(p, 0);
+    return out;
+  }
+  const importState = (id) => S.imports.get(id) || null;
+  function setImport(id, st) { S.imports.set(id, st); renderDash(); }
+
+  async function planImport(coId) {
+    const co = S.companies.get(coId);
+    if (!co || !canImport()) return;
+    S.expanded.add(coId);
+    setImport(coId, { state: "planning" });
+    try {
+      const pending = contactsFor(coId).filter((c) => !c.hubspot_id);
+      let companyAction = "existing", companyHsId = co.hubspot_company_id || "";
+      if (!companyHsId) { companyHsId = await hsFindCompanyId(co); companyAction = companyHsId ? "link" : "create"; }
+      const byEmail = await hsIdsByEmail(pending.map((c) => c.email));
+      const contacts = pending.map((c) => { const hit = byEmail[lc(c.email)]; return { id: c.id, action: hit ? "link" : "create", hsId: hit || "" }; });
+      setImport(coId, { state: "confirm", plan: { companyAction, companyHsId, contacts } });
+    } catch (e) { setImport(coId, { state: "error", msg: errText(e, HS) }); }
+  }
+
+  async function runImport(coId) {
+    const st = importState(coId);
+    const co = S.companies.get(coId);
+    if (!st || st.state !== "confirm" || !co || !canImport()) return;
+    const plan = st.plan;
+    setImport(coId, { state: "running", plan });
+    const ts = nowIso();
+    const by = (S.me && S.me.id) || null;
+    const owner = HS_OWNER_IDS[co.owner] || "";
+    const notes = [];
+    try {
+      // 1. Company
+      let companyHsId = plan.companyHsId;
+      if (plan.companyAction === "create") {
+        let p;
+        try {
+          p = await spendTool(HS, "manage_crm_objects", { confirmationStatus: "CONFIRMED", createRequest: { objects: [{ objectType: "companies", properties: { name: co.name, ...(co.domain ? { domain: co.domain } : {}), hubspot_owner_id: owner } }] } });
+        } catch (e) {
+          setImport(coId, { state: "error", msg: errText(e, HS) + " The company may or may not have been created. Click Import again: it checks HubSpot first and links what already exists." });
+          return;
+        }
+        companyHsId = (createdRecords(p)[0] || {}).id || "";
+        for (let i = 0; !companyHsId && i < 3; i++) { await sleep(1500 * (i + 1)); companyHsId = await hsFindCompanyId(co); }
+        if (!companyHsId) notes.push("HubSpot accepted the company but its record id wasn't found yet. Contacts were created without the company link; use Refresh from HubSpot later.");
+      }
+      if (companyHsId && companyHsId !== co.hubspot_company_id) {
+        await S.db.doc("companies/" + coId).update({ hubspot_company_id: companyHsId, in_hubspot: true, hubspot_company_action: plan.companyAction === "create" ? "created" : "linked", hubspot_imported_at: ts, hubspot_imported_by: by, updated_at: ts });
+      } else if (companyHsId && !co.hubspot_imported_at) {
+        await S.db.doc("companies/" + coId).update({ hubspot_company_action: co.hubspot_company_action || "linked", hubspot_imported_at: ts, hubspot_imported_by: by, updated_at: ts });
+      }
+
+      // 2. Contacts: link existing ones, create the rest (max 10 per request).
+      const all = plan.contacts.map((x) => ({ ...x, c: S.contacts.get(x.id) })).filter((x) => x.c && !x.c.hubspot_id);
+      for (const x of all.filter((x) => x.action === "link")) {
+        await S.db.doc("contacts/" + x.id).update({ hubspot_id: x.hsId, in_hubspot: true, hubspot_import_action: "linked", hubspot_imported_at: ts, updated_at: ts });
+      }
+      const toCreate = all.filter((x) => x.action === "create");
+      for (let i = 0; i < toCreate.length; i += 10) {
+        const batch = toCreate.slice(i, i + 10);
+        const objects = batch.map(({ c }) => {
+          const props = { email: c.email, firstname: c.first_name || "", lastname: c.last_name || "", jobtitle: c.title || "", company: co.name, hubspot_owner_id: owner };
+          if (c.direct_phone && !c.direct_phone_dnc) props.phone = c.direct_phone; // mobile numbers are never sent to HubSpot
+          if (c.linkedin_url) props.hs_linkedin_url = c.linkedin_url;
+          const o = { objectType: "contacts", properties: props };
+          if (companyHsId) o.associations = [{ targetObjectId: Number(companyHsId), targetObjectType: "COMPANY" }];
+          return o;
+        });
+        let p, failed = false;
+        try { p = await spendTool(HS, "manage_crm_objects", { confirmationStatus: "CONFIRMED", createRequest: { objects } }); }
+        catch (e) { failed = true; notes.push(errText(e, HS) + " Some contacts may not have been created."); }
+        const fromResp = {};
+        for (const r of createdRecords(p)) { const e = lc(r.props.email); if (e) fromResp[e] = r.id; }
+        let missing = batch.filter(({ c }) => !fromResp[lc(c.email)]);
+        for (let t = 0; missing.length && t < 3; t++) {
+          await sleep(1500 * (t + 1));
+          const found = await hsIdsByEmail(missing.map(({ c }) => c.email));
+          Object.assign(fromResp, found);
+          missing = missing.filter(({ c }) => !fromResp[lc(c.email)]);
+        }
+        for (const { c } of batch) {
+          const id = fromResp[lc(c.email)];
+          if (id) await S.db.doc("contacts/" + c.id).update({ hubspot_id: id, in_hubspot: true, hubspot_import_action: "created", hubspot_imported_at: ts, updated_at: ts });
+          else if (!failed) notes.push(`${c.first_name} ${c.last_name}: HubSpot hasn't returned a record yet. Use Refresh from HubSpot in a minute.`);
+          else notes.push(`${c.first_name} ${c.last_name}: not confirmed in HubSpot. Click Import again; it links anything that already exists.`);
+        }
+      }
+      setImport(coId, { state: "done", msg: notes.length ? notes.join(" ") : "Imported. Company and contacts are linked to HubSpot." , warn: notes.length > 0 });
+      syncHubspot(false);
+    } catch (e) {
+      setImport(coId, { state: "error", msg: (e && e.code && /^(invalid_argument|quota_exceeded|resource_exhausted|revoked)$/.test(e.code) ? dbErrText(e) : errText(e, HS)) + " Click Import again to continue; it checks HubSpot first." });
+    }
+  }
+  const canImport = () => canEdit() && !!S.mcp && S.conn[HS].state === "ok";
+
+  // ---------- HubSpot sequence status (read only) ----------
+  async function loadSequenceNames() {
+    if (Object.keys(S.seq.names).length) return;
+    try {
+      const p = await readTool(HS, "get_properties", { objectType: "contacts", propertyNames: ["hs_latest_sequence_enrolled"] });
+      const prop = ((p && p.results) || []).find((r) => r.name === "hs_latest_sequence_enrolled");
+      for (const o of (prop && prop.options) || []) S.seq.names[String(o.value)] = String(o.label || "").trim();
+    } catch {}
+  }
+  const seqName = (id) => (id ? S.seq.names[String(id)] || `Sequence ${id}` : "");
+  async function syncHubspot(manual) {
+    if (S.seq.running || !S.db || !S.mcp || S.conn[HS].state !== "ok") return;
+    S.seq.running = true; S.seq.error = ""; renderSyncBar();
+    try {
+      await loadSequenceNames();
+      const all = [...S.contacts.values()];
+      // Re-link imported contacts whose HubSpot id wasn't confirmed at import time.
+      const unlinked = all.filter((c) => !c.hubspot_id && c.hubspot_import_action && c.email);
+      if (unlinked.length && canEdit()) {
+        const found = await hsIdsByEmail(unlinked.map((c) => c.email));
+        for (const c of unlinked) { const id = found[lc(c.email)]; if (id) await S.db.doc("contacts/" + c.id).update({ hubspot_id: id, in_hubspot: true, updated_at: nowIso() }); }
+      }
+      const linked = [...S.contacts.values()].filter((c) => c.hubspot_id && /^\d+$/.test(String(c.hubspot_id)));
+      for (let i = 0; i < linked.length; i += 100) {
+        const batch = linked.slice(i, i + 100);
+        const p = await readTool(HS, "get_crm_objects", { objectType: "contacts", objectIds: batch.map((c) => Number(c.hubspot_id)), properties: SEQ_PROPS });
+        const byId = {};
+        for (const o of (p && (p.objects || p.results)) || []) byId[String(o.id)] = o.properties || {};
+        for (const c of batch) {
+          const pr = byId[String(c.hubspot_id)];
+          if (!pr) continue;
+          const next = {
+            hs_seq_active: String(pr.hs_sequences_is_enrolled) === "true",
+            hs_seq_id: pr.hs_latest_sequence_enrolled || "",
+            hs_seq_enrolled_at: pr.hs_latest_sequence_enrolled_date || "",
+            hs_seq_ended_at: pr.hs_latest_sequence_ended_date || "",
+            hs_seq_count: num(pr.hs_sequences_enrolled_count) || 0,
+          };
+          const changed = Object.keys(next).some((k) => c[k] === undefined || c[k] !== next[k]);
+          if (changed && canEdit()) {
+            try { await S.db.doc("contacts/" + c.id).update({ ...next, hs_seq_synced_at: nowIso() }); } catch (e) { if (e && e.code === "invalid_argument") break; }
+          }
+        }
+      }
+      S.seq.checkedAt = Date.now();
+    } catch (e) { S.seq.error = errText(e, HS); if (manual) toast(S.seq.error); }
+    S.seq.running = false; renderSyncBar(); renderDash();
+  }
+  function renderSyncBar() {
+    const el = $("sync"); if (!el) return;
+    const ok = S.mcp && S.conn[HS].state === "ok" && S.db;
+    const when = S.seq.checkedAt ? `HubSpot checked ${new Date(S.seq.checkedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "";
+    el.innerHTML = `<span class="small muted">${S.seq.running ? `<span class="spinner"></span> Reading sequence status from HubSpot…` : esc(S.seq.error || when)}</span>` +
+      `<button class="btn sm" type="button" id="sync-btn" ${ok && !S.seq.running ? "" : "disabled"}>Refresh from HubSpot</button>`;
+  }
+
   // ---------- intake rendering ----------
   function renderToday() {
     const today = localDay(nowIso());
@@ -811,11 +1005,18 @@ a { color: var(--info); }
   const copyBtn = (v, what) => (v ? `<button type="button" class="copy" data-copy="${esc(v)}" aria-label="Copy ${what}">Copy</button>` : "");
 
   function personHtml(c) {
-    const hs = c.in_hubspot ? (c.hubspot_id ? `<a class="chip hs" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${esc(c.hubspot_id)}" target="_blank" rel="noopener">In HubSpot</a>` : `<span class="chip hs">In HubSpot</span>`) : "";
+    const hsLabel = c.hubspot_import_action === "created" ? "Created in HubSpot" : c.hubspot_import_action === "linked" ? "Linked to HubSpot" : "In HubSpot";
+    const hs = c.hubspot_id
+      ? `<a class="chip ${c.hubspot_import_action ? "ok" : "hs"}" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${esc(c.hubspot_id)}" target="_blank" rel="noopener" title="${c.hubspot_imported_at ? "Imported " + esc(fmtDate(c.hubspot_imported_at)) : "Matched during sourcing"}">${hsLabel} ↗</a>`
+      : c.hubspot_import_action ? `<span class="chip hs">Import pending</span>` : c.in_hubspot ? `<span class="chip hs">In HubSpot</span>` : `<span class="chip">Not in HubSpot</span>`;
+    const seq = !c.hubspot_id ? "" : c.hs_seq_active
+      ? `<div class="seq"><span class="chip ok">Sequence active</span> <b>${esc(seqName(c.hs_seq_id))}</b> <span class="muted">since ${esc(fmtDate(c.hs_seq_enrolled_at))}</span></div>`
+      : c.hs_seq_id ? `<div class="seq"><span class="chip">Sequence ended</span> ${esc(seqName(c.hs_seq_id))} <span class="muted">${c.hs_seq_ended_at ? "ended " + esc(fmtDate(c.hs_seq_ended_at)) : "enrolled " + esc(fmtDate(c.hs_seq_enrolled_at))}</span></div>`
+      : c.hs_seq_active === false ? `<div class="seq muted">Never enrolled in a HubSpot sequence</div>` : "";
     const phone = (v, dnc, lbl) => (v ? `<div class="line"><span class="lbl">${lbl}</span><span class="val">${esc(v)}</span>${dnc ? `<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>` : ""}${copyBtn(v, lbl + " phone")}</div>` : "");
     return `<div class="person">
       <div class="who"><b>${esc(c.first_name)} ${esc(c.last_name)}</b><div class="title">${esc(c.title)}</div>
-        <div class="flags"><span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>${hs}${confFlags(c.zoominfo_accuracy, c.zoominfo_last_updated)}${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}</div></div>
+        <div class="flags"><span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>${hs}${confFlags(c.zoominfo_accuracy, c.zoominfo_last_updated)}${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}</div>${seq}</div>
       <div>${c.email ? `<div class="line"><span class="lbl">Email</span><span class="val">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : `<span class="muted small">No email</span>`}</div>
       <div>${phone(c.direct_phone, c.direct_phone_dnc, "Direct")}${phone(c.mobile_phone, c.mobile_phone_dnc, "Mobile")}<div class="calls-note">For calls only. Do not text sourced contacts.</div></div>
       <div class="acts">
@@ -828,19 +1029,26 @@ a { color: var(--info); }
   function renderDash() {
     renderToday();
     const rows = $("rows");
-    if (!S.db) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>Shared list unavailable</b>Open this tracker in claude.ai while signed in.</div></td></tr>`; renderStrip([]); return; }
-    if (!S.loaded.co || !S.loaded.ct) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><span class="spinner"></span> Loading the shared list…</div></td></tr>`; renderStrip([]); return; }
-    if (S.dbError) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>Couldn't load the list</b>${esc(S.dbError)}</div></td></tr>`; return; }
+    if (!S.db) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><b>Shared list unavailable</b>Open this tracker in claude.ai while signed in.</div></td></tr>`; renderStrip([]); return; }
+    if (!S.loaded.co || !S.loaded.ct) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><span class="spinner"></span> Loading the shared list…</div></td></tr>`; renderStrip([]); return; }
+    if (S.dbError) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><b>Couldn't load the list</b>${esc(S.dbError)}</div></td></tr>`; return; }
     const vis = visibleCompanies();
     renderStrip(vis);
     $("count").textContent = `${vis.length} of ${S.companies.size} companies`;
-    if (!S.companies.size) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>No target companies yet</b>Choose an owner and enter today's first company above. It appears here once its contacts are enriched.</div></td></tr>`; return; }
-    if (!vis.length) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>No companies match these filters</b>Clear a filter or widen the date range.</div></td></tr>`; return; }
+    if (!S.companies.size) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><b>No target companies yet</b>Choose an owner and enter today's first company above. It appears here once its contacts are enriched.</div></td></tr>`; return; }
+    if (!vis.length) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><b>No companies match these filters</b>Clear a filter or widen the date range.</div></td></tr>`; return; }
     const chev = `<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1.5 6.5 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
     rows.innerHTML = vis.map(({ co, cts, shown }) => {
       const open = S.expanded.has(co.id);
-      const inSeq = cts.filter((c) => c.status === "In sequence").length;
+      const inSeq = cts.filter(inSequence).length;
       const li = cts.filter((c) => c.linkedin_connect_sent).length;
+      const linked = cts.filter((c) => c.hubspot_id).length;
+      const coLinked = !!co.hubspot_company_id;
+      const fullyIn = coLinked && linked === cts.length;
+      const imp = importState(co.id);
+      const hsCell = fullyIn
+        ? `<a class="chip ok" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-2/${esc(co.hubspot_company_id)}" target="_blank" rel="noopener" title="${co.hubspot_imported_at ? "Imported " + esc(fmtDate(co.hubspot_imported_at)) : ""}">${co.hubspot_company_action === "created" ? "Imported" : "Linked"} ↗</a>`
+        : `<div style="display:grid;gap:4px;justify-items:start"><span class="chip ${coLinked || linked ? "hs" : ""}">${coLinked || linked ? `Partly · ${linked}/${cts.length} contacts` : "Not imported"}</span>${canImport() && (!imp || imp.state === "done" || imp.state === "error") ? `<button class="btn sm" type="button" data-import="${esc(co.id)}">Import</button>` : ""}</div>`;
       const main = `<tr class="co ${open ? "open" : ""}">
         <td><div class="co-name"><button class="exp" type="button" data-toggle="${esc(co.id)}" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} contacts for ${esc(co.name)}">${chev}</button>
           <div style="min-width:0"><div class="t">${esc(co.name)} ${co.multi_site ? `<span class="chip">Multi-site</span>` : ""} ${co.in_hubspot ? `<span class="chip hs">In HubSpot</span>` : ""}</div><div class="d">${esc(co.domain)}</div></div></div></td>
@@ -851,14 +1059,44 @@ a { color: var(--info); }
         <td class="n num">${cts.length}</td>
         <td class="n num">${inSeq}</td>
         <td class="n num">${li}</td>
+        <td>${hsCell}</td>
         <td class="small"><div>${esc(fmtDate(co.created_at))}</div>${co.created_by ? `<div class="muted" data-uid="${esc(co.created_by)}"></div>` : ""}</td>
       </tr>`;
       if (!open) return main;
       const people = shown.length ? shown.map(personHtml).join("") : `<div class="muted small" style="padding:8px 0">No saved contacts. This company needs ${MIN_QUALIFIED} qualified contacts to be complete.</div>`;
       const note = contactFilterOn() && shown.length !== cts.length ? `<div class="small muted" style="padding:6px 0">Showing ${shown.length} of ${cts.length} contacts that match the contact filters.</div>` : "";
-      return main + `<tr class="detail"><td colspan="9">${note}<div class="people">${people}</div></td></tr>`;
+      return main + `<tr class="detail"><td colspan="10">${importPanel(co, cts)}${note}<div class="people">${people}</div></td></tr>`;
     }).join("");
     fillNames();
+  }
+  const inSequence = (c) => c.status === "In sequence" || c.hs_seq_active === true;
+  function importPanel(co, cts) {
+    const st = importState(co.id);
+    if (!st) return "";
+    const close = `<button class="btn ghost sm" type="button" data-import-close="${esc(co.id)}">Close</button>`;
+    if (st.state === "planning") return `<div class="import"><span class="spinner"></span> Checking HubSpot for existing records…</div>`;
+    if (st.state === "running") return `<div class="import"><span class="spinner"></span> Creating records in HubSpot…</div>`;
+    if (st.state === "error") return `<div class="import banner bad">${esc(st.msg)} ${close}</div>`;
+    if (st.state === "done") return `<div class="import banner ${st.warn ? "" : "info"}">${esc(st.msg)} ${close}</div>`;
+    const p = st.plan;
+    const owner = HS_OWNER_NAMES[co.owner] || "you";
+    const rows = [];
+    rows.push(`<tr><td><b>${esc(co.name)}</b> <span class="muted small">company</span></td><td>${p.companyAction === "create" ? `<span class="chip ok">Create</span>` : `<span class="chip">Link existing</span>`}</td><td class="small">${p.companyAction === "create" ? `Name, domain ${esc(co.domain || "—")}, owner ${esc(owner)}` : `<a href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-2/${esc(p.companyHsId)}" target="_blank" rel="noopener">Record ${esc(p.companyHsId)}</a> stays as is`}</td></tr>`);
+    for (const x of p.contacts) {
+      const c = S.contacts.get(x.id); if (!c) continue;
+      const fields = ["email", c.direct_phone && !c.direct_phone_dnc ? "direct dial" : "", "title", c.linkedin_url ? "LinkedIn" : ""].filter(Boolean).join(", ");
+      rows.push(`<tr><td>${esc(c.first_name)} ${esc(c.last_name)}</td><td>${x.action === "create" ? `<span class="chip ok">Create</span>` : `<span class="chip">Link existing</span>`}</td><td class="small">${x.action === "create" ? `${esc(fields)}; owner ${esc(owner)}; associated with the company` : `<a href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${esc(x.hsId)}" target="_blank" rel="noopener">Record ${esc(x.hsId)}</a> stays as is (same email)`}</td></tr>`);
+    }
+    const creates = (p.companyAction === "create" ? 1 : 0) + p.contacts.filter((x) => x.action === "create").length;
+    const links = (p.companyAction === "link" ? 1 : 0) + p.contacts.filter((x) => x.action === "link").length;
+    return `<div class="import">
+      <div><b>Import to HubSpot</b> <span class="small muted">Review what will happen. Existing HubSpot records are never edited. Mobile numbers are not sent.</span></div>
+      <div class="cand-wrap"><table class="cand" style="min-width:560px"><thead><tr><th>Record</th><th>Action</th><th>Details</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn primary" type="button" data-import-run="${esc(co.id)}">${creates ? `Create ${creates} record${creates === 1 ? "" : "s"}${links ? ` and link ${links}` : ""}` : `Link ${links} existing record${links === 1 ? "" : "s"}`}</button>
+        <button class="btn" type="button" data-import-close="${esc(co.id)}">Cancel</button>
+      </div>
+    </div>`;
   }
   async function fillNames() {
     const els = [...document.querySelectorAll("[data-uid]")];
@@ -870,19 +1108,19 @@ a { color: var(--info); }
   }
   function renderStrip(vis) {
     const active = vis.filter((v) => v.co.status === "Active").length;
-    const inSeq = vis.reduce((n, v) => n + v.shown.filter((c) => c.status === "In sequence").length, 0);
+    const inSeq = vis.reduce((n, v) => n + v.shown.filter(inSequence).length, 0);
     const meetings = vis.filter((v) => v.co.status === "Meeting booked" || v.cts.some((c) => c.status === "Meeting booked")).length;
     const cell = (label, v, accent, hint) => `<div><div class="eyebrow">${label}</div><div class="v ${accent ? "accent" : ""}">${v}</div><div class="small muted">${hint}</div></div>`;
     $("strip").innerHTML =
       cell("Companies shown", vis.length, false, "current filters") +
       cell("Active companies", active, false, "status Active") +
-      cell("Contacts in sequence", inSeq, false, "in HubSpot sequences") +
+      cell("Contacts in sequence", inSeq, false, "status or active in HubSpot") +
       cell("Meetings booked", meetings, true, "companies with a meeting");
   }
 
   function renderConn() {
     const pill = (name) => { const s = S.conn[name].state; return `<span class="pill ${s === "ok" ? "ok" : s === "bad" ? "bad" : ""}" title="${esc(S.conn[name].msg)}">${name}${s === "checking" ? " · checking" : s === "bad" ? " · unavailable" : ""}</span>`; };
-    $("conn").innerHTML = pill(ZI) + pill(HS) + `<span class="pill">HubSpot read only</span>`;
+    $("conn").innerHTML = pill(ZI) + pill(HS) + `<span class="pill" title="The tracker creates new HubSpot records only when you click Import, and never edits existing ones.">HubSpot: import only</span>`;
   }
 
   // ---------- writes ----------
@@ -945,7 +1183,15 @@ a { color: var(--info); }
     }
   });
 
+  $("sync").addEventListener("click", (ev) => { if (ev.target.closest("#sync-btn")) syncHubspot(true); });
   $("rows").addEventListener("click", async (ev) => {
+    const imp = ev.target.closest("[data-import],[data-import-run],[data-import-close]");
+    if (imp) {
+      if (imp.dataset.import) planImport(imp.dataset.import);
+      else if (imp.dataset.importRun) runImport(imp.dataset.importRun);
+      else { S.imports.delete(imp.dataset.importClose); renderDash(); }
+      return;
+    }
     const t = ev.target.closest("[data-toggle]");
     if (t) { const id = t.dataset.toggle; S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); renderDash(); return; }
     const c = ev.target.closest("[data-copy]");
@@ -984,6 +1230,8 @@ a { color: var(--info); }
   }
 
   // ---------- boot ----------
+  let contactsReady = null;
+  const contactsLoaded = new Promise((r) => (contactsReady = r));
   bindFilters();
   renderConn(); renderIntakeBanner(); renderJobs(); renderDash();
 
@@ -1000,11 +1248,12 @@ a { color: var(--info); }
     if (db) {
       const onErr = (e) => { S.dbError = e && e.code === "revoked" ? "Your access to this tracker changed. Reload the page." : "The shared list stopped updating. Reload the page."; renderDash(); };
       db.collection("companies").limit(1000).onSnapshot((snap) => { S.companies = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.co = true; renderDash(); renderJobs(); }, onErr);
-      db.collection("contacts").limit(1000).onSnapshot((snap) => { S.contacts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.ct = true; renderDash(); }, onErr);
+      db.collection("contacts").limit(1000).onSnapshot((snap) => { S.contacts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.ct = true; renderDash(); if (contactsReady) { contactsReady(); contactsReady = null; } }, onErr);
     }
     renderIntakeBanner(); renderDash();
     await checkConnectors();
-    renderConn(); renderIntakeBanner(); renderJobs();
+    renderConn(); renderIntakeBanner(); renderJobs(); renderSyncBar(); renderDash();
+    if (db && S.conn[HS].state === "ok") { await contactsLoaded; syncHubspot(false); }
   })();
 })();
 </script>
