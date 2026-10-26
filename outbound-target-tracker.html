@@ -372,7 +372,7 @@ a { color: var(--info); }
   // HubSpot owner IDs for the dashboard's owners (portal 517572). New records the dashboard creates are owned by the company's tracker owner.
   const HS_OWNER_IDS = { Jeremy: "92239065", David: "96822192" };
   const HS_OWNER_NAMES = { Jeremy: "Jeremy O'Hara", David: "David Walker" };
-  const TASK_TITLE = "Outbound 1st Call and Sequence Launch";
+  const TASK_TITLE = "Enroll in Sequence";
   const SEQ_PROPS = ["email", "hs_sequences_is_enrolled", "hs_latest_sequence_enrolled", "hs_latest_sequence_enrolled_date", "hs_latest_sequence_ended_date", "hs_sequences_enrolled_count"];
 
   // Persona rules (priority order). Exclusions win over everything.
@@ -878,15 +878,15 @@ a { color: var(--info); }
               objectType: "tasks",
               properties: {
                 hs_task_subject: TASK_TITLE,
-                hs_task_body: `${c.title || ""}\n${phone}\n1. Make the first call.\n2. Enroll in the outbound sequence.\nSourced contact: call only, do not text until they opt in.`,
-                hs_task_type: "CALL", hs_task_status: "NOT_STARTED", hs_timestamp: due, hubspot_owner_id: owner,
+                hs_task_body: `${c.title || ""}\n${phone}\nEnroll this contact in the outbound sequence.\nSourced contact: call only, do not text until they opt in.`,
+                hs_task_type: "TODO", hs_task_status: "NOT_STARTED", hs_timestamp: due, hubspot_owner_id: owner,
               },
               associations: assoc,
             };
           });
           let p;
           try { p = await spendTool(HS, "manage_crm_objects", { confirmationStatus: "CONFIRMED", createRequest: { objects } }); }
-          catch (e) { notes.push("Call tasks: " + errText(e, HS) + " Some tasks may not have been created; check HubSpot before creating them by hand."); break; }
+          catch (e) { notes.push("Tasks: " + errText(e, HS) + " Some tasks may not have been created; check HubSpot before creating them by hand."); break; }
           const recs = createdRecords(p).filter((r) => r.props.hs_task_subject === TASK_TITLE);
           for (const [k, { c }] of batch.entries()) {
             const rec = recs.length === batch.length ? recs[k] : null;
@@ -895,8 +895,8 @@ a { color: var(--info); }
           }
         }
       }
-      if (tasksMade) notes.unshift(`Created ${tasksMade} call task${tasksMade === 1 ? "" : "s"} in HubSpot, due now, for ${HS_OWNER_NAMES[co.owner] || "the owner"}.`);
-      const warn = notes.some((n) => !/^Created \d+ call task/.test(n));
+      if (tasksMade) notes.unshift(`Created ${tasksMade} “${TASK_TITLE}” task${tasksMade === 1 ? "" : "s"} in HubSpot, due now, for ${HS_OWNER_NAMES[co.owner] || "the owner"}.`);
+      const warn = notes.some((n) => !/^Created \d+ “/.test(n));
       setImport(coId, { state: "done", msg: "Imported. " + (notes.length ? notes.join(" ") : "Company and contacts are linked to HubSpot."), warn });
       syncHubspot(false);
     } catch (e) {
@@ -1121,11 +1121,11 @@ a { color: var(--info); }
       ? `<div class="seq"><span class="chip ok">Sequence active</span> <b>${esc(seqName(c.hs_seq_id))}</b> <span class="muted">since ${esc(fmtDate(c.hs_seq_enrolled_at))}</span></div>`
       : c.hs_seq_id ? `<div class="seq"><span class="chip">Sequence ended</span> ${esc(seqName(c.hs_seq_id))} <span class="muted">${c.hs_seq_ended_at ? "ended " + esc(fmtDate(c.hs_seq_ended_at)) : "enrolled " + esc(fmtDate(c.hs_seq_enrolled_at))}</span></div>`
       : c.hs_seq_active === false ? `<div class="seq muted">Never enrolled in a HubSpot sequence</div>` : "";
-    const task = c.hubspot_task_created_at ? `<div class="seq"><span class="chip">Call task</span> <span class="muted">created ${esc(fmtDate(c.hubspot_task_created_at))}</span></div>` : "";
+    const task = c.hubspot_task_created_at ? `<div class="seq"><span class="chip">Enroll task</span> <span class="muted">created ${esc(fmtDate(c.hubspot_task_created_at))}</span></div>` : "";
     const phone = (v, dnc, lbl) => (v ? `<div class="line"><span class="lbl">${lbl}</span><span class="val">${esc(v)}</span>${dnc ? `<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>` : ""}${copyBtn(v, lbl + " phone")}</div>` : "");
     return `<div class="person">
       <div class="who"><b>${esc(c.first_name)} ${esc(c.last_name)}</b><div class="title">${esc(c.title)}</div>
-        <div class="flags"><span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>${hs}${confFlags(c.zoominfo_accuracy, c.zoominfo_last_updated)}${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}</div>${seq}${task}</div>
+        <div class="flags"><span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>${hs}${confFlags(c.zoominfo_accuracy, c.zoominfo_last_updated)}${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : `<a class="chip" href="https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent([c.first_name, c.last_name, (S.companies.get(c.company_id) || {}).name].filter(Boolean).join(" "))}" target="_blank" rel="noopener" title="No LinkedIn profile from ZoomInfo. Searches LinkedIn for this name and company.">Find on LinkedIn ↗</a>`}</div>${seq}${task}</div>
       <div>${c.email ? `<div class="line"><span class="lbl">Email</span><span class="val">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : `<span class="muted small">No email</span>`}</div>
       <div>${phone(c.direct_phone, c.direct_phone_dnc, "Direct")}${phone(c.mobile_phone, c.mobile_phone_dnc, "Mobile")}<div class="calls-note">For calls only. Do not text sourced contacts.</div></div>
       <div class="acts">
@@ -1202,7 +1202,7 @@ a { color: var(--info); }
     return `<div class="import">
       <div><b>Import to HubSpot</b> <span class="small muted">Review what will happen. Existing HubSpot records are never edited. Mobile numbers are not sent.</span></div>
       <div class="cand-wrap"><table class="cand" style="min-width:560px"><thead><tr><th>Record</th><th>Action</th><th>Details</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
-      <label class="switch small"><input type="checkbox" data-import-tasks="${esc(co.id)}" ${p.tasks ? "checked" : ""}> Create a call task for each contact: “${TASK_TITLE}”, due now, assigned to ${esc(owner)}</label>
+      <label class="switch small"><input type="checkbox" data-import-tasks="${esc(co.id)}" ${p.tasks ? "checked" : ""}> Create a task for each contact: “${TASK_TITLE}”, due now, assigned to ${esc(owner)}</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn primary" type="button" data-import-run="${esc(co.id)}">${creates ? `Create ${creates} record${creates === 1 ? "" : "s"}${links ? ` and link ${links}` : ""}` : `Link ${links} existing record${links === 1 ? "" : "s"}`}</button>
         <button class="btn" type="button" data-import-close="${esc(co.id)}">Cancel</button>
