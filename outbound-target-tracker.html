@@ -1,0 +1,1010 @@
+<title>Outbound Target Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a work-order sheet. Intake bench on top, live summary strip, then the company ledger with expandable contact rows. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --ink: #16202b;
+  --muted: #5a6776;
+  --line: #d6dde5;
+  --accent: #c2410c;
+  --accent-ink: #ffffff;
+  --accent-soft: #fdecdf;
+  --focus: #2563eb;
+  --ok: #15803d; --ok-soft: #e3f4e8;
+  --warn: #a16207; --warn-soft: #fbf1d6;
+  --bad: #b91c1c; --bad-soft: #fbe4e4;
+  --info: #1d4ed8; --info-soft: #e2eafc;
+  --neutral: #4b5563; --neutral-soft: #eceff3;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --surface-2: #1f2832; --ink: #e6ebf0; --muted: #9aa7b5; --line: #2e3a46;
+    --accent: #f08a4b; --accent-ink: #1a0e05; --accent-soft: #3a2416; --focus: #7aa2ff;
+    --ok: #5fd08a; --ok-soft: #173326; --warn: #e8bf5a; --warn-soft: #362c12; --bad: #f28b8b; --bad-soft: #3a1c1c;
+    --info: #8fb0ff; --info-soft: #1c2a4a; --neutral: #b4bfcb; --neutral-soft: #26303b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --surface-2: #1f2832; --ink: #e6ebf0; --muted: #9aa7b5; --line: #2e3a46;
+  --accent: #f08a4b; --accent-ink: #1a0e05; --accent-soft: #3a2416; --focus: #7aa2ff;
+  --ok: #5fd08a; --ok-soft: #173326; --warn: #e8bf5a; --warn-soft: #362c12; --bad: #f28b8b; --bad-soft: #3a1c1c;
+  --info: #8fb0ff; --info-soft: #1c2a4a; --neutral: #b4bfcb; --neutral-soft: #26303b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; line-height: 1.05; text-transform: uppercase; }
+h2 { font-size: 20px; text-transform: uppercase; }
+h3 { font-size: 17px; }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+button, select, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+.top .sub { color: var(--muted); margin-top: 4px; max-width: 62ch; }
+.conn { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--neutral-soft); color: var(--neutral); white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.viewer { font-size: 12px; color: var(--muted); }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.panel-body { padding: 16px; display: grid; gap: 14px; }
+.banner { padding: 10px 12px; border-radius: var(--radius); background: var(--warn-soft); color: var(--ink); border-left: 3px solid var(--warn); }
+.banner.bad { background: var(--bad-soft); border-left-color: var(--bad); }
+.banner.info { background: var(--info-soft); border-left-color: var(--info); }
+.banner strong { display: block; margin-bottom: 2px; }
+
+/* Intake */
+.intake-grid { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+@media (max-width: 760px) { .intake-grid { grid-template-columns: minmax(0, 1fr); } }
+label.field { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+select, input[type="text"], input[type="search"], input[type="date"], textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; min-width: 0; width: 100%; color: var(--ink);
+}
+textarea { resize: vertical; min-height: 64px; font-family: var(--font-mono); font-size: 13px; }
+.today { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.today b { color: var(--ink); font-family: var(--font-mono); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; font-weight: 600; white-space: nowrap; }
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.06); border-color: var(--accent); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); padding-inline: 8px; }
+.btn.sm { padding: 3px 8px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.jobs { display: grid; gap: 12px; }
+.job { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); padding: 12px 14px; display: grid; gap: 10px; }
+.job-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.job-head .name { font-weight: 700; font-size: 15px; }
+.facts { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.facts span b { color: var(--ink); font-weight: 600; }
+.opts { display: grid; gap: 6px; }
+.opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); text-align: left; cursor: pointer; }
+.opt:hover { border-color: var(--accent); }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; user-select: none; }
+.switch input { width: 16px; height: 16px; accent-color: var(--accent); }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+.cand-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; }
+.cand { min-width: 720px; font-size: 13px; }
+.cand th, .cand td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.cand th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+.cand tr.off td { color: var(--muted); }
+.cand input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.avail { font-family: var(--font-mono); font-size: 11px; display: inline-flex; gap: 4px; }
+.avail i { font-style: normal; padding: 1px 5px; border-radius: 3px; background: var(--neutral-soft); color: var(--muted); }
+.avail i.y { background: var(--ok-soft); color: var(--ok); }
+.avail i.d { background: var(--warn-soft); color: var(--warn); }
+.tier { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.tier.t1 { background: var(--info-soft); color: var(--info); }
+.tier.t2 { background: var(--accent-soft); color: var(--accent); }
+.tier.t3 { background: var(--neutral-soft); color: var(--neutral); }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 3px; white-space: nowrap; background: var(--neutral-soft); color: var(--neutral); text-decoration: none; }
+.chip.hs { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.credit { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px dashed var(--accent); border-radius: 4px; background: var(--accent-soft); }
+.credit .big { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1; }
+.result-list { margin: 0; padding-left: 18px; font-size: 13px; }
+
+/* Summary strip */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.strip > div { padding: 12px 16px; border-left: 1px solid var(--line); }
+.strip > div:first-child { border-left: 0; }
+.strip .v { font-family: var(--font-display); font-size: 34px; font-weight: 700; line-height: 1; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.strip .v.accent { color: var(--accent); }
+@media (max-width: 640px) { .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } .strip > div:nth-child(3) { border-left: 0; } .strip > div:nth-child(n+3) { border-top: 1px solid var(--line); } }
+
+/* Filters */
+.filters { display: grid; grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)) minmax(0, 1.4fr); gap: 10px; align-items: end; }
+.dates { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+@media (max-width: 1000px) { .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
+
+/* Ledger */
+.ledger-wrap { overflow-x: auto; }
+.ledger { min-width: 980px; }
+.ledger th { position: sticky; top: 0; background: var(--surface-2); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.ledger td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.ledger td.n, .ledger th.n { text-align: right; }
+.ledger tr.co:hover td { background: var(--surface-2); }
+.ledger tr.co.open td { background: var(--surface-2); border-bottom-color: transparent; }
+.co-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.co-name .t { font-weight: 700; }
+.co-name .d { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+.exp { width: 26px; height: 26px; padding: 0; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; display: inline-grid; place-items: center; flex: none; }
+.exp svg { transition: transform .15s; }
+.open .exp svg { transform: rotate(90deg); }
+select.inline { width: auto; padding: 4px 6px; font-size: 13px; font-weight: 600; }
+select.inline[data-tone="info"] { background: var(--info-soft); color: var(--info); border-color: transparent; }
+select.inline[data-tone="ok"] { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+select.inline[data-tone="warn"] { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+select.inline[data-tone="bad"] { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+select.inline[data-tone="neutral"] { background: var(--neutral-soft); color: var(--neutral); border-color: transparent; }
+tr.detail > td { background: var(--surface-2); padding: 0 10px 14px 46px; }
+.people { display: grid; gap: 8px; }
+.person { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.6fr) minmax(0, 1.5fr) auto; gap: 8px 16px; align-items: center; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+@media (max-width: 900px) { .person { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 520px) { .person { grid-template-columns: minmax(0, 1fr); } tr.detail > td { padding-left: 10px; } }
+.person .who b { display: block; }
+.person .who .title { font-size: 12px; color: var(--muted); }
+.flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.line { display: flex; align-items: center; gap: 6px; min-width: 0; font-family: var(--font-mono); font-size: 12.5px; }
+.line .lbl { font-family: var(--font-body); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); width: 44px; flex: none; }
+.line .val { overflow-wrap: anywhere; user-select: all; min-width: 0; }
+.copy { border: 1px solid var(--line); background: var(--surface-2); border-radius: 3px; font-size: 11px; padding: 1px 6px; cursor: pointer; flex: none; }
+.copy.done { color: var(--ok); border-color: var(--ok); }
+.acts { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-end; }
+.acts label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.acts input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.calls-note { font-size: 11px; color: var(--muted); }
+.empty { padding: 36px 16px; text-align: center; color: var(--muted); }
+.empty b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
+.toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: min(420px, calc(100vw - 32px)); background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: var(--radius); font-size: 13px; z-index: 20; }
+a { color: var(--info); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">TextUs outbound · working list</div>
+      <h1>Outbound Target Tracker</h1>
+      <div class="sub">Add 1–2 target companies a day. ZoomInfo finds the HR contacts, HubSpot is checked for duplicates (read only), and everything lands in the shared list below.</div>
+    </div>
+    <div style="display:grid;gap:6px;justify-items:end">
+      <div class="conn" id="conn"></div>
+      <div class="viewer" id="viewer"></div>
+    </div>
+  </header>
+
+  <section class="panel" aria-labelledby="intake-h">
+    <div class="panel-head">
+      <h2 id="intake-h">Add today's targets</h2>
+      <div class="today" id="today"></div>
+    </div>
+    <div class="panel-body">
+      <div id="intake-banner"></div>
+      <form id="intake" class="intake-grid" autocomplete="off">
+        <label class="field" for="owner">Owner
+          <select id="owner" required>
+            <option value="">Choose owner…</option>
+            <option>Jeremy</option>
+            <option>David</option>
+          </select>
+        </label>
+        <label class="field" for="names">Company names or domains, one per line (max 5)
+          <textarea id="names" rows="2" placeholder="acmefoods.com&#10;Midwest Plastics Group"></textarea>
+        </label>
+        <button class="btn primary" id="go" type="submit">Look up in ZoomInfo</button>
+      </form>
+      <div class="jobs" id="jobs"></div>
+    </div>
+  </section>
+
+  <div class="strip" id="strip" aria-live="polite"></div>
+
+  <section class="panel" aria-labelledby="list-h">
+    <div class="panel-head">
+      <h2 id="list-h">Target companies</h2>
+      <span class="small muted" id="count"></span>
+    </div>
+    <div class="panel-body" style="padding-bottom:0">
+      <div class="filters">
+        <label class="field" for="f-q">Search company
+          <input type="search" id="f-q" placeholder="Company name">
+        </label>
+        <label class="field" for="f-owner">Owner
+          <select id="f-owner"><option value="all">All owners</option><option>Jeremy</option><option>David</option></select>
+        </label>
+        <label class="field" for="f-co">Company status
+          <select id="f-co"></select>
+        </label>
+        <label class="field" for="f-ct">Contact status
+          <select id="f-ct"></select>
+        </label>
+        <label class="field" for="f-li">LinkedIn sent
+          <select id="f-li"><option value="all">Any</option><option value="yes">Yes</option><option value="no">No</option></select>
+        </label>
+        <div class="field" style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)">Date added
+          <div class="dates">
+            <input type="date" id="f-from" aria-label="Added from">
+            <input type="date" id="f-to" aria-label="Added to">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ledger-wrap" style="margin-top:14px">
+      <table class="ledger" id="ledger">
+        <thead><tr>
+          <th>Company</th><th>Sub-industry</th><th class="n">Employees</th><th>Owner</th><th>Status</th>
+          <th class="n">Contacts</th><th class="n">In sequence</th><th class="n">LinkedIn sent</th><th>Added</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- constants ----------
+  const ZI = "ZoomInfo", HS = "HubSpot";
+  const HS_PORTAL = "517572";
+  const OWNERS = ["Jeremy", "David"];
+  const CO_STATUS = ["Active", "Incomplete", "Meeting booked", "Not interested", "Disqualified", "Nurture"];
+  const CT_STATUS = ["Not started", "In sequence", "Connected", "Meeting booked", "Not interested", "Bad data"];
+  const CO_TONE = { "Active": "info", "Incomplete": "warn", "Meeting booked": "ok", "Not interested": "neutral", "Disqualified": "bad", "Nurture": "neutral" };
+  const CT_TONE = { "Not started": "neutral", "In sequence": "info", "Connected": "info", "Meeting booked": "ok", "Not interested": "neutral", "Bad data": "bad" };
+  const MIN_QUALIFIED = 3;
+  const LOW_CONFIDENCE = 85;     // ZoomInfo accuracy score below this is flagged
+  const STALE_DAYS = 365;        // ZoomInfo record older than this is flagged
+  const HR_TITLES = ["HR", "Human Resources", "HRBP", "HR Business Partner", "HR Generalist", "HR Manager", "HR Director", "People", "Personnel", "CHRO", "Employee Relations"];
+  const OPS_TITLES = ["Plant Manager", "Plant Director", "Operations Manager", "Director of Operations", "Site Manager", "Plant General Manager", "Manufacturing Manager"];
+  const EXCLUDE_TITLES = ["Recruiter", "Recruiting", "Talent Acquisition", "Sourcer", "HRIS", "HR Technology", "Information Technology"];
+  const ENRICH_FIELDS = ["firstName", "lastName", "jobTitle", "email", "phone", "mobilePhone", "directPhoneDoNotCall", "mobilePhoneDoNotCall", "externalUrls", "contactAccuracyScore", "lastUpdatedDate", "validDate"];
+  const ZI_INTENT = "Build a short outbound working list of HR contacts at a target company for one sales rep";
+  const HS_INSIGHTS = { userIntent: "Read-only duplicate check of a target company and its contacts before outbound", satisfaction: "NEUTRAL" };
+
+  // Persona rules (priority order). Exclusions win over everything.
+  const RX_EXCLUDE = /recruit|talent acq|\bTA\b|sourc(er|ing)|hris|hr tech|technolog|technical|\bIT\b|information|systems|software|engineer|developer|analytic|\bdata\b|procure|purchas|category manager|buyer/i;
+  const RX_HR = /\bHR\b|\bHRBP\b|human resources|human capital|\bpeople\b|personnel|employee relations|labor relations|employee experience/i;
+  const RX_LEAD = /chief|\bCHRO\b|\bCPO\b|vice president|\bS?VP\b|\bEVP\b|director|head of/i;
+  const RX_OPS = /plant manager|plant director|plant general manager|plant leader|operations manager|director of operations|operations director|site manager|general manager|manufacturing manager|vp,? (of )?operations|vice president.*operations/i;
+  const TIER_LABEL = { 1: "HR", 2: "HR leadership", 3: "Plant / ops" };
+  function tierOf(title) {
+    if (!title || RX_EXCLUDE.test(title)) return 0;
+    if (RX_HR.test(title)) return RX_LEAD.test(title) ? 2 : 1;
+    if (RX_OPS.test(title)) return 3;
+    return 0;
+  }
+
+  // ---------- state ----------
+  const S = {
+    db: null, user: null, mcp: null, me: null, canWrite: null, readOnly: false,
+    companies: new Map(), contacts: new Map(), loaded: { co: false, ct: false }, dbError: "",
+    conn: { [ZI]: { state: "checking", msg: "" }, [HS]: { state: "checking", msg: "" } },
+    jobs: [], expanded: new Set(), names: {},
+    filters: { q: "", owner: "all", co: "all", ct: "all", li: "all", from: "", to: "" },
+  };
+  let jobSeq = 0;
+
+  // ---------- small helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const num = (v) => { const n = Number(String(v ?? "").replace(/[^0-9.-]/g, "")); return Number.isFinite(n) && String(v ?? "") !== "" ? n : null; };
+  const fmtInt = (n) => (n == null ? "—" : Number(n).toLocaleString());
+  const nowIso = () => new Date().toISOString();
+  const localDay = (iso) => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const fmtDate = (iso) => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); };
+  const daysSince = (iso) => { const d = new Date(iso); return isNaN(d) ? null : (Date.now() - d.getTime()) / 86400000; };
+  const cleanDomain = (w) => String(w || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/[/?#].*$/, "");
+  const looksDomain = (s) => /^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+\/?$/i.test(String(s).trim());
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem("ott:" + k)); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem("ott:" + k, JSON.stringify(v)); } catch {} },
+  };
+  let toastTimer = 0;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 5000); }
+  const use = (name) => (window.claude && typeof window.claude.use === "function" ? window.claude.use(name).catch(() => null) : Promise.resolve(null));
+
+  // ---------- connector calls ----------
+  function payloadOf(result) {
+    let p = result && result.payload !== undefined ? result.payload : result;
+    if (typeof p === "string") { const i = p.indexOf("{"); if (i >= 0) { try { p = JSON.parse(p.slice(i)); } catch {} } }
+    return p;
+  }
+  function errText(e, server) {
+    const s = (e && e.server) || server;
+    const msg = String((e && e.message) || "").slice(0, 220);
+    switch (e && e.code) {
+      case "needs_reauth": return `${s} needs to be reconnected. Reconnect it in claude.ai Settings → Connectors, then reload this page.`;
+      case "server_not_connected": return `${s} isn't connected to your claude.ai account. Add it in Settings → Connectors, then reload this page.`;
+      case "selection_required": return `You have more than one ${s} connector. Pick one when claude.ai asks, then try again.`;
+      case "server_not_found": return `Your ${s} connector no longer exists. Re-add it in claude.ai Settings → Connectors.`;
+      case "not_in_manifest": return `${s} is turned off for this page. Turn it on from the artifact's Permissions menu.`;
+      case "approval_required": return `${s} needs your approval for this page. Click the button again and choose Allow.`;
+      case "blocked_by_policy": return `Your organization's policy blocks this ${s} tool for your account.`;
+      case "server_unavailable": return `${s} didn't respond. Wait a minute and try again.`;
+      case "tool_error": return `${s} returned an error: ${msg || "no details"}`;
+      case "not_granted": case "capability_disabled": case "capability_removed": return `Connectors aren't available in this view. Open the tracker in claude.ai.`;
+      case "cancelled": return `The ${s} request was cancelled.`;
+      default: return `${s} request failed${e && e.code ? ` (${e.code})` : ""}. ${msg}`;
+    }
+  }
+  function noteAuth(e, server) {
+    const c = e && e.code;
+    if (c === "needs_reauth" || c === "server_not_connected" || c === "not_in_manifest" || c === "selection_required" || c === "server_not_found" || c === "blocked_by_policy") {
+      S.conn[server] = { state: "bad", msg: errText(e, server) };
+      renderConn(); renderIntakeBanner();
+    }
+  }
+  async function readTool(server, tool, input) {
+    if (!S.mcp) throw { code: "not_granted", server, message: "" };
+    try {
+      return payloadOf(await S.mcp.callTool(server, tool, input, { cache: false }));
+    } catch (e) {
+      if (e && e.retryable) {
+        await sleep(Math.min(e.retryAfterMs || 0, 15000) || 600 + Math.random() * 900);
+        try { return payloadOf(await S.mcp.callTool(server, tool, input, { cache: false })); }
+        catch (e2) { noteAuth(e2, server); throw e2; }
+      }
+      noteAuth(e, server); throw e;
+    }
+  }
+  // Credit-spending calls: never retried automatically.
+  async function spendTool(server, tool, input) {
+    if (!S.mcp) throw { code: "not_granted", server, message: "" };
+    try { return payloadOf(await S.mcp.callTool(server, tool, input, { cache: false })); }
+    catch (e) { noteAuth(e, server); throw e; }
+  }
+
+  async function checkConnectors() {
+    if (!S.mcp) {
+      const msg = "Connectors aren't available in this view. Open the tracker in claude.ai to add targets.";
+      S.conn[ZI] = { state: "bad", msg }; S.conn[HS] = { state: "bad", msg };
+      return;
+    }
+    try {
+      const res = await S.mcp.listTools();
+      const servers = (res && res.servers) || [];
+      for (const name of [ZI, HS]) {
+        const s = servers.find((x) => x.server === name);
+        if (!s) S.conn[name] = { state: "bad", msg: `${name} isn't connected to your claude.ai account. Add it in Settings → Connectors, then reload this page.` };
+        else if (s.authStatus === "needs_reauth") S.conn[name] = { state: "bad", msg: `${name} needs to be reconnected. Reconnect it in claude.ai Settings → Connectors, then reload this page.` };
+        else if (!s.tools || !s.tools.length) S.conn[name] = { state: "bad", msg: `${name} isn't ready for this page. If you have more than one ${name} connector, pick one when claude.ai asks; otherwise add it in Settings → Connectors.` };
+        else S.conn[name] = { state: "ok", msg: "" };
+      }
+    } catch (e) {
+      const msg = errText(e, "Connector");
+      S.conn[ZI] = { state: "bad", msg }; S.conn[HS] = { state: "bad", msg };
+    }
+  }
+  const sourcingReady = () => S.db && !S.readOnly && S.canWrite !== false && S.conn[ZI].state === "ok" && S.conn[HS].state === "ok";
+
+  // ---------- intake: resolve company ----------
+  function newJob(input, owner) { return { key: "j" + ++jobSeq, input, owner, state: "resolving", options: [], company: null, multi: false, cands: [], excluded: 0, selected: new Set(), confirming: false, error: "", warn: "", hs: null, result: null }; }
+
+  async function resolveJob(job) {
+    job.state = "resolving"; job.error = ""; renderJobs();
+    const q = job.input.trim();
+    const input = looksDomain(q)
+      ? { companyWebsite: "https://www." + cleanDomain(q), pageSize: 10, underManagement: true, userIntent: ZI_INTENT }
+      : { companyName: q, pageSize: 10, underManagement: true, userIntent: ZI_INTENT };
+    try {
+      const p = await readTool(ZI, "search_companies", input);
+      const list = ((p && p.data) || []).map((d) => {
+        const a = d.attributes || {};
+        return { id: String(d.id), name: a.name || "", domain: cleanDomain(a.website), employees: num(a.employeeCount), city: a.city || "", state: a.state || "", country: a.country || "", managed: !!(a.managementStatus && a.managementStatus.underManagement) };
+      }).filter((c) => c.id);
+      if (!list.length) { job.state = "error"; job.error = "No ZoomInfo match. Try the company's website domain instead."; }
+      else {
+        const exact = list.filter((c) => (looksDomain(q) ? c.domain === cleanDomain(q) : norm(c.name) === norm(q)));
+        if (list.length === 1) chooseCompany(job, list[0]);
+        else if (exact.length === 1) chooseCompany(job, exact[0]);
+        else { job.state = "pick"; job.options = list; }
+      }
+    } catch (e) { job.state = "error"; job.error = errText(e, ZI); }
+    renderJobs();
+  }
+  function chooseCompany(job, co) {
+    job.company = co; job.options = [];
+    const existing = S.companies.get("zi-" + co.id);
+    job.state = existing ? "dup" : "company";
+    renderJobs();
+  }
+
+  // ---------- intake: contacts + HubSpot check ----------
+  function candFrom(d) {
+    const a = d.attributes || {};
+    const hasEmail = !!a.hasEmail, hasDirect = !!a.hasDirectPhone, hasMobile = !!a.hasMobilePhone;
+    const directDnc = !!a.directPhoneDoNotCall, mobileDnc = !!a.mobilePhoneDoNotCall;
+    return {
+      id: String(d.id), first: a.firstName || "", last: a.lastName || "", title: a.jobTitle || "",
+      tier: tierOf(a.jobTitle), accuracy: num(a.contactAccuracyScore), lastUpdated: a.lastUpdatedDate || "", validDate: a.validDate || "",
+      hasEmail, hasDirect, hasMobile, directDnc, mobileDnc,
+      callable: hasEmail && ((hasDirect && !directDnc) || (hasMobile && !mobileDnc)),
+      managed: !!(a.managementStatus && a.managementStatus.underManagement),
+      inHubspot: false, hubspotId: "",
+    };
+  }
+  function orderCands(cands, multi) {
+    const ok = (c) => !c.inHubspot && c.callable;
+    const byTier = (t) => cands.filter((c) => c.tier === t).sort((a, b) => (ok(b) - ok(a)) || ((b.accuracy || 0) - (a.accuracy || 0)));
+    const t1 = byTier(1), t2 = byTier(2), t3 = byTier(3);
+    if (!multi) return [...t1, ...t2, ...t3];
+    // Multi-site: lead with HR leadership (corporate HR), then plant/site HR.
+    const lead = t2.filter(ok).slice(0, 2);
+    return [...lead, ...t1, ...t2.filter((c) => !lead.includes(c)), ...t3];
+  }
+  const targetN = (job) => (job.multi ? 5 : 3);
+  function preselect(job) {
+    job.cands = orderCands(job.cands, job.multi);
+    job.selected = new Set(job.cands.filter((c) => !c.inHubspot && c.callable).slice(0, targetN(job)).map((c) => c.id));
+    job.confirming = false;
+  }
+
+  async function hubspotCheck(job) {
+    const co = job.company;
+    const hs = { checked: false, companyIds: [], warn: "" };
+    const portalOf = (p) => { const m = /\/contacts\/(\d+)\//.exec((p && p.urlTemplate) || ""); return m ? m[1] : ""; };
+    try {
+      const coGroups = [];
+      if (co.domain) coGroups.push({ filters: [{ propertyName: "domain", operator: "EQ", value: co.domain }] });
+      coGroups.push({ filters: [{ propertyName: "name", operator: "EQ", value: co.name }] });
+      const pc = await readTool(HS, "search_crm_objects", { objectType: "COMPANY", filterGroups: coGroups, properties: ["name", "domain"], limit: 20, chatInsights: HS_INSIGHTS });
+      const portal = portalOf(pc);
+      if (portal && portal !== HS_PORTAL) { hs.warn = `Your HubSpot connector is signed in to portal ${portal}, not ${HS_PORTAL}. The duplicate check was skipped; check HubSpot by hand before sequencing.`; return hs; }
+      hs.companyIds = ((pc && pc.results) || []).map((r) => Number(r.id)).filter(Boolean);
+
+      // Contacts at this company: by email domain or association with the matched company record.
+      const groups = [];
+      if (co.domain) groups.push({ filters: [{ propertyName: "hs_email_domain", operator: "EQ", value: co.domain }] });
+      if (hs.companyIds.length) groups.push({ associatedWith: [{ objectType: "companies", operator: "IN", objectIdValues: hs.companyIds.slice(0, 100) }] });
+      const atCompany = [];
+      if (groups.length) {
+        const p = await readTool(HS, "search_crm_objects", { objectType: "CONTACT", filterGroups: groups, properties: ["firstname", "lastname", "email", "company", "hs_email_domain"], limit: 200, chatInsights: HS_INSIGHTS });
+        atCompany.push(...((p && p.results) || []));
+      }
+      // Same-name contacts anywhere, kept only when their company text or email domain points at this company.
+      const coKey = norm(co.name).split(" ")[0];
+      const named = [];
+      const top = job.cands.slice(0, 25);
+      for (let i = 0; i < top.length; i += 5) {
+        const chunk = top.slice(i, i + 5).filter((c) => c.first && c.last);
+        if (!chunk.length) continue;
+        const p = await readTool(HS, "search_crm_objects", {
+          objectType: "CONTACT", limit: 100, properties: ["firstname", "lastname", "email", "company", "hs_email_domain"], chatInsights: HS_INSIGHTS,
+          filterGroups: chunk.map((c) => ({ filters: [{ propertyName: "firstname", operator: "EQ", value: c.first }, { propertyName: "lastname", operator: "EQ", value: c.last }] })),
+        });
+        for (const r of (p && p.results) || []) {
+          const pr = r.properties || {};
+          if ((co.domain && pr.hs_email_domain === co.domain) || (coKey && norm(pr.company).split(" ").includes(coKey))) named.push(r);
+        }
+      }
+      for (const c of job.cands) {
+        const last = norm(c.last), first = norm(c.first);
+        const hit = [...atCompany, ...named].find((r) => {
+          const pr = r.properties || {};
+          if (norm(pr.lastname) !== last || !last) return false;
+          const f = norm(pr.firstname);
+          return f === first || (f && first && f[0] === first[0]);
+        });
+        if (hit) { c.inHubspot = true; c.hubspotId = String(hit.id); }
+      }
+      hs.checked = true;
+    } catch (e) {
+      hs.warn = errText(e, HS) + " The duplicate check didn't finish; check HubSpot by hand before sequencing.";
+    }
+    return hs;
+  }
+
+  async function findContacts(job) {
+    const co = job.company;
+    job.state = "searching"; job.error = ""; renderJobs();
+    const base = { companyIdList: [Number(co.id)], underManagement: true, sort: "-contactAccuracyScore", excludeJobTitleList: EXCLUDE_TITLES, userIntent: ZI_INTENT };
+    try {
+      const [hr, ops] = await Promise.all([
+        readTool(ZI, "search_contacts", { ...base, jobTitleList: HR_TITLES, pageSize: 50 }),
+        readTool(ZI, "search_contacts", { ...base, jobTitleList: OPS_TITLES, pageSize: 25 }),
+      ]);
+      const seen = new Map();
+      for (const d of [...((hr && hr.data) || []), ...((ops && ops.data) || [])]) if (d && d.id != null && !seen.has(String(d.id))) seen.set(String(d.id), candFrom(d));
+      const all = [...seen.values()];
+      job.excluded = all.filter((c) => c.tier === 0).length;
+      job.cands = all.filter((c) => c.tier > 0);
+      job.hs = await hubspotCheck(job);
+      job.warn = job.hs.warn;
+      preselect(job);
+      job.state = "review";
+    } catch (e) { job.state = "company"; job.error = errText(e, ZI); }
+    renderJobs();
+  }
+
+  // ---------- intake: enrich + save (only from the confirm click) ----------
+  function linkedinFrom(x) {
+    const arr = Array.isArray(x) ? x : x ? [x] : [];
+    for (const e of arr) { const u = typeof e === "string" ? e : (e && (e.url || e.value)) || ""; if (/linkedin\.com/i.test(u)) return /^https?:/i.test(u) ? u : "https://" + u.replace(/^\/+/, ""); }
+    return "";
+  }
+  async function enrichAndSave(job) {
+    const co = job.company;
+    const chosen = job.cands.filter((c) => job.selected.has(c.id));
+    job.state = "enriching"; job.confirming = false; job.error = ""; renderJobs();
+    const notes = [];
+
+    let industry = "", sub = "", employees = co.employees;
+    try {
+      const p = await spendTool(ZI, "enrich_companies", { companies: [{ companyId: co.id }], requiredFields: ["name", "website", "primaryIndustry", "industries", "employeeCount"], userIntent: ZI_INTENT });
+      const r = p && (p.company_1 || Object.values(p).find((v) => v && typeof v === "object" && "success" in v));
+      const d = r && r.success ? r.data : null;
+      if (d) {
+        const pi = Array.isArray(d.primaryIndustry) && d.primaryIndustry.length ? d.primaryIndustry : Array.isArray(d.industries) ? d.industries : [];
+        industry = pi[0] || d.industry || ""; sub = pi[1] || "";
+        if (num(d.employeeCount) != null) employees = num(d.employeeCount);
+      } else notes.push("Company profile (industry) wasn't returned" + (r && r.error ? `: ${r.error}` : "."));
+    } catch (e) { notes.push("Company profile: " + errText(e, ZI)); }
+
+    const enriched = [], failed = [];
+    let creditsOut = false;
+    for (let i = 0; i < chosen.length; i += 10) {
+      const batch = chosen.slice(i, i + 10);
+      let p;
+      try {
+        p = await spendTool(ZI, "enrich_contacts", { contacts: batch.map((c) => ({ personId: c.id })), requiredFields: ENRICH_FIELDS, userIntent: ZI_INTENT });
+      } catch (e) {
+        batch.forEach((c) => failed.push({ c, why: errText(e, ZI) }));
+        continue;
+      }
+      if (p && p.creditStatus && /exhaust/i.test(p.creditStatus.type || "")) creditsOut = true;
+      const entries = Object.keys(p || {}).filter((k) => /^contact_\d+$/.test(k)).map((k) => p[k]);
+      batch.forEach((c, idx) => {
+        const r = entries.find((x) => x && x.input && String(x.input.personId) === c.id) || (p && p["contact_" + (idx + 1)]);
+        if (r && r.success && r.data) enriched.push({ c, d: r.data });
+        else failed.push({ c, why: (r && r.error) || "No record returned" });
+      });
+    }
+
+    if (!enriched.length) {
+      job.state = "review";
+      job.error = creditsOut
+        ? "Your ZoomInfo account is out of credits, so nothing was enriched or saved. Ask your ZoomInfo admin to add credits, then try again."
+        : "No contacts could be enriched, so nothing was saved. " + (failed[0] ? failed[0].why : "");
+      renderJobs(); return;
+    }
+
+    const qualified = [], unqualified = [];
+    for (const { c, d } of enriched) {
+      const email = d.email || "";
+      const direct = d.phone || d.directPhone || "";
+      const mobile = d.mobilePhone || "";
+      const directDnc = d.directPhoneDoNotCall === true || (d.directPhoneDoNotCall == null && c.directDnc);
+      const mobileDnc = d.mobilePhoneDoNotCall === true || (d.mobilePhoneDoNotCall == null && c.mobileDnc);
+      const callable = (direct && !directDnc) || (mobile && !mobileDnc);
+      const row = { c, d, email, direct, mobile, directDnc, mobileDnc };
+      if (email && callable) qualified.push(row);
+      else unqualified.push({ c, why: !email ? "no email" : (direct || mobile) ? "only do-not-call numbers" : "no direct or mobile number" });
+    }
+
+    const companyId = "zi-" + co.id;
+    const ts = nowIso();
+    const status = qualified.length < MIN_QUALIFIED ? "Incomplete" : "Active";
+    try {
+      await S.db.doc("companies/" + companyId).set({
+        id: companyId, zoominfo_company_id: co.id, name: co.name, domain: co.domain || "",
+        industry, sub_industry: sub, employee_count: employees,
+        owner: job.owner, multi_site: !!job.multi, status,
+        in_hubspot: !!(job.hs && job.hs.companyIds.length), hubspot_company_id: job.hs && job.hs.companyIds.length ? String(job.hs.companyIds[0]) : "",
+        created_at: ts, updated_at: ts, created_by: (S.me && S.me.id) || null,
+      });
+      for (const q of qualified) {
+        const id = `${companyId}_${q.c.id}`;
+        await S.db.doc("contacts/" + id).set({
+          id, company_id: companyId, zoominfo_contact_id: q.c.id,
+          first_name: q.d.firstName || q.c.first, last_name: q.d.lastName || q.c.last, title: q.d.jobTitle || q.c.title, persona_tier: q.c.tier,
+          email: q.email, direct_phone: q.direct, mobile_phone: q.mobile, direct_phone_dnc: !!q.directDnc, mobile_phone_dnc: !!q.mobileDnc,
+          linkedin_url: linkedinFrom(q.d.externalUrls),
+          status: "Not started", linkedin_connect_sent: false,
+          in_hubspot: !!q.c.inHubspot, hubspot_id: q.c.hubspotId || "",
+          zoominfo_accuracy: num(q.d.contactAccuracyScore) ?? q.c.accuracy, zoominfo_last_updated: q.d.lastUpdatedDate || q.c.lastUpdated || "", zoominfo_valid_date: q.d.validDate || q.c.validDate || "",
+          created_at: ts, updated_at: ts,
+        });
+      }
+    } catch (e) {
+      job.state = "review"; job.error = dbErrText(e) + " Enrichment already ran, so trying again will not use new credits for these contacts.";
+      renderJobs(); return;
+    }
+    job.state = "saved";
+    job.result = { status, qualified: qualified.length, unqualified, failed, notes, creditsOut };
+    renderJobs();
+  }
+
+  function dbErrText(e) {
+    switch (e && e.code) {
+      case "invalid_argument": return "You don't have permission to change the shared list.";
+      case "quota_exceeded": return "The shared list is full. Remove old companies before adding more.";
+      case "resource_exhausted": return "Too many saves at once. Wait a few seconds and try again.";
+      case "revoked": return "Your access to this tracker changed. Reload the page.";
+      default: return "Couldn't save to the shared list" + (e && e.code ? ` (${e.code})` : "") + ".";
+    }
+  }
+
+  // ---------- intake rendering ----------
+  function renderToday() {
+    const today = localDay(nowIso());
+    const counts = { Jeremy: 0, David: 0 };
+    for (const c of S.companies.values()) if (localDay(c.created_at) === today && counts[c.owner] != null) counts[c.owner]++;
+    $("today").innerHTML = `<span>Added today:</span>` + OWNERS.map((o) => `<span>${o} <b>${counts[o]}</b></span>`).join("") + `<span>Goal: 1–2 per rep</span>`;
+  }
+  function renderIntakeBanner() {
+    const b = [];
+    if (!S.db) b.push(`<div class="banner bad"><strong>Shared list unavailable</strong>Sign in to claude.ai and open the tracker there to see and edit the list.</div>`);
+    else if (S.readOnly || S.canWrite === false) b.push(`<div class="banner"><strong>View-only access</strong>Ask the tracker's owner for Contributor access to add targets or change statuses.</div>`);
+    for (const name of [ZI, HS]) if (S.conn[name].state === "bad") b.push(`<div class="banner bad"><strong>Adding targets is off: ${name} unavailable</strong>${esc(S.conn[name].msg)} The list below still works.</div>`);
+    $("intake-banner").innerHTML = b.join("");
+    const ready = sourcingReady();
+    $("go").disabled = !ready; $("names").disabled = !ready; $("owner").disabled = !ready;
+  }
+
+  function availHtml(c) {
+    const ph = (has, dnc, l) => `<i class="${has ? (dnc ? "d" : "y") : ""}" title="${has ? (dnc ? "Available, marked do-not-call" : "Available") : "Not on file"}">${l}${has && dnc ? "·DNC" : ""}</i>`;
+    return `<span class="avail">${ph(c.hasEmail, false, "Email")}${ph(c.hasDirect, c.directDnc, "Direct")}${ph(c.hasMobile, c.mobileDnc, "Mobile")}</span>`;
+  }
+  function confFlags(acc, updated) {
+    const f = [];
+    if (acc != null && acc < LOW_CONFIDENCE) f.push(`<span class="chip bad" title="ZoomInfo accuracy score">Low confidence ${esc(acc)}</span>`);
+    const age = updated ? daysSince(updated) : null;
+    if (age != null && age > STALE_DAYS) f.push(`<span class="chip bad" title="ZoomInfo last updated">Stale · ${esc(fmtDate(updated))}</span>`);
+    return f.join("");
+  }
+
+  function jobHtml(job) {
+    const co = job.company;
+    const head = co
+      ? `<div class="job-head"><span class="name">${esc(co.name)}</span><span class="small muted">Owner: <b>${esc(job.owner)}</b> · from “${esc(job.input)}”</span></div>
+         <div class="facts"><span><b>${esc(co.domain || "no domain")}</b></span><span>${esc([co.city, co.state, co.country].filter(Boolean).join(", "))}</span><span><b>${fmtInt(co.employees)}</b> employees</span><span>ZoomInfo ID <b class="mono">${esc(co.id)}</b></span></div>`
+      : `<div class="job-head"><span class="name">${esc(job.input)}</span><span class="small muted">Owner: <b>${esc(job.owner)}</b></span></div>`;
+    const err = job.error ? `<div class="banner bad">${esc(job.error)}</div>` : "";
+    const remove = `<button class="btn ghost sm" data-act="remove" data-job="${job.key}" type="button">Remove</button>`;
+    let body = "";
+    switch (job.state) {
+      case "resolving": body = `<div class="small"><span class="spinner"></span> Looking up in ZoomInfo…</div>`; break;
+      case "error": body = `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="retry" data-job="${job.key}" type="button">Try again</button>${remove}</div>`; break;
+      case "pick":
+        body = `<div class="small muted">More than one ZoomInfo company matches. Pick the right one:</div><div class="opts">` +
+          job.options.map((o, i) => `<button type="button" class="opt" data-act="pick" data-job="${job.key}" data-i="${i}"><span class="mono small">${esc(o.id)}</span><span><b>${esc(o.name)}</b> <span class="muted small">${esc(o.domain)} · ${esc([o.city, o.state, o.country].filter(Boolean).join(", "))}</span></span><span class="small num">${fmtInt(o.employees)} emp</span></button>`).join("") +
+          `</div>${remove}`;
+        break;
+      case "dup": {
+        const ex = S.companies.get("zi-" + co.id);
+        body = `<div class="banner info"><strong>Already on the tracker</strong>Owner ${esc(ex && ex.owner)}, status ${esc(ex && ex.status)}, added ${esc(fmtDate(ex && ex.created_at))}. Nothing new was looked up.</div>${remove}`;
+        break;
+      }
+      case "company":
+        body = `<div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center">
+            <label class="switch"><input type="checkbox" data-act="multi" data-job="${job.key}" ${job.multi ? "checked" : ""}> Multi-site</label>
+            <span class="small muted">${job.multi ? "Up to 5 contacts: corporate HR leadership plus plant HR at several sites." : "3 contacts. Turn on Multi-site for up to 5."}</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary sm" data-act="find" data-job="${job.key}" type="button" ${sourcingReady() ? "" : "disabled"}>Find contacts (free search)</button>${remove}</div>`;
+        break;
+      case "searching": body = `<div class="small"><span class="spinner"></span> Searching ZoomInfo contacts and checking HubSpot…</div>`; break;
+      case "review": case "enriching": body = reviewHtml(job); break;
+      case "saved": {
+        const r = job.result;
+        body = `<div class="banner ${r.status === "Incomplete" ? "" : "info"}"><strong>Saved · ${r.qualified} qualified contact${r.qualified === 1 ? "" : "s"} · status ${esc(r.status)}</strong>${r.status === "Incomplete" ? `Fewer than ${MIN_QUALIFIED} contacts had both an email and a callable number, so the company is marked Incomplete.` : "Company and contacts are in the list below."}</div>` +
+          ([...r.unqualified.map((u) => `${u.c.first} ${u.c.last}: not saved, ${u.why}`), ...r.failed.map((f) => `${f.c.first} ${f.c.last}: not enriched, ${f.why}`), ...r.notes].length
+            ? `<ul class="result-list">${[...r.unqualified.map((u) => `${esc(u.c.first)} ${esc(u.c.last)}: not saved, ${esc(u.why)}`), ...r.failed.map((f) => `${esc(f.c.first)} ${esc(f.c.last)}: not enriched, ${esc(f.why)}`), ...r.notes.map(esc)].map((x) => `<li>${x}</li>`).join("")}</ul>` : "") +
+          (r.creditsOut ? `<div class="banner">ZoomInfo reports your account is out of credits.</div>` : "") +
+          `<div>${remove.replace("Remove", "Clear")}</div>`;
+        break;
+      }
+    }
+    return `<div class="job">${head}${err}${body}</div>`;
+  }
+
+  function reviewHtml(job) {
+    const co = job.company;
+    const n = targetN(job);
+    const busy = job.state === "enriching";
+    const sel = job.cands.filter((c) => job.selected.has(c.id));
+    const contactCredits = sel.filter((c) => !c.managed).length;
+    const coCredit = co.managed ? 0 : 1;
+    const credits = contactCredits + coCredit;
+    const hsCo = job.hs && job.hs.companyIds.length
+      ? `<span class="chip hs">Company already in HubSpot</span> <a class="small" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-2/${esc(job.hs.companyIds[0])}" target="_blank" rel="noopener">Open record</a>`
+      : job.hs && job.hs.checked ? `<span class="chip ok">Company not in HubSpot</span>` : "";
+    const warn = job.warn ? `<div class="banner">${esc(job.warn)}</div>` : "";
+    const rows = job.cands.map((c) => {
+      const on = job.selected.has(c.id);
+      const full = !on && job.selected.size >= n;
+      return `<tr class="${on ? "" : "off"}">
+        <td><input type="checkbox" aria-label="Select ${esc(c.first)} ${esc(c.last)}" data-act="cand" data-job="${job.key}" data-id="${esc(c.id)}" ${on ? "checked" : ""} ${busy || full ? "disabled" : ""}></td>
+        <td><b>${esc(c.first)} ${esc(c.last)}</b><div class="flags">${c.inHubspot ? `<a class="chip hs" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${esc(c.hubspotId)}" target="_blank" rel="noopener">Already in HubSpot</a>` : ""}${confFlags(c.accuracy, c.lastUpdated)}</div></td>
+        <td>${esc(c.title)}</td>
+        <td><span class="tier t${c.tier}">${TIER_LABEL[c.tier]}</span></td>
+        <td>${availHtml(c)}</td>
+        <td class="num small">${c.accuracy ?? "—"}</td>
+        <td class="small">${c.managed ? `<span class="chip ok">Free</span>` : "1 credit"}</td>
+      </tr>`;
+    }).join("");
+    const table = job.cands.length
+      ? `<div class="cand-wrap"><table class="cand"><thead><tr><th></th><th>Name</th><th>Title</th><th>Persona</th><th>On file</th><th>Accuracy</th><th>Cost</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<div class="banner">ZoomInfo has no HR or plant-management contacts at this company. You can save nothing here; try the parent company or a plant's own domain.</div>`;
+    const confirm = job.confirming
+      ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="confirm" data-job="${job.key}" type="button">Use ${credits} credit${credits === 1 ? "" : "s"} and enrich</button><button class="btn" data-act="cancel" data-job="${job.key}" type="button">Cancel</button></div>`
+      : `<button class="btn primary" data-act="enrich" data-job="${job.key}" type="button" ${sel.length && !busy && sourcingReady() ? "" : "disabled"}>${busy ? `<span class="spinner"></span> Enriching…` : `Enrich ${sel.length} contact${sel.length === 1 ? "" : "s"}`}</button>`;
+    return `
+      <div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center">
+        <label class="switch"><input type="checkbox" data-act="multi" data-job="${job.key}" ${job.multi ? "checked" : ""} ${busy ? "disabled" : ""}> Multi-site</label>
+        <span class="small muted">Target ${n}. Selected ${sel.length} of ${job.cands.length} candidates${job.excluded ? ` · ${job.excluded} recruiting, IT or other roles left out` : ""}.</span>
+        ${hsCo}
+      </div>
+      ${warn}${table}
+      <div class="credit">
+        <div><div class="eyebrow">ZoomInfo credits this will use</div><div class="big">${credits}</div>
+          <div class="small muted">${sel.length} contact${sel.length === 1 ? "" : "s"} (${sel.length - contactCredits} already owned, free) + company profile (${coCredit ? "1 credit" : "free"}). A contact is kept only with an email and a direct or mobile number.</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${confirm}<button class="btn ghost sm" data-act="remove" data-job="${job.key}" type="button" ${busy ? "disabled" : ""}>Remove</button></div>
+      </div>`;
+  }
+  function renderJobs() { $("jobs").innerHTML = S.jobs.map(jobHtml).join(""); }
+
+  // ---------- dashboard ----------
+  function contactsFor(id) { const out = []; for (const c of S.contacts.values()) if (c.company_id === id) out.push(c); return out.sort((a, b) => (a.persona_tier || 9) - (b.persona_tier || 9) || String(a.last_name).localeCompare(String(b.last_name))); }
+  function contactMatches(c) {
+    const f = S.filters;
+    if (f.ct !== "all" && c.status !== f.ct) return false;
+    if (f.li === "yes" && !c.linkedin_connect_sent) return false;
+    if (f.li === "no" && c.linkedin_connect_sent) return false;
+    return true;
+  }
+  const contactFilterOn = () => S.filters.ct !== "all" || S.filters.li !== "all";
+  function visibleCompanies() {
+    const f = S.filters, q = norm(f.q);
+    const list = [];
+    for (const co of S.companies.values()) {
+      if (f.owner !== "all" && co.owner !== f.owner) continue;
+      if (f.co !== "all" && co.status !== f.co) continue;
+      if (q && !norm(co.name).includes(q)) continue;
+      const day = localDay(co.created_at);
+      if (f.from && day < f.from) continue;
+      if (f.to && day > f.to) continue;
+      const cts = contactsFor(co.id);
+      const shown = contactFilterOn() ? cts.filter(contactMatches) : cts;
+      if (contactFilterOn() && !shown.length) continue;
+      list.push({ co, cts, shown });
+    }
+    return list.sort((a, b) => String(b.co.created_at).localeCompare(String(a.co.created_at)));
+  }
+  const selectHtml = (opts, val, attrs, tone) => `<select class="inline" ${attrs} data-tone="${tone || ""}" ${canEdit() ? "" : "disabled"}>${opts.map((o) => `<option ${o === val ? "selected" : ""}>${esc(o)}</option>`).join("")}${val && !opts.includes(val) ? `<option selected>${esc(val)}</option>` : ""}</select>`;
+  const canEdit = () => !!S.db && !S.readOnly && S.canWrite !== false;
+  const copyBtn = (v, what) => (v ? `<button type="button" class="copy" data-copy="${esc(v)}" aria-label="Copy ${what}">Copy</button>` : "");
+
+  function personHtml(c) {
+    const hs = c.in_hubspot ? (c.hubspot_id ? `<a class="chip hs" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${esc(c.hubspot_id)}" target="_blank" rel="noopener">In HubSpot</a>` : `<span class="chip hs">In HubSpot</span>`) : "";
+    const phone = (v, dnc, lbl) => (v ? `<div class="line"><span class="lbl">${lbl}</span><span class="val">${esc(v)}</span>${dnc ? `<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>` : ""}${copyBtn(v, lbl + " phone")}</div>` : "");
+    return `<div class="person">
+      <div class="who"><b>${esc(c.first_name)} ${esc(c.last_name)}</b><div class="title">${esc(c.title)}</div>
+        <div class="flags"><span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>${hs}${confFlags(c.zoominfo_accuracy, c.zoominfo_last_updated)}${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}</div></div>
+      <div>${c.email ? `<div class="line"><span class="lbl">Email</span><span class="val">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : `<span class="muted small">No email</span>`}</div>
+      <div>${phone(c.direct_phone, c.direct_phone_dnc, "Direct")}${phone(c.mobile_phone, c.mobile_phone_dnc, "Mobile")}<div class="calls-note">For calls only. Do not text sourced contacts.</div></div>
+      <div class="acts">
+        ${selectHtml(CT_STATUS, c.status, `data-edit="contacts/${esc(c.id)}" data-field="status" aria-label="Contact status"`, CT_TONE[c.status])}
+        <label><input type="checkbox" data-edit="contacts/${esc(c.id)}" data-field="linkedin_connect_sent" ${c.linkedin_connect_sent ? "checked" : ""} ${canEdit() ? "" : "disabled"}> LinkedIn sent</label>
+      </div>
+    </div>`;
+  }
+
+  function renderDash() {
+    renderToday();
+    const rows = $("rows");
+    if (!S.db) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>Shared list unavailable</b>Open this tracker in claude.ai while signed in.</div></td></tr>`; renderStrip([]); return; }
+    if (!S.loaded.co || !S.loaded.ct) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><span class="spinner"></span> Loading the shared list…</div></td></tr>`; renderStrip([]); return; }
+    if (S.dbError) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>Couldn't load the list</b>${esc(S.dbError)}</div></td></tr>`; return; }
+    const vis = visibleCompanies();
+    renderStrip(vis);
+    $("count").textContent = `${vis.length} of ${S.companies.size} companies`;
+    if (!S.companies.size) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>No target companies yet</b>Choose an owner and enter today's first company above. It appears here once its contacts are enriched.</div></td></tr>`; return; }
+    if (!vis.length) { rows.innerHTML = `<tr><td colspan="9"><div class="empty"><b>No companies match these filters</b>Clear a filter or widen the date range.</div></td></tr>`; return; }
+    const chev = `<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1.5 6.5 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`;
+    rows.innerHTML = vis.map(({ co, cts, shown }) => {
+      const open = S.expanded.has(co.id);
+      const inSeq = cts.filter((c) => c.status === "In sequence").length;
+      const li = cts.filter((c) => c.linkedin_connect_sent).length;
+      const main = `<tr class="co ${open ? "open" : ""}">
+        <td><div class="co-name"><button class="exp" type="button" data-toggle="${esc(co.id)}" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} contacts for ${esc(co.name)}">${chev}</button>
+          <div style="min-width:0"><div class="t">${esc(co.name)} ${co.multi_site ? `<span class="chip">Multi-site</span>` : ""} ${co.in_hubspot ? `<span class="chip hs">In HubSpot</span>` : ""}</div><div class="d">${esc(co.domain)}</div></div></div></td>
+        <td>${esc(co.sub_industry || co.industry || "—")}</td>
+        <td class="n num">${fmtInt(co.employee_count)}</td>
+        <td>${selectHtml(OWNERS, co.owner, `data-edit="companies/${esc(co.id)}" data-field="owner" aria-label="Owner"`, "neutral")}</td>
+        <td>${selectHtml(CO_STATUS, co.status, `data-edit="companies/${esc(co.id)}" data-field="status" aria-label="Company status"`, CO_TONE[co.status])}</td>
+        <td class="n num">${cts.length}</td>
+        <td class="n num">${inSeq}</td>
+        <td class="n num">${li}</td>
+        <td class="small"><div>${esc(fmtDate(co.created_at))}</div>${co.created_by ? `<div class="muted" data-uid="${esc(co.created_by)}"></div>` : ""}</td>
+      </tr>`;
+      if (!open) return main;
+      const people = shown.length ? shown.map(personHtml).join("") : `<div class="muted small" style="padding:8px 0">No saved contacts. This company needs ${MIN_QUALIFIED} qualified contacts to be complete.</div>`;
+      const note = contactFilterOn() && shown.length !== cts.length ? `<div class="small muted" style="padding:6px 0">Showing ${shown.length} of ${cts.length} contacts that match the contact filters.</div>` : "";
+      return main + `<tr class="detail"><td colspan="9">${note}<div class="people">${people}</div></td></tr>`;
+    }).join("");
+    fillNames();
+  }
+  async function fillNames() {
+    const els = [...document.querySelectorAll("[data-uid]")];
+    if (!els.length || !S.user) return;
+    const ids = [...new Set(els.map((e) => e.dataset.uid))];
+    let ps = {};
+    try { ps = await S.user.profiles(ids); } catch {}
+    for (const el of document.querySelectorAll("[data-uid]")) { const p = ps[el.dataset.uid]; el.textContent = "by " + ((p && p.name) || "a teammate"); }
+  }
+  function renderStrip(vis) {
+    const active = vis.filter((v) => v.co.status === "Active").length;
+    const inSeq = vis.reduce((n, v) => n + v.shown.filter((c) => c.status === "In sequence").length, 0);
+    const meetings = vis.filter((v) => v.co.status === "Meeting booked" || v.cts.some((c) => c.status === "Meeting booked")).length;
+    const cell = (label, v, accent, hint) => `<div><div class="eyebrow">${label}</div><div class="v ${accent ? "accent" : ""}">${v}</div><div class="small muted">${hint}</div></div>`;
+    $("strip").innerHTML =
+      cell("Companies shown", vis.length, false, "current filters") +
+      cell("Active companies", active, false, "status Active") +
+      cell("Contacts in sequence", inSeq, false, "in HubSpot sequences") +
+      cell("Meetings booked", meetings, true, "companies with a meeting");
+  }
+
+  function renderConn() {
+    const pill = (name) => { const s = S.conn[name].state; return `<span class="pill ${s === "ok" ? "ok" : s === "bad" ? "bad" : ""}" title="${esc(S.conn[name].msg)}">${name}${s === "checking" ? " · checking" : s === "bad" ? " · unavailable" : ""}</span>`; };
+    $("conn").innerHTML = pill(ZI) + pill(HS) + `<span class="pill">HubSpot read only</span>`;
+  }
+
+  // ---------- writes ----------
+  const chains = new Map();
+  function writeDoc(path, data) {
+    const prev = chains.get(path) || Promise.resolve();
+    const next = prev.then(() => S.db.doc(path).update({ ...data, updated_at: nowIso() })).catch((e) => {
+      if (e && e.code === "invalid_argument") { S.readOnly = true; renderIntakeBanner(); renderDash(); }
+      toast(dbErrText(e));
+    });
+    chains.set(path, next);
+    return next;
+  }
+
+  // ---------- events ----------
+  $("intake").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    if (!sourcingReady()) return;
+    const owner = $("owner").value;
+    const lines = $("names").value.split(/\n/).map((s) => s.trim()).filter(Boolean);
+    if (!owner) { toast("Choose an owner first."); $("owner").focus(); return; }
+    if (!lines.length) { toast("Enter at least one company name or domain."); $("names").focus(); return; }
+    if (lines.length > 5) { toast("Enter at most 5 companies at a time (aim for 1–2 a day)."); return; }
+    store.set("owner", owner);
+    $("names").value = "";
+    const jobs = lines.map((l) => newJob(l, owner));
+    S.jobs.unshift(...jobs);
+    renderJobs();
+    jobs.forEach((j) => resolveJob(j));
+  });
+
+  $("jobs").addEventListener("click", (ev) => {
+    const el = ev.target.closest("[data-act]");
+    if (!el || el.tagName === "INPUT") return;
+    const job = S.jobs.find((j) => j.key === el.dataset.job);
+    if (!job) return;
+    const act = el.dataset.act;
+    if (act === "remove") { S.jobs = S.jobs.filter((j) => j !== job); renderJobs(); }
+    else if (act === "retry") resolveJob(job);
+    else if (act === "pick") chooseCompany(job, job.options[Number(el.dataset.i)]);
+    else if (act === "find") findContacts(job);
+    else if (act === "enrich") { if (job.selected.size && sourcingReady()) { job.confirming = true; renderJobs(); } }
+    else if (act === "cancel") { job.confirming = false; renderJobs(); }
+    else if (act === "confirm") { if (job.confirming && job.state === "review" && job.selected.size) enrichAndSave(job); }
+  });
+  $("jobs").addEventListener("change", (ev) => {
+    const el = ev.target.closest("[data-act]");
+    if (!el) return;
+    const job = S.jobs.find((j) => j.key === el.dataset.job);
+    if (!job) return;
+    if (el.dataset.act === "multi") {
+      job.multi = el.checked;
+      if (job.state === "review") preselect(job);
+      renderJobs();
+    } else if (el.dataset.act === "cand") {
+      if (el.checked) { if (job.selected.size < targetN(job)) job.selected.add(el.dataset.id); }
+      else job.selected.delete(el.dataset.id);
+      job.confirming = false;
+      renderJobs();
+    }
+  });
+
+  $("rows").addEventListener("click", async (ev) => {
+    const t = ev.target.closest("[data-toggle]");
+    if (t) { const id = t.dataset.toggle; S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); renderDash(); return; }
+    const c = ev.target.closest("[data-copy]");
+    if (c) {
+      const v = c.dataset.copy;
+      const done = () => { c.textContent = "Copied"; c.classList.add("done"); setTimeout(() => { c.textContent = "Copy"; c.classList.remove("done"); }, 1400); };
+      try { await navigator.clipboard.writeText(v); done(); }
+      catch {
+        const span = c.parentElement.querySelector(".val");
+        if (span) { const r = document.createRange(); r.selectNodeContents(span); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+        toast("Copy isn't allowed here. The text is selected; press Ctrl+C or ⌘C.");
+      }
+    }
+  });
+  $("rows").addEventListener("change", (ev) => {
+    const el = ev.target.closest("[data-edit]");
+    if (!el || !canEdit()) return;
+    const value = el.type === "checkbox" ? el.checked : el.value;
+    if (el.tagName === "SELECT") el.dataset.tone = (el.dataset.field === "status" ? (el.dataset.edit.startsWith("companies/") ? CO_TONE : CT_TONE)[value] : "neutral") || "";
+    writeDoc(el.dataset.edit, { [el.dataset.field]: value });
+  });
+
+  function bindFilters() {
+    $("f-co").innerHTML = `<option value="all">All statuses</option>` + CO_STATUS.map((s) => `<option>${s}</option>`).join("");
+    $("f-ct").innerHTML = `<option value="all">All statuses</option>` + CT_STATUS.map((s) => `<option>${s}</option>`).join("");
+    const saved = store.get("filters");
+    if (saved && typeof saved === "object") Object.assign(S.filters, saved);
+    const map = { q: "f-q", owner: "f-owner", co: "f-co", ct: "f-ct", li: "f-li", from: "f-from", to: "f-to" };
+    for (const [k, id] of Object.entries(map)) {
+      const el = $(id);
+      el.value = S.filters[k];
+      if (el.value !== S.filters[k]) { S.filters[k] = k === "q" || k === "from" || k === "to" ? "" : "all"; el.value = S.filters[k]; }
+      el.addEventListener(el.tagName === "INPUT" && el.type === "search" ? "input" : "change", () => { S.filters[k] = el.value; store.set("filters", S.filters); renderDash(); });
+    }
+    const o = store.get("owner"); if (OWNERS.includes(o)) $("owner").value = o;
+  }
+
+  // ---------- boot ----------
+  bindFilters();
+  renderConn(); renderIntakeBanner(); renderJobs(); renderDash();
+
+  (async () => {
+    const [db, user, mcp] = await Promise.all([use("db"), use("user"), use("mcp")]);
+    S.db = db; S.user = user; S.mcp = mcp;
+    if (user) {
+      try { S.me = await user.me(); } catch {}
+      try { S.canWrite = await user.can("data.write"); } catch { S.canWrite = null; }
+      const nm = S.me && S.me.name;
+      $("viewer").textContent = nm ? `Signed in as ${nm}` : "";
+      if (nm) { const first = nm.split(/\s+/)[0]; if (!$("owner").value && OWNERS.includes(first)) $("owner").value = first; }
+    }
+    if (db) {
+      const onErr = (e) => { S.dbError = e && e.code === "revoked" ? "Your access to this tracker changed. Reload the page." : "The shared list stopped updating. Reload the page."; renderDash(); };
+      db.collection("companies").limit(1000).onSnapshot((snap) => { S.companies = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.co = true; renderDash(); renderJobs(); }, onErr);
+      db.collection("contacts").limit(1000).onSnapshot((snap) => { S.contacts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.ct = true; renderDash(); }, onErr);
+    }
+    renderIntakeBanner(); renderDash();
+    await checkConnectors();
+    renderConn(); renderIntakeBanner(); renderJobs();
+  })();
+})();
+</script>
