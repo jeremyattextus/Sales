@@ -599,7 +599,7 @@ a { color: var(--info); }
     if (!enriched.length) {
       job.state = "review";
       job.error = creditsOut
-        ? "Your ZoomInfo account is out of credits, so nothing was enriched or saved. Ask your ZoomInfo admin to add credits, then try again."
+        ? "ZoomInfo refused the enrichment for lack of credits, so nothing was enriched or saved. The connector uses your user's Data (Bulk) credit allowance, which can be empty even when your ZoomInfo account shows credits. Ask your ZoomInfo admin to give your user a Data (Bulk) allowance for the API/MCP integration, then try again."
         : "No contacts could be enriched, so nothing was saved. " + (failed[0] ? failed[0].why : "");
       renderJobs(); return;
     }
@@ -725,7 +725,7 @@ a { color: var(--info); }
         body = `<div class="banner ${r.status === "Incomplete" ? "" : "info"}"><strong>Saved · ${r.qualified} qualified contact${r.qualified === 1 ? "" : "s"} · status ${esc(r.status)}</strong>${r.status === "Incomplete" ? `Fewer than ${MIN_QUALIFIED} contacts had both an email and a callable number, so the company is marked Incomplete.` : "Company and contacts are in the list below."}</div>` +
           ([...r.unqualified.map((u) => `${u.c.first} ${u.c.last}: not saved, ${u.why}`), ...r.failed.map((f) => `${f.c.first} ${f.c.last}: not enriched, ${f.why}`), ...r.notes].length
             ? `<ul class="result-list">${[...r.unqualified.map((u) => `${esc(u.c.first)} ${esc(u.c.last)}: not saved, ${esc(u.why)}`), ...r.failed.map((f) => `${esc(f.c.first)} ${esc(f.c.last)}: not enriched, ${esc(f.why)}`), ...r.notes.map(esc)].map((x) => `<li>${x}</li>`).join("")}</ul>` : "") +
-          (r.creditsOut ? `<div class="banner">ZoomInfo reports your account is out of credits.</div>` : "") +
+          (r.creditsOut ? `<div class="banner">ZoomInfo stopped part of this enrichment for lack of credits. Ask your ZoomInfo admin to raise your user's Data (Bulk) allowance.</div>` : "") +
           `<div>${remove.replace("Remove", "Clear")}</div>`;
         break;
       }
