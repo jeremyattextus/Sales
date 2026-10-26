@@ -1,4 +1,4 @@
-<title>Outbound Target Tracker</title>
+<title>Outbound Dashboard</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -211,7 +211,7 @@ a { color: var(--info); }
   <header class="top">
     <div>
       <div class="eyebrow">TextUs outbound · working list</div>
-      <h1>Outbound Target Tracker</h1>
+      <h1>Outbound Dashboard</h1>
       <div class="sub">Add 1–2 target companies a day. ZoomInfo finds the HR contacts, HubSpot is checked for duplicates (read only), and everything lands in the shared list below.</div>
     </div>
     <div style="display:grid;gap:6px;justify-items:end">
@@ -321,7 +321,7 @@ a { color: var(--info); }
             <select id="od-status">
               <option value="ondeck">Not started</option>
               <option value="started">Started</option>
-              <option value="added">Added to tracker</option>
+              <option value="added">Added to dashboard</option>
               <option value="all">All</option>
             </select>
           </label>
@@ -369,7 +369,7 @@ a { color: var(--info); }
   const ENRICH_FIELDS = ["firstName", "lastName", "jobTitle", "email", "phone", "mobilePhone", "directPhoneDoNotCall", "mobilePhoneDoNotCall", "externalUrls", "contactAccuracyScore", "lastUpdatedDate", "validDate"];
   const ZI_INTENT = "Build a short outbound working list of HR contacts at a target company for one sales rep";
   const HS_INSIGHTS = { userIntent: "Read-only duplicate check of a target company and its contacts before outbound", satisfaction: "NEUTRAL" };
-  // HubSpot owner IDs for the tracker's owners (portal 517572). New records the tracker creates are owned by the company's tracker owner.
+  // HubSpot owner IDs for the dashboard's owners (portal 517572). New records the dashboard creates are owned by the company's tracker owner.
   const HS_OWNER_IDS = { Jeremy: "92239065", David: "96822192" };
   const HS_OWNER_NAMES = { Jeremy: "Jeremy O'Hara", David: "David Walker" };
   const TASK_TITLE = "Outbound 1st Call and Sequence Launch";
@@ -440,7 +440,7 @@ a { color: var(--info); }
       case "blocked_by_policy": return `Your organization's policy blocks this ${s} tool for your account.`;
       case "server_unavailable": return `${s} didn't respond. Wait a minute and try again.`;
       case "tool_error": return `${s} returned an error: ${msg || "no details"}`;
-      case "not_granted": case "capability_disabled": case "capability_removed": return `Connectors aren't available in this view. Open the tracker in claude.ai.`;
+      case "not_granted": case "capability_disabled": case "capability_removed": return `Connectors aren't available in this view. Open the dashboard in claude.ai.`;
       case "cancelled": return `The ${s} request was cancelled.`;
       default: return `${s} request failed${e && e.code ? ` (${e.code})` : ""}. ${msg}`;
     }
@@ -474,7 +474,7 @@ a { color: var(--info); }
 
   async function checkConnectors() {
     if (!S.mcp) {
-      const msg = "Connectors aren't available in this view. Open the tracker in claude.ai to add targets.";
+      const msg = "Connectors aren't available in this view. Open the dashboard in claude.ai to add targets.";
       S.conn[ZI] = { state: "bad", msg }; S.conn[HS] = { state: "bad", msg };
       return;
     }
@@ -739,7 +739,7 @@ a { color: var(--info); }
       case "invalid_argument": return "You don't have permission to change the shared list.";
       case "quota_exceeded": return "The shared list is full. Remove old companies before adding more.";
       case "resource_exhausted": return "Too many saves at once. Wait a few seconds and try again.";
-      case "revoked": return "Your access to this tracker changed. Reload the page.";
+      case "revoked": return "Your access to this dashboard changed. Reload the page.";
       default: return "Couldn't save to the shared list" + (e && e.code ? ` (${e.code})` : "") + ".";
     }
   }
@@ -863,7 +863,7 @@ a { color: var(--info); }
           else notes.push(`${c.first_name} ${c.last_name}: not confirmed in HubSpot. Click Import again; it links anything that already exists.`);
         }
       }
-      // 3. One "1st call + enroll" task per imported contact, due now, owned by the tracker owner.
+      // 3. One "1st call + enroll" task per imported contact, due now, owned by the dashboard owner.
       let tasksMade = 0;
       if (plan.tasks) {
         const need = imported.filter(({ c }) => !(S.contacts.get(c.id) || c).hubspot_task_created_at);
@@ -873,7 +873,7 @@ a { color: var(--info); }
           const objects = batch.map(({ c, hsId }) => {
             const assoc = [{ targetObjectId: Number(hsId), targetObjectType: "CONTACT" }];
             if (companyHsId) assoc.push({ targetObjectId: Number(companyHsId), targetObjectType: "COMPANY" });
-            const phone = c.direct_phone && !c.direct_phone_dnc ? `Direct dial: ${c.direct_phone}` : "No direct dial in HubSpot; check the tracker for a callable number.";
+            const phone = c.direct_phone && !c.direct_phone_dnc ? `Direct dial: ${c.direct_phone}` : "No direct dial in HubSpot; check the dashboard for a callable number.";
             return {
               objectType: "tasks",
               properties: {
@@ -970,8 +970,8 @@ a { color: var(--info); }
   }
   function renderIntakeBanner() {
     const b = [];
-    if (!S.db) b.push(`<div class="banner bad"><strong>Shared list unavailable</strong>Sign in to claude.ai and open the tracker there to see and edit the list.</div>`);
-    else if (S.readOnly || S.canWrite === false) b.push(`<div class="banner"><strong>View-only access</strong>Ask the tracker's owner for Contributor access to add targets or change statuses.</div>`);
+    if (!S.db) b.push(`<div class="banner bad"><strong>Shared list unavailable</strong>Sign in to claude.ai and open the dashboard there to see and edit the list.</div>`);
+    else if (S.readOnly || S.canWrite === false) b.push(`<div class="banner"><strong>View-only access</strong>Ask the dashboard's owner for Contributor access to add targets or change statuses.</div>`);
     for (const name of [ZI, HS]) if (S.conn[name].state === "bad") b.push(`<div class="banner bad"><strong>Adding targets is off: ${name} unavailable</strong>${esc(S.conn[name].msg)} The list below still works.</div>`);
     $("intake-banner").innerHTML = b.join("");
     const ready = sourcingReady();
@@ -1010,7 +1010,7 @@ a { color: var(--info); }
         break;
       case "dup": {
         const ex = S.companies.get("zi-" + co.id);
-        body = `<div class="banner info"><strong>Already on the tracker</strong>Owner ${esc(ex && ex.owner)}, status ${esc(ex && ex.status)}, added ${esc(fmtDate(ex && ex.created_at))}. Nothing new was looked up.</div>${remove}`;
+        body = `<div class="banner info"><strong>Already on the dashboard</strong>Owner ${esc(ex && ex.owner)}, status ${esc(ex && ex.status)}, added ${esc(fmtDate(ex && ex.created_at))}. Nothing new was looked up.</div>${remove}`;
         break;
       }
       case "company":
@@ -1139,7 +1139,7 @@ a { color: var(--info); }
   function renderDash() {
     renderToday();
     const rows = $("rows");
-    if (!S.db) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><b>Shared list unavailable</b>Open this tracker in claude.ai while signed in.</div></td></tr>`; renderStrip([]); return; }
+    if (!S.db) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><b>Shared list unavailable</b>Open this dashboard in claude.ai while signed in.</div></td></tr>`; renderStrip([]); return; }
     if (!S.loaded.co || !S.loaded.ct) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><span class="spinner"></span> Loading the shared list…</div></td></tr>`; renderStrip([]); return; }
     if (S.dbError) { rows.innerHTML = `<tr><td colspan="10"><div class="empty"><b>Couldn't load the list</b>${esc(S.dbError)}</div></td></tr>`; return; }
     const vis = visibleCompanies();
@@ -1231,7 +1231,7 @@ a { color: var(--info); }
 
   function renderConn() {
     const pill = (name) => { const s = S.conn[name].state; return `<span class="pill ${s === "ok" ? "ok" : s === "bad" ? "bad" : ""}" title="${esc(S.conn[name].msg)}">${name}${s === "checking" ? " · checking" : s === "bad" ? " · unavailable" : ""}</span>`; };
-    $("conn").innerHTML = pill(ZI) + pill(HS) + `<span class="pill" title="The tracker creates new HubSpot records only when you click Import, and never edits existing ones.">HubSpot: import only</span>`;
+    $("conn").innerHTML = pill(ZI) + pill(HS) + `<span class="pill" title="The dashboard creates new HubSpot records only when you click Import, and never edits existing ones.">HubSpot: import only</span>`;
   }
 
   // ---------- writes ----------
@@ -1350,7 +1350,7 @@ a { color: var(--info); }
   const companyByName = () => { const m = new Map(); for (const c of S.companies.values()) m.set(norm(c.name), c); return m; };
   function odState(o, byName) {
     const co = (o.tracker_company_id && S.companies.get(o.tracker_company_id)) || (byName || companyByName()).get(norm(o.name));
-    if (co) return { key: "added", label: co.hubspot_company_id ? "In HubSpot" : "Added to tracker", tone: co.hubspot_company_id ? "ok" : "info", co };
+    if (co) return { key: "added", label: co.hubspot_company_id ? "In HubSpot" : "Added to dashboard", tone: co.hubspot_company_id ? "ok" : "info", co };
     if (o.started_at) return { key: "started", label: "Started", tone: "hs" };
     return { key: "ondeck", label: "On deck", tone: "" };
   }
@@ -1396,7 +1396,7 @@ a { color: var(--info); }
       if (seen.has(key)) { skipped.push({ name, why: "repeated in this file" }); return; }
       seen.add(key);
       if (existing.has(key)) { skipped.push({ name, why: "already on deck" }); return; }
-      if (onTracker.has(key)) { skipped.push({ name, why: "already on the tracker" }); return; }
+      if (onTracker.has(key)) { skipped.push({ name, why: "already on the dashboard" }); return; }
       add.push({ name, sub_industry: iSub >= 0 ? String(r[iSub] || "").trim() : "", employee_count: iEmp >= 0 ? num(r[iEmp]) : null, rank: iRank >= 0 ? num(r[iRank]) ?? idx + 1 : idx + 1 });
     });
     return { list, add, skipped, cols: { sub: iSub >= 0 ? head[iSub] : "", emp: iEmp >= 0 ? head[iEmp] : "" } };
@@ -1462,7 +1462,7 @@ a { color: var(--info); }
     const waiting = [...S.ondeck.values()].filter((o) => odState(o, byName).key === "ondeck").length;
     $("ondeck-count").textContent = S.ondeck.size ? `${waiting}` : "";
     const rows = $("od-rows");
-    const banner = !S.db ? `<div class="banner bad"><strong>Shared list unavailable</strong>Open the tracker in claude.ai while signed in.</div>` : !canEdit() ? `<div class="banner">You have view-only access, so you can't import lists or send targets to Today.</div>` : "";
+    const banner = !S.db ? `<div class="banner bad"><strong>Shared list unavailable</strong>Open the dashboard in claude.ai while signed in.</div>` : !canEdit() ? `<div class="banner">You have view-only access, so you can't import lists or send targets to Today.</div>` : "";
     $("od-banner").innerHTML = banner;
     $("od-import").disabled = !canEdit();
     if (!S.db || !S.loaded.od) { rows.innerHTML = `<tr><td colspan="6"><div class="empty">${S.db ? `<span class="spinner"></span> Loading On-Deck targets…` : "Not available in this view."}</div></td></tr>`; renderOdBar([]); return; }
@@ -1590,7 +1590,7 @@ a { color: var(--info); }
       if (nm) { const first = nm.split(/\s+/)[0]; if (!$("owner").value && OWNERS.includes(first)) $("owner").value = first; }
     }
     if (db) {
-      const onErr = (e) => { S.dbError = e && e.code === "revoked" ? "Your access to this tracker changed. Reload the page." : "The shared list stopped updating. Reload the page."; renderDash(); };
+      const onErr = (e) => { S.dbError = e && e.code === "revoked" ? "Your access to this dashboard changed. Reload the page." : "The shared list stopped updating. Reload the page."; renderDash(); };
       db.collection("companies").limit(1000).onSnapshot((snap) => { S.companies = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.co = true; renderDash(); renderJobs(); renderOndeck(); }, onErr);
       db.collection("ondeck").limit(1000).onSnapshot((snap) => { S.ondeck = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.od = true; fillOdOptions(); renderOndeck(); }, onErr);
       db.collection("contacts").limit(1000).onSnapshot((snap) => { S.contacts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.ct = true; renderDash(); if (contactsReady) { contactsReady(); contactsReady = null; } }, onErr);
