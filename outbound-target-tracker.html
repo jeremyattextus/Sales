@@ -304,6 +304,7 @@ a { color: var(--info); }
   // HubSpot owner IDs for the tracker's owners (portal 517572). New records the tracker creates are owned by the company's tracker owner.
   const HS_OWNER_IDS = { Jeremy: "92239065", David: "96822192" };
   const HS_OWNER_NAMES = { Jeremy: "Jeremy O'Hara", David: "David Walker" };
+  const TASK_TITLE = "Outbound 1st Call and Sequence Launch";
   const SEQ_PROPS = ["email", "hs_sequences_is_enrolled", "hs_latest_sequence_enrolled", "hs_latest_sequence_enrolled_date", "hs_latest_sequence_ended_date", "hs_sequences_enrolled_count"];
 
   // Persona rules (priority order). Exclusions win over everything.
@@ -806,7 +807,7 @@ a { color: var(--info); }
             return {
               objectType: "tasks",
               properties: {
-                hs_task_subject: `1st call + enroll in sequence: ${c.first_name} ${c.last_name} (${co.name})`,
+                hs_task_subject: TASK_TITLE,
                 hs_task_body: `${c.title || ""}\n${phone}\n1. Make the first call.\n2. Enroll in the outbound sequence.\nSourced contact: call only, do not text until they opt in.`,
                 hs_task_type: "CALL", hs_task_status: "NOT_STARTED", hs_timestamp: due, hubspot_owner_id: owner,
               },
@@ -816,9 +817,9 @@ a { color: var(--info); }
           let p;
           try { p = await spendTool(HS, "manage_crm_objects", { confirmationStatus: "CONFIRMED", createRequest: { objects } }); }
           catch (e) { notes.push("Call tasks: " + errText(e, HS) + " Some tasks may not have been created; check HubSpot before creating them by hand."); break; }
-          const recs = createdRecords(p).filter((r) => /1st call/.test(r.props.hs_task_subject || ""));
+          const recs = createdRecords(p).filter((r) => r.props.hs_task_subject === TASK_TITLE);
           for (const [k, { c }] of batch.entries()) {
-            const rec = recs.find((r) => String(r.props.hs_task_subject || "").includes(`${c.first_name} ${c.last_name}`)) || (recs.length === batch.length ? recs[k] : null);
+            const rec = recs.length === batch.length ? recs[k] : null;
             await S.db.doc("contacts/" + c.id).update({ hubspot_task_created_at: nowIso(), hubspot_task_id: rec ? rec.id : "", updated_at: nowIso() });
             tasksMade++;
           }
@@ -1130,7 +1131,7 @@ a { color: var(--info); }
     return `<div class="import">
       <div><b>Import to HubSpot</b> <span class="small muted">Review what will happen. Existing HubSpot records are never edited. Mobile numbers are not sent.</span></div>
       <div class="cand-wrap"><table class="cand" style="min-width:560px"><thead><tr><th>Record</th><th>Action</th><th>Details</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
-      <label class="switch small"><input type="checkbox" data-import-tasks="${esc(co.id)}" ${p.tasks ? "checked" : ""}> Create a call task for each contact: “1st call + enroll in sequence”, due now, assigned to ${esc(owner)}</label>
+      <label class="switch small"><input type="checkbox" data-import-tasks="${esc(co.id)}" ${p.tasks ? "checked" : ""}> Create a call task for each contact: “${TASK_TITLE}”, due now, assigned to ${esc(owner)}</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn primary" type="button" data-import-run="${esc(co.id)}">${creates ? `Create ${creates} record${creates === 1 ? "" : "s"}${links ? ` and link ${links}` : ""}` : `Link ${links} existing record${links === 1 ? "" : "s"}`}</button>
         <button class="btn" type="button" data-import-close="${esc(co.id)}">Cancel</button>
