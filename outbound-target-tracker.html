@@ -720,7 +720,7 @@ a { color: var(--info); }
       if (!companyHsId) { companyHsId = await hsFindCompanyId(co); companyAction = companyHsId ? "link" : "create"; }
       const byEmail = await hsIdsByEmail(pending.map((c) => c.email));
       const contacts = pending.map((c) => { const hit = byEmail[lc(c.email)]; return { id: c.id, action: hit ? "link" : "create", hsId: hit || "" }; });
-      setImport(coId, { state: "confirm", plan: { companyAction, companyHsId, contacts } });
+      setImport(coId, { state: "confirm", plan: { companyAction, companyHsId, contacts, tasks: true } });
     } catch (e) { setImport(coId, { state: "error", msg: errText(e, HS) }); }
   }
 
@@ -757,12 +757,14 @@ a { color: var(--info); }
 
       // 2. Contacts: link existing ones, create the rest (max 10 per request).
       const all = plan.contacts.map((x) => ({ ...x, c: S.contacts.get(x.id) })).filter((x) => x.c && !x.c.hubspot_id);
+      const imported = []; // { c, hsId } for every contact linked or created in this run
       for (const x of all.filter((x) => x.action === "link")) {
         await S.db.doc("contacts/" + x.id).update({ hubspot_id: x.hsId, in_hubspot: true, hubspot_import_action: "linked", hubspot_imported_at: ts, updated_at: ts });
+        imported.push({ c: x.c, hsId: x.hsId });
       }
       const toCreate = all.filter((x) => x.action === "create");
-      for (let i = 0; i < toCreate.length; i += 10) {
-        const batch = toCreate.slice(i, i + 10);
+      for (let i = 0; i < toCreate.length; i += 5) { // each contact carries 1 association; stay at 10 objects per request
+        const batch = toCreate.slice(i, i + 5);
         const objects = batch.map(({ c }) => {
           const props = { email: c.email, firstname: c.first_name || "", lastname: c.last_name || "", jobtitle: c.title || "", company: co.name, hubspot_owner_id: owner };
           if (c.direct_phone && !c.direct_phone_dnc) props.phone = c.direct_phone; // mobile numbers are never sent to HubSpot
@@ -785,12 +787,46 @@ a { color: var(--info); }
         }
         for (const { c } of batch) {
           const id = fromResp[lc(c.email)];
-          if (id) await S.db.doc("contacts/" + c.id).update({ hubspot_id: id, in_hubspot: true, hubspot_import_action: "created", hubspot_imported_at: ts, updated_at: ts });
+          if (id) { await S.db.doc("contacts/" + c.id).update({ hubspot_id: id, in_hubspot: true, hubspot_import_action: "created", hubspot_imported_at: ts, updated_at: ts }); imported.push({ c, hsId: id }); }
           else if (!failed) notes.push(`${c.first_name} ${c.last_name}: HubSpot hasn't returned a record yet. Use Refresh from HubSpot in a minute.`);
           else notes.push(`${c.first_name} ${c.last_name}: not confirmed in HubSpot. Click Import again; it links anything that already exists.`);
         }
       }
-      setImport(coId, { state: "done", msg: notes.length ? notes.join(" ") : "Imported. Company and contacts are linked to HubSpot." , warn: notes.length > 0 });
+      // 3. One "1st call + enroll" task per imported contact, due now, owned by the tracker owner.
+      let tasksMade = 0;
+      if (plan.tasks) {
+        const need = imported.filter(({ c }) => !(S.contacts.get(c.id) || c).hubspot_task_created_at);
+        for (let i = 0; i < need.length; i += 3) { // each task carries 2 associations; stay under 10 objects per request
+          const batch = need.slice(i, i + 3);
+          const due = String(Date.now());
+          const objects = batch.map(({ c, hsId }) => {
+            const assoc = [{ targetObjectId: Number(hsId), targetObjectType: "CONTACT" }];
+            if (companyHsId) assoc.push({ targetObjectId: Number(companyHsId), targetObjectType: "COMPANY" });
+            const phone = c.direct_phone && !c.direct_phone_dnc ? `Direct dial: ${c.direct_phone}` : "No direct dial in HubSpot; check the tracker for a callable number.";
+            return {
+              objectType: "tasks",
+              properties: {
+                hs_task_subject: `1st call + enroll in sequence: ${c.first_name} ${c.last_name} (${co.name})`,
+                hs_task_body: `${c.title || ""}\n${phone}\n1. Make the first call.\n2. Enroll in the outbound sequence.\nSourced contact: call only, do not text until they opt in.`,
+                hs_task_type: "CALL", hs_task_status: "NOT_STARTED", hs_timestamp: due, hubspot_owner_id: owner,
+              },
+              associations: assoc,
+            };
+          });
+          let p;
+          try { p = await spendTool(HS, "manage_crm_objects", { confirmationStatus: "CONFIRMED", createRequest: { objects } }); }
+          catch (e) { notes.push("Call tasks: " + errText(e, HS) + " Some tasks may not have been created; check HubSpot before creating them by hand."); break; }
+          const recs = createdRecords(p).filter((r) => /1st call/.test(r.props.hs_task_subject || ""));
+          for (const [k, { c }] of batch.entries()) {
+            const rec = recs.find((r) => String(r.props.hs_task_subject || "").includes(`${c.first_name} ${c.last_name}`)) || (recs.length === batch.length ? recs[k] : null);
+            await S.db.doc("contacts/" + c.id).update({ hubspot_task_created_at: nowIso(), hubspot_task_id: rec ? rec.id : "", updated_at: nowIso() });
+            tasksMade++;
+          }
+        }
+      }
+      if (tasksMade) notes.unshift(`Created ${tasksMade} call task${tasksMade === 1 ? "" : "s"} in HubSpot, due now, for ${HS_OWNER_NAMES[co.owner] || "the owner"}.`);
+      const warn = notes.some((n) => !/^Created \d+ call task/.test(n));
+      setImport(coId, { state: "done", msg: "Imported. " + (notes.length ? notes.join(" ") : "Company and contacts are linked to HubSpot."), warn });
       syncHubspot(false);
     } catch (e) {
       setImport(coId, { state: "error", msg: (e && e.code && /^(invalid_argument|quota_exceeded|resource_exhausted|revoked)$/.test(e.code) ? dbErrText(e) : errText(e, HS)) + " Click Import again to continue; it checks HubSpot first." });
@@ -1013,10 +1049,11 @@ a { color: var(--info); }
       ? `<div class="seq"><span class="chip ok">Sequence active</span> <b>${esc(seqName(c.hs_seq_id))}</b> <span class="muted">since ${esc(fmtDate(c.hs_seq_enrolled_at))}</span></div>`
       : c.hs_seq_id ? `<div class="seq"><span class="chip">Sequence ended</span> ${esc(seqName(c.hs_seq_id))} <span class="muted">${c.hs_seq_ended_at ? "ended " + esc(fmtDate(c.hs_seq_ended_at)) : "enrolled " + esc(fmtDate(c.hs_seq_enrolled_at))}</span></div>`
       : c.hs_seq_active === false ? `<div class="seq muted">Never enrolled in a HubSpot sequence</div>` : "";
+    const task = c.hubspot_task_created_at ? `<div class="seq"><span class="chip">Call task</span> <span class="muted">created ${esc(fmtDate(c.hubspot_task_created_at))}</span></div>` : "";
     const phone = (v, dnc, lbl) => (v ? `<div class="line"><span class="lbl">${lbl}</span><span class="val">${esc(v)}</span>${dnc ? `<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>` : ""}${copyBtn(v, lbl + " phone")}</div>` : "");
     return `<div class="person">
       <div class="who"><b>${esc(c.first_name)} ${esc(c.last_name)}</b><div class="title">${esc(c.title)}</div>
-        <div class="flags"><span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>${hs}${confFlags(c.zoominfo_accuracy, c.zoominfo_last_updated)}${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}</div>${seq}</div>
+        <div class="flags"><span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>${hs}${confFlags(c.zoominfo_accuracy, c.zoominfo_last_updated)}${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}</div>${seq}${task}</div>
       <div>${c.email ? `<div class="line"><span class="lbl">Email</span><span class="val">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : `<span class="muted small">No email</span>`}</div>
       <div>${phone(c.direct_phone, c.direct_phone_dnc, "Direct")}${phone(c.mobile_phone, c.mobile_phone_dnc, "Mobile")}<div class="calls-note">For calls only. Do not text sourced contacts.</div></div>
       <div class="acts">
@@ -1093,6 +1130,7 @@ a { color: var(--info); }
     return `<div class="import">
       <div><b>Import to HubSpot</b> <span class="small muted">Review what will happen. Existing HubSpot records are never edited. Mobile numbers are not sent.</span></div>
       <div class="cand-wrap"><table class="cand" style="min-width:560px"><thead><tr><th>Record</th><th>Action</th><th>Details</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
+      <label class="switch small"><input type="checkbox" data-import-tasks="${esc(co.id)}" ${p.tasks ? "checked" : ""}> Create a call task for each contact: “1st call + enroll in sequence”, due now, assigned to ${esc(owner)}</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn primary" type="button" data-import-run="${esc(co.id)}">${creates ? `Create ${creates} record${creates === 1 ? "" : "s"}${links ? ` and link ${links}` : ""}` : `Link ${links} existing record${links === 1 ? "" : "s"}`}</button>
         <button class="btn" type="button" data-import-close="${esc(co.id)}">Cancel</button>
@@ -1208,6 +1246,8 @@ a { color: var(--info); }
     }
   });
   $("rows").addEventListener("change", (ev) => {
+    const tk = ev.target.closest("[data-import-tasks]");
+    if (tk) { const st = importState(tk.dataset.importTasks); if (st && st.plan) st.plan.tasks = tk.checked; return; }
     const el = ev.target.closest("[data-edit]");
     if (!el || !canEdit()) return;
     const value = el.type === "checkbox" ? el.checked : el.value;
