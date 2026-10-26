@@ -1058,7 +1058,7 @@ a { color: var(--info); }
       <div>${c.email ? `<div class="line"><span class="lbl">Email</span><span class="val">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : `<span class="muted small">No email</span>`}</div>
       <div>${phone(c.direct_phone, c.direct_phone_dnc, "Direct")}${phone(c.mobile_phone, c.mobile_phone_dnc, "Mobile")}<div class="calls-note">For calls only. Do not text sourced contacts.</div></div>
       <div class="acts">
-        ${c.hubspot_id ? `<a class="btn sm ${c.hs_seq_active ? "" : "primary"}" style="text-decoration:none" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${esc(c.hubspot_id)}" target="_blank" rel="noopener" title="${c.hs_seq_active ? "Open this contact in HubSpot" : "Opens the contact in HubSpot. Choose Enroll in sequence there, then use Refresh from HubSpot here."}">${c.hs_seq_active ? "Open in HubSpot ↗" : "Enroll in HubSpot ↗"}</a>` : ""}
+        ${c.hubspot_id ? `<a class="btn sm" style="text-decoration:none" href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${esc(c.hubspot_id)}" target="_blank" rel="noopener" title="Open this contact's record in HubSpot">View in HubSpot ↗</a>` : ""}
         ${selectHtml(CT_STATUS, c.status, `data-edit="contacts/${esc(c.id)}" data-field="status" aria-label="Contact status"`, CT_TONE[c.status])}
         <label><input type="checkbox" data-edit="contacts/${esc(c.id)}" data-field="linkedin_connect_sent" ${c.linkedin_connect_sent ? "checked" : ""} ${canEdit() ? "" : "disabled"}> LinkedIn sent</label>
       </div>
