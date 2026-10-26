@@ -789,9 +789,22 @@ a { color: var(--info); }
       const pending = contactsFor(coId).filter((c) => !c.hubspot_id);
       let companyAction = "existing", companyHsId = co.hubspot_company_id || "";
       if (!companyHsId) { companyHsId = await hsFindCompanyId(co); companyAction = companyHsId ? "link" : "create"; }
+      // Existing company: its HubSpot owner is switched to the dashboard owner on import.
+      let currentOwnerId = "", currentOwnerName = "";
+      if (companyHsId) {
+        const pc = await readTool(HS, "get_crm_objects", { objectType: "companies", objectIds: [Number(companyHsId)], properties: ["name", "hubspot_owner_id"] });
+        const rec = ((pc && (pc.objects || pc.results)) || [])[0];
+        currentOwnerId = String((rec && rec.properties && rec.properties.hubspot_owner_id) || "");
+        const known = Object.keys(HS_OWNER_IDS).find((k) => HS_OWNER_IDS[k] === currentOwnerId);
+        if (known) currentOwnerName = HS_OWNER_NAMES[known];
+        else if (currentOwnerId) {
+          try { const po = await readTool(HS, "search_owners", { ownerIds: [Number(currentOwnerId)] }); const o = ((po && po.owners) || [])[0]; currentOwnerName = (o && o.name) || ""; } catch {}
+        }
+      }
+      const ownerChange = !!companyHsId && currentOwnerId !== (HS_OWNER_IDS[co.owner] || "");
       const byEmail = await hsIdsByEmail(pending.map((c) => c.email));
       const contacts = pending.map((c) => { const hit = byEmail[lc(c.email)]; return { id: c.id, action: hit ? "link" : "create", hsId: hit || "" }; });
-      setImport(coId, { state: "confirm", plan: { companyAction, companyHsId, contacts, tasks: true } });
+      setImport(coId, { state: "confirm", plan: { companyAction, companyHsId, contacts, tasks: true, ownerChange, currentOwnerId, currentOwnerName } });
     } catch (e) { setImport(coId, { state: "error", msg: errText(e, HS) }); }
   }
 
@@ -819,6 +832,12 @@ a { color: var(--info); }
         companyHsId = (createdRecords(p)[0] || {}).id || "";
         for (let i = 0; !companyHsId && i < 3; i++) { await sleep(1500 * (i + 1)); companyHsId = await hsFindCompanyId(co); }
         if (!companyHsId) notes.push("HubSpot accepted the company but its record id wasn't found yet. Contacts were created without the company link; use Refresh from HubSpot later.");
+      }
+      if (plan.companyAction !== "create" && plan.ownerChange && companyHsId && owner) {
+        try {
+          await spendTool(HS, "manage_crm_objects", { confirmationStatus: "CONFIRMED", updateRequest: { objects: [{ objectType: "companies", objectId: Number(companyHsId), properties: { hubspot_owner_id: owner } }] } });
+          notes.push(`Company owner in HubSpot changed to ${HS_OWNER_NAMES[co.owner] || co.owner}.`);
+        } catch (e) { notes.push("Company owner wasn't changed: " + errText(e, HS)); }
       }
       if (companyHsId && companyHsId !== co.hubspot_company_id) {
         await S.db.doc("companies/" + coId).update({ hubspot_company_id: companyHsId, in_hubspot: true, hubspot_company_action: plan.companyAction === "create" ? "created" : "linked", hubspot_imported_at: ts, hubspot_imported_by: by, updated_at: ts });
@@ -1191,7 +1210,7 @@ a { color: var(--info); }
     const p = st.plan;
     const owner = HS_OWNER_NAMES[co.owner] || "you";
     const rows = [];
-    rows.push(`<tr><td><b>${esc(co.name)}</b> <span class="muted small">company</span></td><td>${p.companyAction === "create" ? `<span class="chip ok">Create</span>` : `<span class="chip">Link existing</span>`}</td><td class="small">${p.companyAction === "create" ? `Name, domain ${esc(co.domain || "—")}, owner ${esc(owner)}` : `<a href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-2/${esc(p.companyHsId)}" target="_blank" rel="noopener">Record ${esc(p.companyHsId)}</a> stays as is`}</td></tr>`);
+    rows.push(`<tr><td><b>${esc(co.name)}</b> <span class="muted small">company</span></td><td>${p.companyAction === "create" ? `<span class="chip ok">Create</span>` : `<span class="chip">Link existing</span>`}</td><td class="small">${p.companyAction === "create" ? `Name, domain ${esc(co.domain || "—")}, owner ${esc(owner)}` : `<a href="https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-2/${esc(p.companyHsId)}" target="_blank" rel="noopener">Record ${esc(p.companyHsId)}</a>: ${p.ownerChange ? `<b>owner changes</b> from ${esc(p.currentOwnerName || (p.currentOwnerId ? "owner " + p.currentOwnerId : "no owner"))} to ${esc(owner)}` : `already owned by ${esc(owner)}`}; nothing else changes`}</td></tr>`);
     for (const x of p.contacts) {
       const c = S.contacts.get(x.id); if (!c) continue;
       const fields = ["email", c.direct_phone && !c.direct_phone_dnc ? "direct dial" : "", "title", c.linkedin_url ? "LinkedIn" : ""].filter(Boolean).join(", ");
@@ -1200,11 +1219,11 @@ a { color: var(--info); }
     const creates = (p.companyAction === "create" ? 1 : 0) + p.contacts.filter((x) => x.action === "create").length;
     const links = (p.companyAction === "link" ? 1 : 0) + p.contacts.filter((x) => x.action === "link").length;
     return `<div class="import">
-      <div><b>Import to HubSpot</b> <span class="small muted">Review what will happen. Existing HubSpot records are never edited. Mobile numbers are not sent.</span></div>
+      <div><b>Import to HubSpot</b> <span class="small muted">Review what will happen. The company's HubSpot owner is set to ${esc(owner)}. Existing contacts are never edited. Mobile numbers are not sent.</span></div>
       <div class="cand-wrap"><table class="cand" style="min-width:560px"><thead><tr><th>Record</th><th>Action</th><th>Details</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
       <label class="switch small"><input type="checkbox" data-import-tasks="${esc(co.id)}" ${p.tasks ? "checked" : ""}> Create a task for each contact: “${TASK_TITLE}”, due now, assigned to ${esc(owner)}</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="btn primary" type="button" data-import-run="${esc(co.id)}">${creates ? `Create ${creates} record${creates === 1 ? "" : "s"}${links ? ` and link ${links}` : ""}` : `Link ${links} existing record${links === 1 ? "" : "s"}`}</button>
+        <button class="btn primary" type="button" data-import-run="${esc(co.id)}">${[creates ? `Create ${creates} record${creates === 1 ? "" : "s"}` : "", links ? `link ${links}` : "", p.ownerChange ? "set company owner" : ""].filter(Boolean).join(", ").replace(/^./, (m) => m.toUpperCase()) || "Confirm"}</button>
         <button class="btn" type="button" data-import-close="${esc(co.id)}">Cancel</button>
       </div>
     </div>`;
@@ -1231,7 +1250,7 @@ a { color: var(--info); }
 
   function renderConn() {
     const pill = (name) => { const s = S.conn[name].state; return `<span class="pill ${s === "ok" ? "ok" : s === "bad" ? "bad" : ""}" title="${esc(S.conn[name].msg)}">${name}${s === "checking" ? " · checking" : s === "bad" ? " · unavailable" : ""}</span>`; };
-    $("conn").innerHTML = pill(ZI) + pill(HS) + `<span class="pill" title="The dashboard creates new HubSpot records only when you click Import, and never edits existing ones.">HubSpot: import only</span>`;
+    $("conn").innerHTML = pill(ZI) + pill(HS) + `<span class="pill" title="The dashboard writes to HubSpot only when you click Import: it creates new records and sets the company owner, and never edits existing contacts.">HubSpot: import only</span>`;
   }
 
   // ---------- writes ----------
