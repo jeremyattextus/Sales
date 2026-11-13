@@ -91,7 +91,9 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .who select { background: var(--bar-seg); color: var(--bar-ink); border: 0; border-radius: 6px; padding: 3px 6px; font-size: 13px; }
 
 /* Page */
-main { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 26px 64px; display: grid; gap: 18px; }
+main { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 26px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+main > section, main > section > div { min-width: 0; }
+main > section > div { grid-template-columns: minmax(0, 1fr); }
 .banner { border-radius: var(--radius); padding: 10px 14px; font-size: 14px; background: var(--warn-soft); color: var(--warn); }
 .banner.info { background: var(--deal-soft); color: var(--deal-ink); }
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
@@ -234,6 +236,78 @@ details.done-box summary::-webkit-details-marker { display: none; }
   h1 { font-size: 25px; }
   .tasklist > li { padding: 12px; }
 }
+
+/* Filters */
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; }
+.filters label.lbl { min-width: 0; }
+.filters .sel, .filters .field { padding: 6px 9px; font-size: 13.5px; }
+.filters .clear { align-self: center; }
+.result-note { font-size: 13px; color: var(--muted); }
+
+/* Contacts, sourced */
+.tier { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; font-family: var(--font-head); white-space: nowrap; }
+.tier.t1 { background: var(--deal-soft); color: var(--deal-ink); }
+.tier.t2 { background: var(--gong-soft); color: var(--gong); }
+.tier.t3 { background: var(--surface-2); color: var(--heading); }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--muted); text-decoration: none; font-family: var(--font-head); }
+a.chip:hover { color: var(--ink); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.cline { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; }
+.cline .k { font-family: var(--font-head); font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); width: 52px; flex: none; }
+.cline .v { overflow-wrap: anywhere; user-select: all; min-width: 0; font-variant-numeric: tabular-nums; }
+.copy { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 6px; font-size: 11px; padding: 0 7px; line-height: 20px; cursor: pointer; flex: none; }
+.copy:hover { color: var(--ink); }
+.copy.done { color: var(--ok); border-color: var(--ok); }
+.flags { display: flex; flex-wrap: wrap; gap: 4px; }
+.calls-note { font-size: 11.5px; color: var(--muted); }
+.li-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.li-check input { width: 16px; height: 16px; accent-color: var(--blue); }
+
+/* Find targets */
+.intake { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+@media (max-width: 720px) { .intake { grid-template-columns: minmax(0, 1fr); } }
+.intake textarea.field { min-height: 44px; }
+.conn-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.conn-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.conn-pill.ok::before { background: var(--ok); }
+.conn-pill.bad { color: var(--bad); }
+.conn-pill.bad::before { background: var(--bad); }
+.jobs { display: grid; gap: 12px; }
+.job { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.job-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; }
+.job-head .name { font-family: var(--font-head); font-size: 16px; color: var(--heading); }
+.job-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); }
+.job-facts b { color: var(--ink); font-weight: 600; }
+.opts { display: grid; gap: 6px; }
+.opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); text-align: left; cursor: pointer; color: var(--ink); }
+.opt:hover { border-color: var(--blue); }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; user-select: none; }
+.switch input { width: 16px; height: 16px; accent-color: var(--blue); }
+.cand-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table.cand { border-collapse: collapse; width: 100%; min-width: 700px; font-size: 13.5px; }
+.cand th, .cand td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.cand th { font-family: var(--font-head); font-weight: 400; font-size: 11.5px; color: var(--muted); background: var(--surface-2); }
+.cand tr:last-child td { border-bottom: 0; }
+.cand tr.off td { color: var(--muted); }
+.cand input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); }
+.avail { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.avail i { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface-2); color: var(--muted); }
+.avail i.y { background: var(--ok-soft); color: var(--ok); }
+.avail i.d { background: var(--warn-soft); color: var(--warn); }
+.credit { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 10px; background: var(--deal-soft); }
+.credit .big { font-family: var(--font-head); font-size: 24px; color: var(--heading); line-height: 1; }
+.job ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+.od-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
+.od th { text-align: left; font-family: var(--font-head); font-weight: 400; font-size: 12px; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.od td { padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.od tr:last-child td { border-bottom: 0; }
+.od tr.sel td { background: var(--deal-soft); }
+.od input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); }
+.od .r { text-align: right; }
+.added-today { display: flex; gap: 6px; flex-wrap: wrap; }
 </style>
 
 <header class="bar">
@@ -242,6 +316,7 @@ details.done-box summary::-webkit-details-marker { display: none; }
     <nav class="nav" aria-label="Views">
       <a href="#today" id="nav-today">Today <span class="count" id="nav-count" hidden></span></a>
       <a href="#accounts" id="nav-accounts">Accounts</a>
+      <a href="#prospect" id="nav-prospect">Find targets</a>
     </nav>
     <div class="bar-right">
       <div class="seg" role="group" aria-label="Owner" id="owner-seg">
@@ -261,7 +336,9 @@ details.done-box summary::-webkit-details-marker { display: none; }
   <section id="view-today" hidden></section>
   <section id="view-accounts" hidden></section>
   <section id="view-account" hidden></section>
+  <section id="view-prospect" hidden></section>
 </main>
+<input type="file" id="od-file" accept=".csv,text/csv" hidden>
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script>
@@ -271,9 +348,31 @@ details.done-box summary::-webkit-details-marker { display: none; }
   const OWNERS = ["Jeremy", "David"];
   const SF_USERS = { Jeremy: "005Pe00000MyPQJIA3", David: "005Pe00000RHuxVIAT" };
   const SF_BASE = "https://textus.lightning.force.com";
-  const OUT_STAGES = ["Target", "Contacted", "Engaged", "Ready"];
-  const CONTACT_STATUS = ["Active", "Engaged", "Dormant", "Dead"];
-  const SF = "Salesforce", GONG = "Gong";
+  const OUT_STAGES = ["Target", "Contacted", "Engaged", "Ready", "Nurture", "Disqualified"];
+  const CONTACT_STATUS = ["Not started", "Contacted", "Connected", "Meeting booked", "Not interested", "Bad data"];
+  const STATUS_ALIAS = { Active: "Connected", Engaged: "Connected", Dormant: "Not interested", Dead: "Bad data", "In sequence": "Contacted" };
+  const SF = "Salesforce", GONG = "Gong", ZI = "ZoomInfo";
+
+  // ZoomInfo targeting (carried over from the Outbound Dashboard)
+  const MIN_QUALIFIED = 3;
+  const LOW_CONFIDENCE = 85;
+  const STALE_DAYS = 365;
+  const HR_TITLES = ["HR", "Human Resources", "HRBP", "HR Business Partner", "HR Generalist", "HR Manager", "HR Director", "People", "Personnel", "CHRO", "Employee Relations"];
+  const OPS_TITLES = ["Plant Manager", "Plant Director", "Operations Manager", "Director of Operations", "Site Manager", "Plant General Manager", "Manufacturing Manager"];
+  const EXCLUDE_TITLES = ["Recruiter", "Recruiting", "Talent Acquisition", "Sourcer", "HRIS", "HR Technology", "Information Technology"];
+  const ENRICH_FIELDS = ["firstName", "lastName", "jobTitle", "email", "phone", "mobilePhone", "directPhoneDoNotCall", "mobilePhoneDoNotCall", "externalUrls", "contactAccuracyScore", "lastUpdatedDate", "validDate"];
+  const ZI_INTENT = "Build a short outbound working list of HR contacts at a target company for one sales rep";
+  const RX_EXCLUDE = /recruit|talent acq|\bTA\b|sourc(er|ing)|hris|hr tech|technolog|technical|\bIT\b|information|systems|software|engineer|developer|analytic|\bdata\b|procure|purchas|category manager|buyer/i;
+  const RX_HR = /\bHR\b|\bHRBP\b|human resources|human capital|\bpeople\b|personnel|employee relations|labor relations|employee experience/i;
+  const RX_LEAD = /chief|\bCHRO\b|\bCPO\b|vice president|\bS?VP\b|\bEVP\b|director|head of/i;
+  const RX_OPS = /plant manager|plant director|plant general manager|plant leader|operations manager|director of operations|operations director|site manager|general manager|manufacturing manager|vp,? (of )?operations|vice president.*operations/i;
+  const TIER_LABEL = { 1: "HR", 2: "HR leadership", 3: "Plant / ops" };
+  function tierOf(title) {
+    if (!title || RX_EXCLUDE.test(title)) return 0;
+    if (RX_HR.test(title)) return RX_LEAD.test(title) ? 2 : 1;
+    if (RX_OPS.test(title)) return 3;
+    return 0;
+  }
 
   const ICON = {
     plus: '<path d="M12 5v14M5 12h14"/>',
@@ -287,6 +386,8 @@ details.done-box summary::-webkit-details-marker { display: none; }
     check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     x: '<path d="M6 6l12 12M18 6L6 18"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+    upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
 
@@ -298,40 +399,52 @@ details.done-box summary::-webkit-details-marker { display: none; }
   const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const today = () => ymd(new Date());
   const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+  const localDay = (iso) => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : ymd(d); };
   const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const fmtDate = (s) => { if (!s) return "—"; const [y, m, d] = String(s).slice(0, 10).split("-").map(Number); if (!y) return "—"; const cy = new Date().getFullYear(); return `${MON[m - 1]} ${d}${y !== cy ? ", " + y : ""}`; };
   const fmtWhen = (iso) => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; const t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); return ymd(d) === today() ? `Today ${t}` : `${fmtDate(ymd(d))} · ${t}`; };
   const money = (n) => (n == null || n === "" || isNaN(Number(n))) ? "—" : Number(n).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const fmtInt = (n) => (n == null || n === "" ? "—" : Number(n).toLocaleString());
+  const num = (v) => { const n = Number(String(v == null ? "" : v).replace(/[^0-9.-]/g, "")); return Number.isFinite(n) && String(v == null ? "" : v) !== "" ? n : null; };
   const daysBetween = (a, b) => { const [y1, m1, d1] = a.split("-").map(Number), [y2, m2, d2] = b.split("-").map(Number); return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 864e5); };
+  const daysSince = (iso) => { const d = new Date(iso); return isNaN(d) ? null : (Date.now() - d.getTime()) / 864e5; };
   const dueLabel = (due) => { const t = today(); if (!due) return { cls: "", txt: "No date" }; if (due < t) { const n = daysBetween(due, t); return { cls: "over", txt: n === 1 ? "1 day late" : `${n} days late` }; } if (due === t) return { cls: "today", txt: "Today" }; if (due === addDays(t, 1)) return { cls: "", txt: "Tomorrow" }; return { cls: "", txt: fmtDate(due) }; };
   const normDomain = (s) => String(s || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split(/[\/?#]/)[0];
   const normName = (s) => String(s || "").toLowerCase().replace(/&/g, "and").replace(/\b(inc|llc|ltd|corp|corporation|co|company|group|the)\b\.?/g, "").replace(/[^a-z0-9]/g, "");
+  const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const looksDomain = (s) => /^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+\/?$/i.test(String(s).trim());
   const store = { get(k) { try { return localStorage.getItem("cockpit." + k); } catch { return null; } }, set(k, v) { try { localStorage.setItem("cockpit." + k, v); } catch {} } };
+  const storeJ = { get(k) { try { return JSON.parse(store.get(k) || "null"); } catch { return null; } }, set(k, v) { store.set(k, JSON.stringify(v)); } };
   const initial = (o) => (o || "?").slice(0, 1).toUpperCase();
   const fv = (f, n) => { const el = f.elements.namedItem(n); return el ? el.value : ""; };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const cStatus = (s) => STATUS_ALIAS[s] || s || "Not started";
 
   // ---------- state ----------
   const S = {
     db: null, user: null, mcp: null, meId: null, meName: "",
     myOwner: store.get("me") || "", canWrite: null,
-    accounts: new Map(), tasks: new Map(), notes: new Map(), settings: {},
-    loaded: { a: false, t: false }, dbErr: "", dbAbsent: false,
+    accounts: new Map(), tasks: new Map(), notes: new Map(), ondeck: new Map(), settings: {},
+    loaded: { a: false, t: false, o: false }, dbErr: "", dbAbsent: false,
     owner: store.get("owner") || "mine", seg: store.get("seg") || "deal", q: "",
+    af: Object.assign({ close: "any", cfrom: "", cto: "", stage: "all", added: "any" }, storeJ.get("af") || {}),
     route: { view: "today", id: null },
-    conn: { [SF]: "unknown", [GONG]: "unknown" },
+    zi: { state: "checking", msg: "" },
     sync: { running: false, msg: "", err: "" },
     gong: { running: false, err: "" },
     editTask: null, editContact: null, addContact: false, addAccount: false, confirmDelete: false,
-    notesUnsub: null, notesFor: null, names: {},
+    notesUnsub: null, notesFor: null,
+    jobs: [], odSel: new Set(), odPreview: null, odBusy: false,
+    odF: Object.assign({ q: "", status: "ondeck", sub: "all", list: "all" }, storeJ.get("odF") || {}),
   };
+  let jobSeq = 0;
   const canWrite = () => !!S.db && S.canWrite !== false;
+  const ziReady = () => canWrite() && !!S.mcp && S.zi.state === "ok";
 
   // ---------- owner filter ----------
   const otherOwner = () => (S.myOwner === "David" ? "Jeremy" : "David");
   function ownerMatch(owner) {
-    if (S.owner === "all") return true;
-    if (!S.myOwner) return true;
+    if (S.owner === "all" || !S.myOwner) return true;
     return S.owner === "mine" ? owner === S.myOwner : owner === otherOwner();
   }
   function renderOwnerSeg() {
@@ -351,14 +464,24 @@ details.done-box summary::-webkit-details-marker { display: none; }
   }
 
   // ---------- db writes ----------
+  function dbErrText(e) {
+    switch (e && e.code) {
+      case "invalid_argument": return "You don't have permission to change the board.";
+      case "quota_exceeded": return "The board is full. Delete old accounts before adding more.";
+      case "resource_exhausted": return "Too many saves at once. Wait a few seconds and try again.";
+      case "revoked": return "Your access to this board changed. Reload the page.";
+      default: return "That change didn't save" + (e && e.code ? ` (${e.code})` : "") + ". Try again.";
+    }
+  }
   async function w(fn, failMsg) {
     if (!canWrite()) { toast("You have view-only access to this board."); return false; }
-    try { await fn(); return true; } catch (e) { console.error(e); toast(failMsg || "That change didn't save. Try again."); return false; }
+    try { await fn(); return true; } catch (e) { console.error(e); toast(failMsg || dbErrText(e)); return false; }
   }
   const nowIso = () => new Date().toISOString();
   const acctRef = (id) => S.db.collection("accounts").doc(id);
   const taskRef = (id) => S.db.collection("tasks").doc(id);
   const noteRef = (id) => S.db.collection("notes").doc(id);
+  const odRef = (id) => S.db.collection("ondeck").doc(id);
   const touch = (id) => acctRef(id).update({ updated_at: nowIso() }).catch(() => {});
 
   async function setTaskDone(id, done) {
@@ -377,8 +500,8 @@ details.done-box summary::-webkit-details-marker { display: none; }
   // ---------- connectors ----------
   function payloadOf(result) {
     let p = result && result.payload !== undefined ? result.payload : result;
-    if (p && p.content && !p.structuredContent && Array.isArray(p.content)) { const t = p.content.find((c) => c.type === "text"); if (t) p = t.text; }
-    else if (p && p.structuredContent) p = p.structuredContent;
+    if (p && p.structuredContent) p = p.structuredContent;
+    else if (p && Array.isArray(p.content) && !p.data && !p.records) { const t = p.content.find((c) => c.type === "text"); if (t) p = t.text; }
     if (typeof p === "string") { const i = p.search(/[\[{]/); if (i >= 0) { try { p = JSON.parse(p.slice(i)); } catch {} } }
     return p;
   }
@@ -388,6 +511,7 @@ details.done-box summary::-webkit-details-marker { display: none; }
       case "needs_reauth": return `${s} needs to be reconnected. Reconnect it in claude.ai Settings → Connectors, then reload.`;
       case "server_not_connected": case "server_not_found": return `${s} isn't connected to your claude.ai account. Add it in Settings → Connectors, then reload.`;
       case "selection_required": return `You have more than one ${s} connector. Pick one when claude.ai asks, then try again.`;
+      case "not_in_manifest": return `${s} is turned off for this page. Turn it on from the artifact's Permissions menu.`;
       case "blocked_by_policy": return `Your organization blocks this ${s} tool for your account.`;
       case "consent_required": case "approval_required": return `Allow ${s} for this page when claude.ai asks, then try again.`;
       case "rate_limited": return `${s} is rate-limiting requests. Wait a minute and try again.`;
@@ -405,12 +529,26 @@ details.done-box summary::-webkit-details-marker { display: none; }
       throw e;
     }
   }
+  // Credit-spending calls are never retried automatically.
+  async function spendTool(server, tool, input) {
+    if (!S.mcp) throw { code: "not_granted", server, message: "" };
+    return payloadOf(await S.mcp.callTool(server, tool, input, { cache: false }));
+  }
+  async function checkZoomInfo() {
+    if (!S.mcp) { S.zi = { state: "bad", msg: "Connectors aren't available in this view. Open the cockpit in claude.ai." }; return; }
+    try {
+      const res = await S.mcp.listTools(ZI);
+      const s = ((res && res.servers) || []).find((x) => x.server === ZI);
+      if (!s) S.zi = { state: "bad", msg: "ZoomInfo isn't connected to your claude.ai account. Add it in Settings → Connectors, then reload." };
+      else if (s.authStatus === "needs_reauth") S.zi = { state: "bad", msg: "ZoomInfo needs to be reconnected in claude.ai Settings → Connectors. Then reload." };
+      else if (!s.tools || !s.tools.length) S.zi = { state: "bad", msg: "ZoomInfo isn't ready for this page. If you have more than one ZoomInfo connector, pick one when claude.ai asks." };
+      else S.zi = { state: "ok", msg: "" };
+    } catch (e) { S.zi = { state: "bad", msg: errText(e, ZI) }; }
+  }
 
   // ---------- Salesforce sync ----------
   function soqlRecords(p) { return (p && (p.records || (p.result && p.result.records))) || []; }
-  async function soql(q) {
-    return soqlRecords(await callTool(SF, "soqlQuery", { q }));
-  }
+  async function soql(q) { return soqlRecords(await callTool(SF, "soqlQuery", { q })); }
   async function syncSalesforce() {
     if (S.sync.running || !canWrite()) return;
     S.sync = { running: true, msg: "Reading open opportunities from Salesforce…", err: "" }; renderAccounts();
@@ -434,28 +572,28 @@ details.done-box summary::-webkit-details-marker { display: none; }
           sf_synced_at: nowIso(), band: "deal",
         };
         const role = r.OpportunityContactRoles && r.OpportunityContactRoles.records && r.OpportunityContactRoles.records[0];
-        const pc = role && role.Contact ? { sf_contact_id: role.ContactId, name: role.Contact.Name || "", title: role.Contact.Title || "", email: role.Contact.Email || "", phone: role.Contact.Phone || "" } : null;
+        const pc = role && role.Contact ? { sf_contact_id: role.ContactId, name: role.Contact.Name || "", title: role.Contact.Title || "", email: role.Contact.Email || "", phone: role.Contact.Phone || "", source: "salesforce" } : null;
         let id = byOpp.get(r.Id), mode = "update";
         if (!id) { id = (dom && byDomain.get(dom)) || byName.get(normName(acc.Name)); mode = id ? "convert" : "create"; }
         if (mode === "convert") { byDomain.delete(dom); byName.delete(normName(acc.Name)); }
         if (mode === "create") {
           id = rid("a");
-          const contacts = pc ? [{ id: rid("c"), ...pc, is_primary: true, status: "Active" }] : [];
+          const contacts = pc ? [{ id: rid("c"), ...pc, is_primary: true, status: "Connected" }] : [];
           jobs.push(() => acctRef(id).set({ ...sfFields, owner: ownerFor(r.OwnerId), company_name: acc.Name || r.Name, domain: dom, contacts, created_at: nowIso(), updated_at: nowIso() }));
           created++;
         } else {
           const a = S.accounts.get(id) || {}; const patch = { ...sfFields, updated_at: nowIso() };
-          if (mode === "convert") { patch.owner = ownerFor(r.OwnerId); converted++; } else updated++;
+          if (mode === "convert") { patch.owner = ownerFor(r.OwnerId); patch.outbound_stage = a.stage || ""; converted++; } else updated++;
           if (!a.domain && dom) patch.domain = dom;
           if (pc) {
             const cs = Array.isArray(a.contacts) ? a.contacts.slice() : [];
             const hit = cs.find((c) => (c.sf_contact_id && c.sf_contact_id === pc.sf_contact_id) || (pc.email && c.email && c.email.toLowerCase() === pc.email.toLowerCase()));
-            if (!hit) { cs.push({ id: rid("c"), ...pc, is_primary: !cs.some((c) => c.is_primary), status: "Active" }); patch.contacts = cs; }
+            if (!hit) { cs.push({ id: rid("c"), ...pc, is_primary: !cs.some((c) => c.is_primary), status: "Connected" }); patch.contacts = cs; }
+            else if (!hit.sf_contact_id) { patch.contacts = cs.map((c) => (c === hit ? { ...c, sf_contact_id: pc.sf_contact_id } : c)); }
           }
           jobs.push(() => acctRef(id).update(patch));
         }
       }
-      // Deals that left the open list: refresh their stage once.
       const gone = [...S.accounts.entries()].filter(([, a]) => a.sf_opportunity_id && !seen.has(a.sf_opportunity_id) && !a.sf_closed);
       let closed = 0;
       if (gone.length) {
@@ -527,19 +665,23 @@ details.done-box summary::-webkit-details-marker { display: none; }
   }
 
   // ---------- routing ----------
+  const VIEWS = ["today", "accounts", "account", "prospect"];
   function parseHash() {
     const h = location.hash.replace(/^#/, "");
     if (h === "accounts") return { view: "accounts", id: null };
-    const m = h.match(/^account-([A-Za-z0-9]+)$/); if (m) return { view: "account", id: m[1] };
+    if (h === "prospect") return { view: "prospect", id: null };
+    const m = h.match(/^account-([A-Za-z0-9-]+)$/); if (m) return { view: "account", id: m[1] };
     return { view: "today", id: null };
+  }
+  function showView(r) {
+    for (const v of VIEWS) $("view-" + v).hidden = r.view !== v;
+    for (const n of ["today", "accounts", "prospect"]) $("nav-" + n).removeAttribute("aria-current");
+    $(r.view === "today" ? "nav-today" : r.view === "prospect" ? "nav-prospect" : "nav-accounts").setAttribute("aria-current", "page");
   }
   function route() {
     const r = parseHash();
     if (r.id !== S.route.id) { S.editTask = null; S.editContact = null; S.addContact = false; S.confirmDelete = false; S.gong = { running: false, err: "" }; }
-    S.route = r;
-    $("view-today").hidden = r.view !== "today"; $("view-accounts").hidden = r.view !== "accounts"; $("view-account").hidden = r.view !== "account";
-    $("nav-today").removeAttribute("aria-current"); $("nav-accounts").removeAttribute("aria-current");
-    $(r.view === "today" ? "nav-today" : "nav-accounts").setAttribute("aria-current", "page");
+    S.route = r; showView(r);
     if (r.view === "account") { subscribeNotes(r.id); buildDetailShell(); }
     renderAll();
     window.scrollTo(0, 0);
@@ -554,6 +696,16 @@ details.done-box summary::-webkit-details-marker { display: none; }
       .sort((a, b) => (a[1].due_date < b[1].due_date ? -1 : a[1].due_date > b[1].due_date ? 1 : (a[1].created_at || "").localeCompare(b[1].created_at || "")));
   }
   function contactOf(acc, cid) { return cid && acc && Array.isArray(acc.contacts) ? acc.contacts.find((c) => c.id === cid) : null; }
+  function findAccount({ zid, domain, name }) {
+    const d = normDomain(domain), n = normName(name);
+    for (const [id, a] of S.accounts) {
+      if (zid && String(a.zoominfo_company_id || "") === String(zid)) return [id, a];
+    }
+    for (const [id, a] of S.accounts) {
+      if ((d && normDomain(a.domain) === d) || (n && normName(a.company_name) === n)) return [id, a];
+    }
+    return null;
+  }
 
   // ---------- banner ----------
   function renderBanner() {
@@ -567,10 +719,12 @@ details.done-box summary::-webkit-details-marker { display: none; }
 
   // ---------- Today ----------
   function renderToday() {
-    const el = $("view-today"); if (el.hidden && S.route.view !== "today") { renderNavCount(); return; }
+    renderNavCount();
+    if (S.route.view !== "today") return;
+    const el = $("view-today");
     const t = today(); const items = focusTasks();
     const over = items.filter(([, x]) => x.due_date < t), due = items.filter(([, x]) => x.due_date === t);
-    const d = new Date(); const dateTxt = d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+    const dateTxt = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
     const scope = S.owner === "all" ? "Everyone's accounts" : S.owner === "mine" ? (S.myOwner ? "Your accounts" : "All accounts") : `${otherOwner()}'s accounts`;
     const row = ([id, x]) => {
       const a = S.accounts.get(x.account_id) || {}; const c = contactOf(a, x.contact_id); const dl = dueLabel(x.due_date);
@@ -580,15 +734,14 @@ details.done-box summary::-webkit-details-marker { display: none; }
         <div class="t-side">${S.owner === "all" ? `<span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span>` : ""}<span class="pill ${dl.cls}">${esc(dl.txt)}</span></div></li>`;
     };
     let body;
-    if (!S.db && !S.dbAbsent) body = `<div class="empty"><span class="spinner"></span><span>Loading your board…</span></div>`;
-    else if (S.db && !(S.loaded.a && S.loaded.t)) body = `<div class="empty"><span class="spinner"></span><span>Loading your board…</span></div>`;
+    if (S.dbAbsent) body = `<div class="empty"><span>Open the cockpit in claude.ai to see your tasks.</span></div>`;
+    else if (!S.db || !(S.loaded.a && S.loaded.t)) body = `<div class="empty"><span class="spinner"></span><span>Loading your board…</span></div>`;
     else if (!items.length) body = `<div class="empty"><span class="bubble">Nothing due. You're caught up.</span><span class="small">Tasks you add on an account show up here on their due date. <a href="#accounts">Open accounts</a></span></div>`;
     else body = `${over.length ? `<div class="group-label eyebrow">Overdue · ${over.length}</div><ul class="tasklist">${over.map(row).join("")}</ul>` : ""}${due.length ? `<div class="group-label eyebrow">Due today · ${due.length}</div><ul class="tasklist">${due.map(row).join("")}</ul>` : ""}`;
     el.innerHTML = `<div style="display:grid;gap:18px">
       <div class="page-head"><div><div class="eyebrow">${esc(dateTxt)}</div><h1>What to work today</h1><div class="sub">${esc(scope)} · due and overdue tasks</div></div>
         <div class="focus-stats"><div class="stat over"><b class="num">${over.length}</b><span>overdue</span></div><div class="stat"><b class="num">${due.length}</b><span>due today</span></div></div></div>
       <div class="panel">${body}</div></div>`;
-    renderNavCount();
   }
   function renderNavCount() {
     const t = today(); const items = focusTasks(); const n = $("nav-count");
@@ -596,52 +749,25 @@ details.done-box summary::-webkit-details-marker { display: none; }
   }
 
   // ---------- Accounts ----------
-  function renderAccounts() {
-    if (S.route.view !== "accounts") return;
-    const t = today();
-    const all = [...S.accounts.entries()].filter(([, a]) => ownerMatch(a.owner));
-    const cnt = { outbound: all.filter(([, a]) => a.band !== "deal").length, deal: all.filter(([, a]) => a.band === "deal").length, all: all.length };
-    const q = S.q.trim().toLowerCase();
-    let rows = all.filter(([, a]) => S.seg === "all" || (S.seg === "deal" ? a.band === "deal" : a.band !== "deal"));
-    if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""}`.toLowerCase().includes(q));
-    const open = new Map(); const overdue = new Set();
-    for (const [, x] of openTasks()) { open.set(x.account_id, (open.get(x.account_id) || 0) + 1); if (x.due_date && x.due_date < t) overdue.add(x.account_id); }
-    rows.sort((a, b) => {
-      const A = a[1], B = b[1];
-      if (S.seg !== "outbound" && (A.band === "deal") !== (B.band === "deal")) return A.band === "deal" ? -1 : 1;
-      if (A.band === "deal" && B.band === "deal") { if (!!A.sf_closed !== !!B.sf_closed) return A.sf_closed ? 1 : -1; return String(A.close_date || "9999").localeCompare(String(B.close_date || "9999")); }
-      return String(A.company_name || "").localeCompare(String(B.company_name || ""));
-    });
-    const showDeal = S.seg !== "outbound";
-    const last = S.settings.last_sf_sync;
-    const syncLine = S.sync.err ? `<span class="sync-line err">${esc(S.sync.err)}</span>` : S.sync.running ? `<span class="sync-line"><span class="spinner"></span> ${esc(S.sync.msg)}</span>` : S.sync.msg ? `<span class="sync-line">${esc(S.sync.msg)}</span>` : last ? `<span class="sync-line">Salesforce synced ${esc(fmtWhen(last.at))}${last.by ? ` by ${esc(last.by)}` : ""}</span>` : `<span class="sync-line">Salesforce not synced yet</span>`;
-    const tableBody = rows.map(([id, a]) => {
-      const n = open.get(id) || 0; const isDeal = a.band === "deal";
-      return `<tr data-href="#account-${id}" tabindex="0">
-        <td><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc(isDeal && a.sf_opportunity_name ? a.sf_opportunity_name : a.domain || "")}</div></td>
-        <td><span class="pill ${isDeal ? (a.sf_closed ? "warn" : "deal") : "out"}">${esc(a.stage || (isDeal ? "Deal" : "Target"))}</span></td>
-        <td><span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span> <span class="small">${esc(a.owner || "")}</span></td>
-        <td><span class="taskcount num">${overdue.has(id) ? '<span class="od" title="Has overdue tasks"></span>' : ""}${n || '<span class="muted">0</span>'}</span></td>
-        ${showDeal ? `<td class="r num">${isDeal ? money(a.amount) : '<span class="muted">—</span>'}</td><td class="num">${isDeal ? esc(fmtDate(a.close_date)) : '<span class="muted">—</span>'}</td>` : ""}
-      </tr>`;
-    }).join("");
-    const loading = S.db && !S.loaded.a;
-    const emptyMsg = loading ? `<div class="empty"><span class="spinner"></span><span>Loading accounts…</span></div>`
-      : !S.accounts.size ? `<div class="empty"><span class="bubble">No accounts yet.</span><span class="small">Sync Salesforce to bring in open deals, or add an outbound target by hand.</span></div>`
-      : `<div class="empty"><span>No accounts match${q ? ` “${esc(S.q)}”` : ""} in this view.</span></div>`;
-    if (!$("acc-table")) buildAccountsShell();
-    $("acc-sync").innerHTML = `${syncLine}
-          <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>
-          <button class="btn" type="button" data-act="add-account" ${!canWrite() ? "disabled" : ""}>${ic("plus")} Add target</button>`;
-    $("add-account-panel").hidden = !S.addAccount;
-    $("acc-tabs").innerHTML = `
-          <button type="button" data-seg="outbound" aria-pressed="${S.seg === "outbound"}">Outbound <span class="n num">${cnt.outbound}</span></button>
-          <button type="button" data-seg="deal" aria-pressed="${S.seg === "deal"}">Live deals <span class="n num">${cnt.deal}</span></button>
-          <button type="button" data-seg="all" aria-pressed="${S.seg === "all"}">All <span class="n num">${cnt.all}</span></button>`;
-    $("acc-table").innerHTML = rows.length ? `<div class="table-wrap"><table class="book"><thead><tr><th>Company</th><th>Stage</th><th>Owner</th><th>Open tasks</th>${showDeal ? '<th class="r">Amount</th><th>Close date</th>' : ""}</tr></thead><tbody>${tableBody}</tbody></table></div>` : emptyMsg;
+  function quarterStart(y, q) { return new Date(y, q * 3, 1); }
+  function closeRange() {
+    const f = S.af, now = new Date(), y = now.getFullYear(), m = now.getMonth(), q = Math.floor(m / 3);
+    const last = (d) => ymd(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+    switch (f.close) {
+      case "past": return ["", addDays(today(), -1)];
+      case "this-month": return [ymd(new Date(y, m, 1)), last(new Date(y, m, 1))];
+      case "next-month": return [ymd(new Date(y, m + 1, 1)), last(new Date(y, m + 1, 1))];
+      case "this-quarter": return [ymd(quarterStart(y, q)), last(new Date(y, q * 3 + 2, 1))];
+      case "next-quarter": return [ymd(quarterStart(y, q + 1)), last(new Date(y, q * 3 + 5, 1))];
+      case "next-90": return [today(), addDays(today(), 90)];
+      case "this-year": return [`${y}-01-01`, `${y}-12-31`];
+      case "custom": return [f.cfrom || "", f.cto || ""];
+      default: return null;
+    }
   }
-  document.addEventListener("input", (e) => { if (e.target.id === "acct-q") { S.q = e.target.value; renderAccounts(); } });
-
+  function addedSince() {
+    switch (S.af.added) { case "today": return today(); case "7": return addDays(today(), -6); case "30": return addDays(today(), -29); default: return ""; }
+  }
   function buildAccountsShell() {
     $("view-accounts").innerHTML = `<div style="display:grid;gap:16px">
       <div class="page-head"><div><div class="eyebrow">The book</div><h1>Accounts</h1></div>
@@ -655,19 +781,111 @@ details.done-box summary::-webkit-details-marker { display: none; }
             <label class="lbl" for="na-stage">Stage<select class="sel" id="na-stage">${OUT_STAGES.map((s) => `<option>${s}</option>`).join("")}</select></label>
           </div>
           <div class="row-form"><button class="btn" type="submit">${ic("plus")} Add outbound target</button><button class="btn ghost" type="button" data-act="cancel-account">Cancel</button>
-            <span class="small muted">Deals come in from Salesforce. A target that matches a synced opportunity by domain becomes that deal.</span></div>
+            <span class="small muted">To pull contacts from ZoomInfo, use <a href="#prospect">Find targets</a> instead.</span></div>
         </form>
       </div>
       <div class="toolbar">
         <div class="tabs" role="group" aria-label="Segment" id="acc-tabs"></div>
         <label class="sr" for="acct-q">Search accounts</label><input class="field" id="acct-q" type="search" placeholder="Search company, domain, stage" style="flex:0 1 280px">
       </div>
+      <div class="filters" id="acc-filters"></div>
       <div class="panel" id="acc-table"></div>
     </div>`;
+    S._fSeg = null;
   }
+  function renderAccFilters() {
+    const el = $("acc-filters"); const f = S.af;
+    if (S._fSeg === S.seg + "|" + f.close && el.contains(document.activeElement)) return;
+    S._fSeg = S.seg + "|" + f.close;
+    if (S.seg === "deal") {
+      el.innerHTML = `<label class="lbl" for="af-close">Close date<select class="sel" id="af-close">
+          ${[["any", "Any time"], ["past", "Past due"], ["this-month", "This month"], ["next-month", "Next month"], ["this-quarter", "This quarter"], ["next-quarter", "Next quarter"], ["next-90", "Next 90 days"], ["this-year", "This year"], ["custom", "Custom range"]].map(([v, l]) => `<option value="${v}" ${f.close === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        ${f.close === "custom" ? `<label class="lbl" for="af-from">From<input class="field" type="date" id="af-from" value="${esc(f.cfrom)}"></label><label class="lbl" for="af-to">To<input class="field" type="date" id="af-to" value="${esc(f.cto)}"></label>` : ""}
+        ${f.close !== "any" ? `<button class="btn ghost clear" type="button" data-act="af-clear">Clear</button>` : ""}
+        <span class="result-note" id="acc-note"></span>`;
+    } else if (S.seg === "outbound") {
+      el.innerHTML = `<label class="lbl" for="af-stage">Stage<select class="sel" id="af-stage"><option value="all">All stages</option>${OUT_STAGES.map((s) => `<option ${f.stage === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+        <label class="lbl" for="af-added">Added<select class="sel" id="af-added">${[["any", "Any time"], ["today", "Today"], ["7", "Last 7 days"], ["30", "Last 30 days"]].map(([v, l]) => `<option value="${v}" ${f.added === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        ${f.stage !== "all" || f.added !== "any" ? `<button class="btn ghost clear" type="button" data-act="af-clear">Clear</button>` : ""}
+        <span class="result-note" id="acc-note"></span>`;
+    } else el.innerHTML = `<span class="result-note" id="acc-note"></span>`;
+  }
+  function renderAccounts() {
+    if (S.route.view !== "accounts") return;
+    if (!$("acc-table")) buildAccountsShell();
+    const t = today();
+    const all = [...S.accounts.entries()].filter(([, a]) => ownerMatch(a.owner));
+    const cnt = { outbound: all.filter(([, a]) => a.band !== "deal").length, deal: all.filter(([, a]) => a.band === "deal").length, all: all.length };
+    const q = S.q.trim().toLowerCase();
+    let rows = all.filter(([, a]) => S.seg === "all" || (S.seg === "deal" ? a.band === "deal" : a.band !== "deal"));
+    const segTotal = rows.length;
+    if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""} ${a.sub_industry || ""}`.toLowerCase().includes(q));
+    if (S.seg === "deal") {
+      const r = closeRange();
+      if (r) rows = rows.filter(([, a]) => a.close_date && (!r[0] || a.close_date >= r[0]) && (!r[1] || a.close_date <= r[1]));
+    } else if (S.seg === "outbound") {
+      if (S.af.stage !== "all") rows = rows.filter(([, a]) => a.stage === S.af.stage);
+      const since = addedSince(); if (since) rows = rows.filter(([, a]) => localDay(a.created_at) >= since);
+    }
+    const open = new Map(); const overdue = new Set();
+    for (const [, x] of openTasks()) { open.set(x.account_id, (open.get(x.account_id) || 0) + 1); if (x.due_date && x.due_date < t) overdue.add(x.account_id); }
+    rows.sort((a, b) => {
+      const A = a[1], B = b[1];
+      if (S.seg === "all" && (A.band === "deal") !== (B.band === "deal")) return A.band === "deal" ? -1 : 1;
+      if (A.band === "deal" && B.band === "deal") { if (!!A.sf_closed !== !!B.sf_closed) return A.sf_closed ? 1 : -1; return String(A.close_date || "9999").localeCompare(String(B.close_date || "9999")); }
+      if (S.seg === "outbound") return String(B.created_at || "").localeCompare(String(A.created_at || ""));
+      return String(A.company_name || "").localeCompare(String(B.company_name || ""));
+    });
+    const last = S.settings.last_sf_sync;
+    const syncLine = S.sync.err ? `<span class="sync-line err">${esc(S.sync.err)}</span>` : S.sync.running ? `<span class="sync-line"><span class="spinner"></span> ${esc(S.sync.msg)}</span>` : S.sync.msg ? `<span class="sync-line">${esc(S.sync.msg)}</span>` : last ? `<span class="sync-line">Salesforce synced ${esc(fmtWhen(last.at))}${last.by ? ` by ${esc(last.by)}` : ""}</span>` : `<span class="sync-line">Salesforce not synced yet</span>`;
+    const ownerCell = (a) => `<td><span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span> <span class="small">${esc(a.owner || "")}</span></td>`;
+    const taskCell = (id) => { const n = open.get(id) || 0; return `<td><span class="taskcount num">${overdue.has(id) ? '<span class="od" title="Has overdue tasks"></span>' : ""}${n || '<span class="muted">0</span>'}</span></td>`; };
+    const stagePill = (a) => { const isDeal = a.band === "deal"; return `<span class="pill ${isDeal ? (a.sf_closed ? "warn" : "deal") : "out"}">${esc(a.stage || (isDeal ? "Deal" : "Target"))}</span>${a.incomplete && !isDeal ? ' <span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}`; };
+    let head, body;
+    if (S.seg === "outbound") {
+      head = `<th>Company</th><th>Stage</th><th>Owner</th><th class="r">Contacts</th><th>Open tasks</th><th>Added</th>`;
+      body = rows.map(([id, a]) => {
+        const cs = Array.isArray(a.contacts) ? a.contacts : []; const li = cs.filter((c) => c.linkedin_sent).length;
+        return `<tr data-href="#account-${id}" tabindex="0">
+          <td><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc([a.sub_industry || a.industry, a.employee_count ? fmtInt(a.employee_count) + " employees" : ""].filter(Boolean).join(" · ") || a.domain || "")}</div></td>
+          <td>${stagePill(a)}</td>${ownerCell(a)}
+          <td class="r num">${cs.length}${li ? ` <span class="small muted" title="LinkedIn connects sent">· LI ${li}</span>` : ""}</td>
+          ${taskCell(id)}<td class="num small">${esc(fmtDate(localDay(a.created_at)))}</td></tr>`;
+      }).join("");
+    } else {
+      head = `<th>Company</th><th>Stage</th><th>Owner</th><th>Open tasks</th><th class="r">Amount</th><th>Close date</th>`;
+      body = rows.map(([id, a]) => {
+        const isDeal = a.band === "deal";
+        return `<tr data-href="#account-${id}" tabindex="0">
+          <td><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc(isDeal && a.sf_opportunity_name ? a.sf_opportunity_name : a.sub_industry || a.domain || "")}</div></td>
+          <td>${stagePill(a)}</td>${ownerCell(a)}${taskCell(id)}
+          <td class="r num">${isDeal ? money(a.amount) : '<span class="muted">—</span>'}</td><td class="num">${isDeal ? esc(fmtDate(a.close_date)) : '<span class="muted">—</span>'}</td></tr>`;
+      }).join("");
+    }
+    const loading = S.db && !S.loaded.a;
+    const emptyMsg = loading ? `<div class="empty"><span class="spinner"></span><span>Loading accounts…</span></div>`
+      : !S.accounts.size ? `<div class="empty"><span class="bubble">No accounts yet.</span><span class="small">Sync Salesforce to bring in open deals, or <a href="#prospect">find outbound targets</a>.</span></div>`
+      : `<div class="empty"><span>No accounts match these filters.</span></div>`;
+    $("acc-sync").innerHTML = `${syncLine}
+          <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>
+          <button class="btn" type="button" data-act="add-account" ${!canWrite() ? "disabled" : ""}>${ic("plus")} Add target</button>`;
+    $("add-account-panel").hidden = !S.addAccount;
+    $("acc-tabs").innerHTML = `
+          <button type="button" data-seg="outbound" aria-pressed="${S.seg === "outbound"}">Outbound <span class="n num">${cnt.outbound}</span></button>
+          <button type="button" data-seg="deal" aria-pressed="${S.seg === "deal"}">Live deals <span class="n num">${cnt.deal}</span></button>
+          <button type="button" data-seg="all" aria-pressed="${S.seg === "all"}">All <span class="n num">${cnt.all}</span></button>`;
+    renderAccFilters();
+    const note = $("acc-note");
+    if (note) {
+      let txt = rows.length === segTotal ? `${rows.length} accounts` : `${rows.length} of ${segTotal} accounts`;
+      if (S.seg === "deal" && rows.length) { const sum = rows.reduce((s, [, a]) => s + (Number(a.amount) || 0), 0); txt += ` · ${money(sum)}`; }
+      note.textContent = txt;
+    }
+    $("acc-table").innerHTML = rows.length ? `<div class="table-wrap"><table class="book"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>` : emptyMsg;
+  }
+
   // ---------- Account detail ----------
   function buildDetailShell() {
-    const id = S.route.id;
     $("view-account").innerHTML = `<div style="display:grid;gap:16px">
       <a class="back" href="#accounts">${ic("back")} Accounts</a>
       <div class="panel" id="d-head"></div>
@@ -699,7 +917,7 @@ details.done-box summary::-webkit-details-marker { display: none; }
         </div>
         <div class="col">
           <div class="panel">
-            <div class="panel-head"><h2>Contacts</h2><button class="btn ghost" type="button" data-act="add-contact">${ic("plus")} Add</button></div>
+            <div class="panel-head"><h2>Contacts</h2><div style="display:flex;gap:2px;flex-wrap:wrap"><button class="btn ghost" type="button" data-act="zi-more" title="Search ZoomInfo for more contacts at this company">${ic("search")} ZoomInfo</button><button class="btn ghost" type="button" data-act="add-contact">${ic("plus")} Add</button></div></div>
             <div class="panel-body" id="d-contacts"></div>
           </div>
           <div class="panel" id="d-gong"></div>
@@ -710,6 +928,7 @@ details.done-box summary::-webkit-details-marker { display: none; }
   }
   function renderDetail() {
     if (S.route.view !== "account") return;
+    if (!$("d-head")) buildDetailShell();
     const id = S.route.id; const a = S.accounts.get(id);
     if (!a) {
       $("d-head").innerHTML = S.loaded.a ? `<div class="empty"><span class="bubble">This account isn't on the board.</span><span class="small">It may have been deleted. <a href="#accounts">Back to accounts</a></span></div>` : `<div class="empty"><span class="spinner"></span><span>Loading account…</span></div>`;
@@ -720,16 +939,20 @@ details.done-box summary::-webkit-details-marker { display: none; }
     const sfUrl = a.sf_opportunity_id ? `${SF_BASE}/lightning/r/Opportunity/${encodeURIComponent(a.sf_opportunity_id)}/view` : "";
     $("d-head").innerHTML = `<div class="acct-head">
       <div class="acct-title"><h1>${esc(a.company_name || "Untitled")}</h1><span class="pill ${isDeal ? "deal" : "out"}">${isDeal ? "Live deal" : "Outbound"}</span>
+        ${a.multi_site ? '<span class="chip">Multi-site</span>' : ""}${a.incomplete && !isDeal ? '<span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}
         ${a.domain ? `<a class="small" href="https://${esc(normDomain(a.domain))}" target="_blank" rel="noopener">${esc(normDomain(a.domain))}</a>` : ""}
         ${sfUrl ? `<a class="btn sec" style="margin-left:auto" href="${esc(sfUrl)}" target="_blank" rel="noopener">${ic("out")} Open in Salesforce</a>` : ""}</div>
       ${isDeal && a.sf_opportunity_name ? `<div class="small muted" style="margin-top:-8px">${esc(a.sf_opportunity_name)}</div>` : ""}
       <div class="facts">
-        <div class="fact"><span class="eyebrow">Stage</span>${isDeal ? `<span class="v">${esc(a.stage || "—")}${a.sf_closed ? ' <span class="pill warn">Closed</span>' : ""}</span>` : `<select class="sel" id="f-stage" data-act-change="stage" ${canWrite() ? "" : "disabled"}>${OUT_STAGES.map((s) => `<option ${s === a.stage ? "selected" : ""}>${s}</option>`).join("")}</select>`}</div>
+        <div class="fact"><span class="eyebrow">Stage</span>${isDeal ? `<span class="v">${esc(a.stage || "—")}${a.sf_closed ? ' <span class="pill warn">Closed</span>' : ""}</span>` : `<select class="sel" id="f-stage" data-act-change="stage" ${canWrite() ? "" : "disabled"}>${OUT_STAGES.map((s) => `<option ${s === a.stage ? "selected" : ""}>${s}</option>`).join("")}${a.stage && !OUT_STAGES.includes(a.stage) ? `<option selected>${esc(a.stage)}</option>` : ""}</select>`}</div>
         <div class="fact"><span class="eyebrow">Owner</span><select class="sel" id="f-owner" data-act-change="owner" ${canWrite() ? "" : "disabled"}>${OWNERS.map((o) => `<option ${o === a.owner ? "selected" : ""}>${o}</option>`).join("")}</select></div>
         ${isDeal ? `<div class="fact"><span class="eyebrow">Amount</span><span class="v big num">${money(a.amount)}</span></div>
         <div class="fact"><span class="eyebrow">Close date</span><span class="v num">${esc(fmtDate(a.close_date))}</span></div>
         <div class="fact"><span class="eyebrow">SF owner</span><span class="v">${esc(a.sf_owner || "—")}</span></div>
         <div class="fact"><span class="eyebrow">Last SF activity</span><span class="v num">${esc(fmtDate(a.last_activity_date))}</span></div>` : ""}
+        ${a.sub_industry || a.industry ? `<div class="fact"><span class="eyebrow">Industry</span><span class="v">${esc(a.sub_industry || a.industry)}</span></div>` : ""}
+        ${a.employee_count ? `<div class="fact"><span class="eyebrow">Employees</span><span class="v num">${fmtInt(a.employee_count)}</span></div>` : ""}
+        ${!isDeal ? `<div class="fact"><span class="eyebrow">Added</span><span class="v num">${esc(fmtDate(localDay(a.created_at)))}</span></div>` : ""}
       </div>
       ${isDeal ? `<div class="small muted">Deal fields come from Salesforce${a.sf_synced_at ? `, synced ${esc(fmtWhen(a.sf_synced_at))}` : ""}. Change them in Salesforce.</div>` : ""}
     </div>`;
@@ -765,12 +988,19 @@ details.done-box summary::-webkit-details-marker { display: none; }
     list.innerHTML = (open.length ? `<ul class="tasklist" style="border-top:1px solid var(--line)">${open.map((r) => row(r, false)).join("")}</ul>` : `<div class="empty small" style="border-top:1px solid var(--line)">No open tasks. Add the next step above.</div>`)
       + (done.length ? `<details class="done-box" ${S.showDone ? "open" : ""}><summary>Done (${done.length})</summary><ul class="tasklist">${done.map((r) => row(r, true)).join("")}</ul></details>` : "");
     const det = list.querySelector("details"); if (det) det.addEventListener("toggle", () => (S.showDone = det.open));
-    // Gong suggestions
     const sug = (a.gong && Array.isArray(a.gong.suggestions) ? a.gong.suggestions : []).filter((s) => s.status === "pending");
     $("d-sugg").innerHTML = sug.length ? `<div class="sugg"><div class="eyebrow" style="color:var(--gong)">Suggested by Gong · ${sug.length}</div>
       ${sug.map((s) => `<div class="sugg-item"><p>${esc(s.text)}</p><div class="acts">
         <button class="btn gong" type="button" data-act="accept-sugg" data-id="${esc(s.id)}" ${canWrite() ? "" : "disabled"}>${ic("check")} Add task</button>
         <button class="icon-btn" type="button" data-act="dismiss-sugg" data-id="${esc(s.id)}" aria-label="Dismiss suggestion" ${canWrite() ? "" : "disabled"}>${ic("x")}</button></div></div>`).join("")}</div>` : "";
+  }
+  const copyBtn = (v, what) => (v ? `<button type="button" class="copy" data-copy="${esc(v)}" aria-label="Copy ${esc(what)}">Copy</button>` : "");
+  function confFlags(acc, updated) {
+    const f = [];
+    if (acc != null && acc < LOW_CONFIDENCE) f.push(`<span class="chip bad" title="ZoomInfo accuracy score">Low confidence ${esc(acc)}</span>`);
+    const age = updated ? daysSince(updated) : null;
+    if (age != null && age > STALE_DAYS) f.push(`<span class="chip bad" title="ZoomInfo last updated">Stale · ${esc(fmtDate(localDay(updated)))}</span>`);
+    return f.join("");
   }
   function renderContacts(a) {
     const el = $("d-contacts");
@@ -780,18 +1010,32 @@ details.done-box summary::-webkit-details-marker { display: none; }
       <input class="field" name="name" placeholder="Name" value="${esc(c ? c.name : "")}" required aria-label="Name">
       <input class="field" name="title" placeholder="Title" value="${esc(c ? c.title : "")}" aria-label="Title">
       <input class="field" name="email" type="email" placeholder="Email" value="${esc(c ? c.email : "")}" aria-label="Email">
-      <input class="field" name="phone" placeholder="Phone" value="${esc(c ? c.phone : "")}" aria-label="Phone">
+      <input class="field" name="phone" placeholder="Direct phone" value="${esc(c ? c.phone : "")}" aria-label="Direct phone">
+      <input class="field" name="mobile" placeholder="Mobile phone" value="${esc(c ? c.mobile : "")}" aria-label="Mobile phone">
+      <input class="field" name="linkedin" placeholder="LinkedIn URL" value="${esc(c ? c.linkedin_url : "")}" aria-label="LinkedIn URL">
       <div class="row-form"><button class="btn" type="submit">${c ? "Save" : "Add contact"}</button><button class="btn ghost" type="button" data-act="cancel-contact">Cancel</button>
       ${c ? `<button class="btn ghost" type="button" data-act="delete-contact" data-id="${esc(c.id)}" style="margin-left:auto">${ic("trash")} Remove</button>` : ""}</div></form>`;
-    const card = (c) => S.editContact === c.id ? form(c) : `<div class="contact ${c.is_primary ? "primary" : ""}">
+    const phone = (v, dnc, k) => (v ? `<div class="cline"><span class="k">${k}</span><span class="v">${esc(v)}</span>${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
+    const card = (c) => {
+      if (S.editContact === c.id) return form(c);
+      const st = cStatus(c.status);
+      const liSearch = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent([c.name, a.company_name].filter(Boolean).join(" "))}`;
+      const sourced = c.source === "zoominfo";
+      return `<div class="contact ${c.is_primary ? "primary" : ""}">
       <div class="contact-top"><button class="star ${c.is_primary ? "on" : ""}" type="button" data-act="primary" data-id="${esc(c.id)}" aria-label="${c.is_primary ? "Primary contact" : "Make primary contact"}" title="${c.is_primary ? "Primary contact" : "Make primary"}" ${canWrite() ? "" : "disabled"}>${ic("star")}</button>
         <div class="nm"><b>${esc(c.name || "Unnamed")}</b>${c.title ? `<span>${esc(c.title)}</span>` : ""}</div>
         ${canWrite() ? `<button class="icon-btn" type="button" data-act="edit-contact" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)}">${ic("edit")}</button>` : ""}</div>
-      ${c.email || c.phone ? `<div class="lines">${c.email ? `<span>${esc(c.email)}</span>` : ""}${c.phone ? `<span class="num">${esc(c.phone)}</span>` : ""}</div>` : ""}
-      <div class="foot"><label class="sr" for="cs-${esc(c.id)}">Status</label><select class="sel small" id="cs-${esc(c.id)}" data-act-change="contact-status" data-id="${esc(c.id)}" style="padding:3px 8px" ${canWrite() ? "" : "disabled"}>${CONTACT_STATUS.map((s) => `<option ${s === c.status ? "selected" : ""}>${s}</option>`).join("")}</select>
-        ${c.is_primary ? '<span class="pill deal">Primary</span>' : ""}${c.sf_contact_id ? '<span class="pill">From Salesforce</span>' : ""}</div></div>`;
-    const sorted = cs.slice().sort((x, y) => (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0));
-    el.innerHTML = (S.addContact ? form(null) : "") + (sorted.length ? sorted.map(card).join("") : (S.addContact ? "" : `<div class="small muted">No contacts yet. Add the people you're working with.</div>`));
+      <div class="flags">${c.persona_tier ? `<span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>` : ""}
+        ${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : `<a class="chip" href="${esc(liSearch)}" target="_blank" rel="noopener" title="Search LinkedIn for this name and company">Find on LinkedIn ↗</a>`}
+        ${confFlags(c.zi_accuracy, c.zi_updated)}${c.sf_contact_id ? '<span class="chip">Salesforce</span>' : ""}${sourced ? '<span class="chip">ZoomInfo</span>' : ""}</div>
+      ${c.email || c.phone || c.mobile ? `<div class="lines" style="gap:4px">${c.email ? `<div class="cline"><span class="k">Email</span><span class="v">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : ""}${phone(c.phone, c.phone_dnc, "Direct")}${phone(c.mobile, c.mobile_dnc, "Mobile")}</div>` : ""}
+      ${sourced ? '<div class="calls-note">Sourced contact: call only. Don\'t text until they opt in.</div>' : ""}
+      <div class="foot"><label class="sr" for="cs-${esc(c.id)}">Status</label><select class="sel small" id="cs-${esc(c.id)}" data-act-change="contact-status" data-id="${esc(c.id)}" style="padding:3px 8px" ${canWrite() ? "" : "disabled"}>${CONTACT_STATUS.map((s) => `<option ${s === st ? "selected" : ""}>${s}</option>`).join("")}</select>
+        <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${canWrite() ? "" : "disabled"}> LinkedIn sent</label>
+        ${c.is_primary ? '<span class="pill deal">Primary</span>' : ""}</div></div>`;
+    };
+    const sorted = cs.slice().sort((x, y) => (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
+    el.innerHTML = (S.addContact ? form(null) : "") + (sorted.length ? sorted.map(card).join("") : (S.addContact ? "" : `<div class="small muted">No contacts yet. Add one, or search ZoomInfo for HR and plant contacts.</div>`));
   }
   function renderGong(a) {
     const g = a.gong; const el = $("d-gong");
@@ -820,17 +1064,494 @@ details.done-box summary::-webkit-details-marker { display: none; }
     el.innerHTML = ns.length ? ns.map(([nid, n]) => `<li class="note"><div class="msg">${esc(n.body)}</div><div class="by"><span>${esc(n.author || "Someone")} · ${esc(fmtWhen(n.created_at))}</span>${canWrite() ? `<button class="icon-btn" type="button" data-act="delete-note" data-id="${esc(nid)}" aria-label="Delete note">${ic("trash")}</button>` : ""}</div></li>`).join("") : `<li class="small muted">No notes yet.</li>`;
   }
 
+  // ---------- Find targets: ZoomInfo ----------
+  function newJob(input, owner) { return { key: "j" + ++jobSeq, input, owner, state: "resolving", options: [], company: null, multi: false, cands: [], excluded: 0, selected: new Set(), confirming: false, addTask: true, error: "", result: null, accountId: null, ondeckId: null, listInfo: null }; }
+  function startJobs(inputs, owner, extra) {
+    const jobs = inputs.map((x) => Object.assign(newJob(x.input, owner), x.extra || {}, extra || {}));
+    S.jobs.unshift(...jobs);
+    renderJobs();
+    jobs.forEach(resolveJob);
+    return jobs;
+  }
+  async function resolveJob(job) {
+    job.state = "resolving"; job.error = ""; renderJobs();
+    const q = job.input.trim();
+    const input = looksDomain(q)
+      ? { companyWebsite: "https://www." + normDomain(q), pageSize: 10, underManagement: true, userIntent: ZI_INTENT }
+      : { companyName: q, pageSize: 10, underManagement: true, userIntent: ZI_INTENT };
+    try {
+      const p = await callTool(ZI, "search_companies", input);
+      const list = ((p && p.data) || []).map((d) => {
+        const at = d.attributes || {};
+        return { id: String(d.id), name: at.name || "", domain: normDomain(at.website), employees: num(at.employeeCount), city: at.city || "", state: at.state || "", country: at.country || "", managed: !!(at.managementStatus && at.managementStatus.underManagement) };
+      }).filter((c) => c.id);
+      if (!list.length) { job.state = "error"; job.error = "No ZoomInfo match. Try the company's website domain instead."; }
+      else {
+        const exact = list.filter((c) => (looksDomain(q) ? c.domain === normDomain(q) : norm(c.name) === norm(q)));
+        if (list.length === 1) chooseCompany(job, list[0]);
+        else if (exact.length === 1) chooseCompany(job, exact[0]);
+        else { job.state = "pick"; job.options = list; }
+      }
+    } catch (e) { job.state = "error"; job.error = errText(e, ZI); }
+    renderJobs();
+  }
+  function chooseCompany(job, co) {
+    job.company = co; job.options = [];
+    if (job.accountId) { job.state = "company"; renderJobs(); return; }
+    const hit = findAccount({ zid: co.id, domain: co.domain, name: co.name });
+    if (hit) { job.state = "dup"; job.dupId = hit[0]; linkOndeck(job, hit[0]); }
+    else job.state = "company";
+    renderJobs();
+  }
+  function candFrom(d) {
+    const at = d.attributes || {};
+    const hasEmail = !!at.hasEmail, hasDirect = !!at.hasDirectPhone, hasMobile = !!at.hasMobilePhone;
+    const directDnc = !!at.directPhoneDoNotCall, mobileDnc = !!at.mobilePhoneDoNotCall;
+    return {
+      id: String(d.id), first: at.firstName || "", last: at.lastName || "", title: at.jobTitle || "",
+      tier: tierOf(at.jobTitle), accuracy: num(at.contactAccuracyScore), lastUpdated: at.lastUpdatedDate || "", validDate: at.validDate || "",
+      hasEmail, hasDirect, hasMobile, directDnc, mobileDnc,
+      callable: hasEmail && ((hasDirect && !directDnc) || (hasMobile && !mobileDnc)),
+      managed: !!(at.managementStatus && at.managementStatus.underManagement), onBoard: false,
+    };
+  }
+  function orderCands(cands, multi) {
+    const ok = (c) => !c.onBoard && c.callable;
+    const byTier = (t) => cands.filter((c) => c.tier === t).sort((a, b) => (ok(b) - ok(a)) || ((b.accuracy || 0) - (a.accuracy || 0)));
+    const t1 = byTier(1), t2 = byTier(2), t3 = byTier(3);
+    if (!multi) return [...t1, ...t2, ...t3];
+    const lead = t2.filter(ok).slice(0, 2);
+    return [...lead, ...t1, ...t2.filter((c) => !lead.includes(c)), ...t3];
+  }
+  const targetN = (job) => (job.multi ? 5 : 3);
+  function preselect(job) {
+    job.cands = orderCands(job.cands, job.multi);
+    job.selected = new Set(job.cands.filter((c) => !c.onBoard && c.callable).slice(0, targetN(job)).map((c) => c.id));
+    job.confirming = false;
+  }
+  async function findContacts(job) {
+    const co = job.company;
+    job.state = "searching"; job.error = ""; renderJobs();
+    const base = { companyIdList: [Number(co.id)], underManagement: true, sort: "-contactAccuracyScore", excludeJobTitleList: EXCLUDE_TITLES, userIntent: ZI_INTENT };
+    try {
+      const [hr, ops] = await Promise.all([
+        callTool(ZI, "search_contacts", { ...base, jobTitleList: HR_TITLES, pageSize: 50 }),
+        callTool(ZI, "search_contacts", { ...base, jobTitleList: OPS_TITLES, pageSize: 25 }),
+      ]);
+      const seen = new Map();
+      for (const d of [...((hr && hr.data) || []), ...((ops && ops.data) || [])]) if (d && d.id != null && !seen.has(String(d.id))) seen.set(String(d.id), candFrom(d));
+      const all = [...seen.values()];
+      job.excluded = all.filter((c) => c.tier === 0).length;
+      job.cands = all.filter((c) => c.tier > 0);
+      const acc = job.accountId && S.accounts.get(job.accountId);
+      if (acc) {
+        const have = acc.contacts || [];
+        for (const c of job.cands) c.onBoard = have.some((x) => String(x.zoominfo_contact_id || "") === c.id || norm(x.name) === norm(`${c.first} ${c.last}`));
+      }
+      preselect(job);
+      job.state = "review";
+    } catch (e) { job.state = "company"; job.error = errText(e, ZI); }
+    renderJobs();
+  }
+  function linkedinFrom(x) {
+    const arr = Array.isArray(x) ? x : x ? [x] : [];
+    for (const e of arr) { const u = typeof e === "string" ? e : (e && (e.url || e.value)) || ""; if (/linkedin\.com/i.test(u)) return /^https?:/i.test(u) ? u : "https://" + u.replace(/^\/+/, ""); }
+    return "";
+  }
+  async function enrichAndSave(job) {
+    const co = job.company;
+    const chosen = job.cands.filter((c) => job.selected.has(c.id));
+    job.state = "enriching"; job.confirming = false; job.error = ""; renderJobs();
+    const notes = [];
+    const existing = job.accountId ? S.accounts.get(job.accountId) : null;
+    let industry = existing ? existing.industry || "" : "", sub = existing ? existing.sub_industry || "" : "", employees = co.employees;
+    if (!existing || !existing.sub_industry) {
+      try {
+        const p = await spendTool(ZI, "enrich_companies", { companies: [{ companyId: co.id }], requiredFields: ["name", "website", "primaryIndustry", "industries", "employeeCount"], userIntent: ZI_INTENT });
+        const r = p && (p.company_1 || Object.values(p).find((v) => v && typeof v === "object" && "success" in v));
+        const d = r && r.success ? r.data : null;
+        if (d) {
+          const pi = Array.isArray(d.primaryIndustry) && d.primaryIndustry.length ? d.primaryIndustry : Array.isArray(d.industries) ? d.industries : [];
+          industry = pi[0] || d.industry || ""; sub = pi[1] || "";
+          if (num(d.employeeCount) != null) employees = num(d.employeeCount);
+        } else notes.push("Company profile (industry) wasn't returned" + (r && r.error ? `: ${r.error}` : "."));
+      } catch (e) { notes.push("Company profile: " + errText(e, ZI)); }
+    }
+    const enriched = [], failed = [];
+    let creditsOut = false;
+    for (let i = 0; i < chosen.length; i += 10) {
+      const batch = chosen.slice(i, i + 10);
+      let p;
+      try { p = await spendTool(ZI, "enrich_contacts", { contacts: batch.map((c) => ({ personId: c.id })), requiredFields: ENRICH_FIELDS, userIntent: ZI_INTENT }); }
+      catch (e) { batch.forEach((c) => failed.push({ c, why: errText(e, ZI) })); continue; }
+      if (p && p.creditStatus && /exhaust/i.test(p.creditStatus.type || "")) creditsOut = true;
+      const entries = Object.keys(p || {}).filter((k) => /^contact_\d+$/.test(k)).map((k) => p[k]);
+      batch.forEach((c, idx) => {
+        const r = entries.find((x) => x && x.input && String(x.input.personId) === c.id) || (p && p["contact_" + (idx + 1)]);
+        if (r && r.success && r.data) enriched.push({ c, d: r.data });
+        else failed.push({ c, why: (r && r.error) || "No record returned" });
+      });
+    }
+    if (!enriched.length) {
+      job.state = "review";
+      job.error = creditsOut
+        ? "ZoomInfo refused the enrichment for lack of credits, so nothing was saved. The connector uses your user's Data (Bulk) credit allowance, which can be empty even when your ZoomInfo account shows credits. Ask your ZoomInfo admin for a Data (Bulk) allowance for the API/MCP integration."
+        : "No contacts could be enriched, so nothing was saved. " + (failed[0] ? failed[0].why : "");
+      renderJobs(); return;
+    }
+    const qualified = [], unqualified = [];
+    const ts = nowIso();
+    for (const { c, d } of enriched) {
+      const email = d.email || "", direct = d.phone || d.directPhone || "", mobile = d.mobilePhone || "";
+      const directDnc = d.directPhoneDoNotCall === true || (d.directPhoneDoNotCall == null && c.directDnc);
+      const mobileDnc = d.mobilePhoneDoNotCall === true || (d.mobilePhoneDoNotCall == null && c.mobileDnc);
+      const callable = (direct && !directDnc) || (mobile && !mobileDnc);
+      if (email && callable) qualified.push({
+        id: "c" + c.id, zoominfo_contact_id: c.id, source: "zoominfo",
+        name: `${d.firstName || c.first} ${d.lastName || c.last}`.trim(), title: d.jobTitle || c.title, persona_tier: c.tier,
+        email, phone: direct, mobile, phone_dnc: !!directDnc, mobile_dnc: !!mobileDnc, linkedin_url: linkedinFrom(d.externalUrls),
+        zi_accuracy: num(d.contactAccuracyScore) != null ? num(d.contactAccuracyScore) : c.accuracy, zi_updated: d.lastUpdatedDate || c.lastUpdated || "",
+        status: "Not started", linkedin_sent: false, is_primary: false, added_at: ts,
+      });
+      else unqualified.push({ c, why: !email ? "no email" : (direct || mobile) ? "only do-not-call numbers" : "no direct or mobile number" });
+    }
+    let accId = job.accountId;
+    try {
+      if (existing) {
+        const cs = (existing.contacts || []).slice();
+        for (const q of qualified) if (!cs.some((x) => String(x.zoominfo_contact_id || "") === q.zoominfo_contact_id)) cs.push(q);
+        if (!cs.some((x) => x.is_primary) && cs.length) cs[0] = { ...cs[0], is_primary: true };
+        const patch = { contacts: cs, updated_at: ts, zoominfo_company_id: existing.zoominfo_company_id || co.id };
+        if (existing.band !== "deal") patch.incomplete = cs.filter((x) => x.email && ((x.phone && !x.phone_dnc) || (x.mobile && !x.mobile_dnc))).length < MIN_QUALIFIED;
+        if (!existing.sub_industry && sub) { patch.industry = industry; patch.sub_industry = sub; }
+        if (!existing.employee_count && employees) patch.employee_count = employees;
+        await acctRef(accId).update(patch);
+      } else {
+        accId = "azi" + co.id;
+        if (qualified.length) qualified[0].is_primary = true;
+        await acctRef(accId).set({
+          owner: job.owner, band: "outbound", stage: "Target", company_name: co.name, domain: co.domain || "",
+          zoominfo_company_id: co.id, industry, sub_industry: sub, employee_count: employees, multi_site: !!job.multi,
+          incomplete: qualified.length < MIN_QUALIFIED, source: "zoominfo", contacts: qualified,
+          sf_opportunity_id: null, amount: null, close_date: null, sf_owner: "", last_activity_date: null,
+          created_at: ts, updated_at: ts, created_by: S.meId || null, created_by_name: S.myOwner || "",
+        });
+      }
+    } catch (e) {
+      job.state = "review"; job.error = dbErrText(e) + " Enrichment already ran, so trying again won't use new credits for these contacts.";
+      renderJobs(); return;
+    }
+    if (job.addTask && qualified.length) {
+      const first = qualified.find((x) => x.is_primary) || qualified[0];
+      await addTask(accId, existing ? `Reach out to ${qualified.length} new contact${qualified.length === 1 ? "" : "s"}` : `Start outreach at ${co.name}`, today(), first.id, "manual");
+    }
+    job.accountId = accId;
+    linkOndeck(job, accId);
+    job.state = "saved";
+    job.result = { qualified: qualified.length, unqualified, failed, notes, creditsOut, existing: !!existing };
+    renderJobs();
+  }
+  function linkOndeck(job, accId) {
+    let odId = job.ondeckId;
+    if (!odId && job.company) { const hit = [...S.ondeck.entries()].find(([, o]) => norm(o.name) === norm(job.company.name)); if (hit) odId = hit[0]; }
+    if (!odId || !S.ondeck.has(odId) || !canWrite()) return;
+    odRef(odId).update({ account_id: accId, added_at: nowIso(), updated_at: nowIso() }).catch(() => {});
+  }
+
+  // ---------- Find targets: rendering ----------
+  function availHtml(c) {
+    const ph = (has, dnc, l) => `<i class="${has ? (dnc ? "d" : "y") : ""}" title="${has ? (dnc ? "Available, marked do-not-call" : "Available") : "Not on file"}">${l}${has && dnc ? "·DNC" : ""}</i>`;
+    return `<span class="avail">${ph(c.hasEmail, false, "Email")}${ph(c.hasDirect, c.directDnc, "Direct")}${ph(c.hasMobile, c.mobileDnc, "Mobile")}</span>`;
+  }
+  function jobHtml(job) {
+    const co = job.company;
+    const target = job.accountId && S.accounts.get(job.accountId);
+    const head = co
+      ? `<div class="job-head"><span class="name">${esc(co.name)}</span><span class="small muted">Owner <b>${esc(job.owner)}</b> · from “${esc(job.input)}”${target && job.state !== "saved" ? ` · adding to <a href="#account-${esc(job.accountId)}">${esc(target.company_name)}</a>` : ""}</span></div>
+         <div class="job-facts"><span><b>${esc(co.domain || "no domain")}</b></span><span>${esc([co.city, co.state, co.country].filter(Boolean).join(", "))}</span><span><b>${fmtInt(co.employees)}</b> employees</span></div>`
+      : `<div class="job-head"><span class="name">${esc(job.input)}</span><span class="small muted">Owner <b>${esc(job.owner)}</b></span></div>`;
+    const listNote = job.listInfo ? `<div class="job-facts"><span>From On-Deck: <b>${esc(job.listInfo.sub || "no sub-industry")}</b></span>${job.listInfo.emp ? `<span><b>${fmtInt(job.listInfo.emp)}</b> employees on the list</span>` : ""}</div>` : "";
+    const err = job.error ? `<div class="err">${esc(job.error)}</div>` : "";
+    const remove = `<button class="btn ghost" data-act="job-remove" data-job="${job.key}" type="button">Remove</button>`;
+    let body = "";
+    switch (job.state) {
+      case "resolving": body = `<div class="small"><span class="spinner"></span> Looking up in ZoomInfo…</div>`; break;
+      case "error": body = `<div class="row-form"><button class="btn sec" data-act="job-retry" data-job="${job.key}" type="button">Try again</button>${remove}</div>`; break;
+      case "pick":
+        body = `<div class="small muted">More than one ZoomInfo company matches. Pick the right one:</div><div class="opts">` +
+          job.options.map((o, i) => `<button type="button" class="opt" data-act="job-pick" data-job="${job.key}" data-i="${i}"><span><b>${esc(o.name)}</b> <span class="muted small">${esc(o.domain)} · ${esc([o.city, o.state, o.country].filter(Boolean).join(", "))}</span></span><span class="small num">${fmtInt(o.employees)} emp</span></button>`).join("") +
+          `</div><div>${remove}</div>`;
+        break;
+      case "dup": {
+        const ex = S.accounts.get(job.dupId) || {};
+        body = `<div class="banner info">Already on the board: <a href="#account-${esc(job.dupId)}">${esc(ex.company_name || co.name)}</a> · ${esc(ex.band === "deal" ? "live deal" : "outbound")} · owner ${esc(ex.owner || "—")} · ${(ex.contacts || []).length} contacts.</div>
+          <div class="row-form"><button class="btn sec" type="button" data-act="job-more" data-job="${job.key}">${ic("search")} Find more contacts for it</button>${remove}</div>`;
+        break;
+      }
+      case "company":
+        body = `<div class="row-form" style="gap:10px 18px">
+            <label class="switch"><input type="checkbox" data-job-change="multi" data-job="${job.key}" ${job.multi ? "checked" : ""}> Multi-site</label>
+            <span class="small muted">${job.multi ? "Up to 5 contacts: corporate HR leadership plus plant HR at several sites." : "3 contacts. Turn on Multi-site for up to 5."}</span></div>
+          <div class="row-form"><button class="btn" data-act="job-find" data-job="${job.key}" type="button" ${ziReady() ? "" : "disabled"}>${ic("search")} Find contacts (free search)</button>${remove}</div>`;
+        break;
+      case "searching": body = `<div class="small"><span class="spinner"></span> Searching ZoomInfo for HR and plant contacts…</div>`; break;
+      case "review": case "enriching": body = reviewHtml(job); break;
+      case "saved": {
+        const r = job.result; const acc = S.accounts.get(job.accountId) || {};
+        const lines = [...r.unqualified.map((u) => `${esc(u.c.first)} ${esc(u.c.last)}: not saved, ${esc(u.why)}`), ...r.failed.map((f) => `${esc(f.c.first)} ${esc(f.c.last)}: not enriched, ${esc(f.why)}`), ...r.notes.map(esc)];
+        body = `<div class="banner ${r.qualified < MIN_QUALIFIED && !r.existing ? "" : "info"}">${r.existing ? "Added" : "Saved"} ${r.qualified} qualified contact${r.qualified === 1 ? "" : "s"} to <a href="#account-${esc(job.accountId)}">${esc(acc.company_name || co.name)}</a>.${r.qualified < MIN_QUALIFIED && !r.existing ? ` Fewer than ${MIN_QUALIFIED} had both an email and a callable number, so it's marked Incomplete.` : ""}</div>` +
+          (lines.length ? `<ul>${lines.map((x) => `<li>${x}</li>`).join("")}</ul>` : "") +
+          (r.creditsOut ? `<div class="banner">ZoomInfo stopped part of this enrichment for lack of credits. Ask your ZoomInfo admin to raise your user's Data (Bulk) allowance.</div>` : "") +
+          `<div class="row-form"><a class="btn sec" href="#account-${esc(job.accountId)}">Open account</a>${remove.replace("Remove", "Clear")}</div>`;
+        break;
+      }
+    }
+    return `<div class="job">${head}${listNote}${err}${body}</div>`;
+  }
+  function reviewHtml(job) {
+    const co = job.company; const n = targetN(job); const busy = job.state === "enriching";
+    const sel = job.cands.filter((c) => job.selected.has(c.id));
+    const contactCredits = sel.filter((c) => !c.managed).length;
+    const coCredit = co.managed || (job.accountId && (S.accounts.get(job.accountId) || {}).sub_industry) ? 0 : 1;
+    const credits = contactCredits + coCredit;
+    const rows = job.cands.map((c) => {
+      const on = job.selected.has(c.id); const full = !on && job.selected.size >= n;
+      return `<tr class="${on ? "" : "off"}">
+        <td><input type="checkbox" aria-label="Select ${esc(c.first)} ${esc(c.last)}" data-job-change="cand" data-job="${job.key}" data-id="${esc(c.id)}" ${on ? "checked" : ""} ${busy || full || c.onBoard ? "disabled" : ""}></td>
+        <td><b>${esc(c.first)} ${esc(c.last)}</b><div class="flags" style="margin-top:3px">${c.onBoard ? '<span class="chip ok">Already on this account</span>' : ""}${confFlags(c.accuracy, c.lastUpdated)}</div></td>
+        <td>${esc(c.title)}</td>
+        <td><span class="tier t${c.tier}">${TIER_LABEL[c.tier]}</span></td>
+        <td>${availHtml(c)}</td>
+        <td class="num small">${c.accuracy == null ? "—" : c.accuracy}</td>
+        <td class="small">${c.managed ? '<span class="chip ok">Free</span>' : "1 credit"}</td></tr>`;
+    }).join("");
+    const table = job.cands.length
+      ? `<div class="cand-wrap"><table class="cand"><thead><tr><th></th><th>Name</th><th>Title</th><th>Persona</th><th>On file</th><th>Accuracy</th><th>Cost</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<div class="banner">ZoomInfo has no HR or plant-management contacts at this company. Try the parent company or a plant's own domain.</div>`;
+    const confirm = job.confirming
+      ? `<button class="btn" data-act="job-confirm" data-job="${job.key}" type="button">Use ${credits} credit${credits === 1 ? "" : "s"} and save</button><button class="btn ghost" data-act="job-cancel" data-job="${job.key}" type="button">Cancel</button>`
+      : `<button class="btn" data-act="job-enrich" data-job="${job.key}" type="button" ${sel.length && !busy && ziReady() ? "" : "disabled"}>${busy ? '<span class="spinner"></span> Enriching…' : `Enrich ${sel.length} contact${sel.length === 1 ? "" : "s"}`}</button>`;
+    return `<div class="row-form" style="gap:10px 18px">
+        <label class="switch"><input type="checkbox" data-job-change="multi" data-job="${job.key}" ${job.multi ? "checked" : ""} ${busy ? "disabled" : ""}> Multi-site</label>
+        <span class="small muted">Target ${n}. Selected ${sel.length} of ${job.cands.length} candidates${job.excluded ? ` · ${job.excluded} recruiting, IT or other roles left out` : ""}.</span></div>
+      ${table}
+      <div class="credit">
+        <div><div class="eyebrow">ZoomInfo credits this will use</div><div class="big num">${credits}</div>
+          <div class="small muted">${sel.length} contact${sel.length === 1 ? "" : "s"} (${sel.length - contactCredits} already owned, free) + company profile (${coCredit ? "1 credit" : "free"}). A contact is kept only with an email and a direct or mobile number.</div>
+          <label class="switch small" style="margin-top:8px"><input type="checkbox" data-job-change="task" data-job="${job.key}" ${job.addTask ? "checked" : ""} ${busy ? "disabled" : ""}> Add a "Start outreach" task due today</label></div>
+        <div class="row-form">${confirm}${busy ? "" : `<button class="btn ghost" data-act="job-remove" data-job="${job.key}" type="button">Remove</button>`}</div>
+      </div>`;
+  }
+  function renderJobs() { const el = $("jobs"); if (el) el.innerHTML = S.jobs.map(jobHtml).join(""); }
+
+  // ---------- Find targets: On-Deck ----------
+  function odState(o, byName) {
+    const acc = (o.account_id && S.accounts.get(o.account_id)) || byName.get(norm(o.name));
+    if (acc) return { key: "added", acc, id: o.account_id && S.accounts.get(o.account_id) ? o.account_id : acc._id };
+    if (o.started_at) return { key: "started" };
+    return { key: "ondeck" };
+  }
+  function accountsByName() { const m = new Map(); for (const [id, a] of S.accounts) m.set(norm(a.company_name), Object.assign({ _id: id }, a)); return m; }
+  function parseCsv(text) {
+    const rows = []; let row = [], f = "", q = false;
+    text = text.replace(/^﻿/, "");
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(f); f = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+      else f += ch;
+    }
+    if (f !== "" || row.length) { row.push(f); rows.push(row); }
+    return rows.filter((r) => r.some((c) => String(c).trim() !== ""));
+  }
+  function pickCol(headers, patterns) { const h = headers.map((x) => norm(x)); for (const p of patterns) { const i = h.findIndex((x) => p.test(x)); if (i >= 0) return i; } return -1; }
+  function readTargetCsv(text, fileName) {
+    const rows = parseCsv(text);
+    if (rows.length < 2) return { error: "The file has no data rows." };
+    const head = rows[0];
+    const iName = pickCol(head, [/^company( name)?$/, /^account( name)?$/, /^company/, /^name$/]);
+    const iSub = pickCol(head, [/^sub ?industry$/, /sub ?industry/, /^industry$/, /industry/]);
+    const iEmp = pickCol(head, [/^est employees$/, /employees?( count)?$/, /employee/, /headcount/, /^size$/]);
+    const iDom = pickCol(head, [/^domain$/, /website/, /^url$/]);
+    const iRank = pickCol(head, [/^$/, /^rank$/, /^no$/]);
+    if (iName < 0) return { error: "Couldn't find a Company column. The first row must be headers, with a column named Company." };
+    const list = String(fileName || "Uploaded list").replace(/\.csv$/i, "").replace(/_/g, " ").trim().slice(0, 120);
+    const existing = new Set([...S.ondeck.values()].map((o) => norm(o.name)));
+    const onBoard = accountsByName();
+    const seen = new Set(); const add = [], skipped = [];
+    rows.slice(1).forEach((r, idx) => {
+      const name = String(r[iName] || "").trim(); if (!name) return;
+      const key = norm(name);
+      if (seen.has(key)) { skipped.push({ name, why: "repeated in this file" }); return; }
+      seen.add(key);
+      if (existing.has(key)) { skipped.push({ name, why: "already on deck" }); return; }
+      if (onBoard.has(key)) { skipped.push({ name, why: "already an account" }); return; }
+      const rk = iRank >= 0 ? num(r[iRank]) : null;
+      add.push({ name, sub_industry: iSub >= 0 ? String(r[iSub] || "").trim() : "", employee_count: iEmp >= 0 ? num(r[iEmp]) : null, domain: iDom >= 0 ? normDomain(r[iDom]) : "", rank: rk == null ? idx + 1 : rk });
+    });
+    return { list, add, skipped, cols: { sub: iSub >= 0 ? head[iSub] : "", emp: iEmp >= 0 ? head[iEmp] : "" } };
+  }
+  const slug = (s) => norm(s).replace(/ /g, "-").slice(0, 80) || "x";
+  async function saveOndeck(pre) {
+    if (!canWrite() || S.odBusy) return;
+    S.odBusy = true; renderOdPreview();
+    const ts = nowIso(); let ok = 0, fail = 0, lastErr = null;
+    const queue = pre.add.slice();
+    const worker = async () => {
+      while (queue.length) {
+        const r = queue.shift();
+        let id = "od-" + slug(r.name); if (S.ondeck.has(id)) id += "-" + Math.random().toString(36).slice(2, 6);
+        try { await odRef(id).set({ id, name: r.name, domain: r.domain || "", sub_industry: r.sub_industry, employee_count: r.employee_count, rank: r.rank, list_name: pre.list, created_at: ts, created_by: S.meId || null }); ok++; }
+        catch (e) { fail++; lastErr = e; if (e && /^(invalid_argument|quota_exceeded|revoked)$/.test(e.code)) queue.length = 0; }
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    S.odBusy = false; S.odPreview = null; renderOdPreview();
+    toast(fail ? `Added ${ok} companies; ${fail} failed. ${dbErrText(lastErr)}` : `Added ${ok} companies to On-Deck.`);
+    S.odF.list = pre.list; S.odF.status = "ondeck"; storeJ.set("odF", S.odF); S._odOpts = ""; renderOndeck();
+  }
+  function renderOdPreview() {
+    const el = $("od-preview"); if (!el) return; const p = S.odPreview;
+    if (!p) { el.innerHTML = ""; return; }
+    if (p.error) { el.innerHTML = `<div class="banner">${esc(p.error)} <button class="btn ghost" type="button" data-act="od-preview-close">Close</button></div>`; return; }
+    const sample = p.add.slice(0, 5).map((r) => `<li>${esc(r.name)} <span class="muted">· ${esc(r.sub_industry || "no sub-industry")} · ${r.employee_count == null ? "no size" : fmtInt(r.employee_count) + " employees"}</span></li>`).join("");
+    el.innerHTML = `<div class="job">
+      <div><b>${esc(p.list)}</b> <span class="small muted">· ${p.add.length} new compan${p.add.length === 1 ? "y" : "ies"} to add${p.skipped.length ? ` · ${p.skipped.length} skipped (${esc([...new Set(p.skipped.map((s) => s.why))].join(", "))})` : ""}</span></div>
+      <div class="small muted">Reading Company${p.cols.sub ? `, ${esc(p.cols.sub)}` : " (no sub-industry column found)"}${p.cols.emp ? `, ${esc(p.cols.emp)}` : " (no employee column found)"}.</div>
+      ${sample ? `<ul>${sample}${p.add.length > 5 ? `<li class="muted">…and ${p.add.length - 5} more</li>` : ""}</ul>` : ""}
+      <div class="row-form"><button class="btn" type="button" data-act="od-preview-save" ${p.add.length && canWrite() && !S.odBusy ? "" : "disabled"}>${S.odBusy ? '<span class="spinner"></span> Adding…' : `Add ${p.add.length} to On-Deck`}</button>
+        <button class="btn ghost" type="button" data-act="od-preview-close" ${S.odBusy ? "disabled" : ""}>Cancel</button></div></div>`;
+  }
+  function odVisible(byName) {
+    const f = S.odF, q = norm(f.q);
+    return [...S.ondeck.entries()].map(([id, o]) => ({ id, o, st: odState(o, byName) })).filter(({ o, st }) =>
+      (f.status === "all" || st.key === f.status) && (f.sub === "all" || o.sub_industry === f.sub) && (f.list === "all" || o.list_name === f.list) && (!q || norm(o.name).includes(q))
+    ).sort((a, b) => String(a.o.list_name || "").localeCompare(String(b.o.list_name || "")) || (a.o.rank == null ? 1e9 : a.o.rank) - (b.o.rank == null ? 1e9 : b.o.rank) || String(a.o.name).localeCompare(String(b.o.name)));
+  }
+  function buildProspectShell() {
+    $("view-prospect").innerHTML = `<div style="display:grid;gap:18px">
+      <div class="page-head"><div><div class="eyebrow">Outbound</div><h1>Find targets</h1><div class="sub">Add 1–2 target companies a day. ZoomInfo finds the HR and plant contacts; they land on the board as an Outbound account.</div></div>
+        <div style="display:grid;gap:6px;justify-items:end"><span class="conn-pill" id="zi-conn"></span><div class="added-today small muted" id="added-today"></div></div></div>
+      <div class="panel">
+        <div class="panel-head"><h2>Look up companies</h2></div>
+        <div class="panel-body">
+          <div id="zi-banner"></div>
+          <form class="intake" id="intake" autocomplete="off">
+            <label class="lbl" for="in-owner">Owner<select class="sel" id="in-owner">${OWNERS.map((o) => `<option>${o}</option>`).join("")}</select></label>
+            <label class="lbl" for="in-names">Company names or domains, one per line (max 5)<textarea class="field" id="in-names" rows="2" placeholder="acmefoods.com&#10;Midwest Plastics Group"></textarea></label>
+            <button class="btn" id="in-go" type="submit">${ic("search")} Look up in ZoomInfo</button>
+          </form>
+          <div class="jobs" id="jobs"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>On-Deck targets</h2><div class="small muted">Target accounts waiting their turn. Tick 1–2 and look them up.</div></div>
+          <button class="btn sec" type="button" data-act="od-import">${ic("upload")} Import list (CSV)</button></div>
+        <div class="panel-body">
+          <div id="od-preview"></div>
+          <div class="filters">
+            <label class="lbl" for="od-q">Search<input class="field" type="search" id="od-q" placeholder="Company name"></label>
+            <label class="lbl" for="od-status">Show<select class="sel" id="od-status"><option value="ondeck">Not started</option><option value="started">Started</option><option value="added">On the board</option><option value="all">All</option></select></label>
+            <label class="lbl" for="od-sub">Sub-industry<select class="sel" id="od-sub"></select></label>
+            <label class="lbl" for="od-list">List<select class="sel" id="od-list"></select></label>
+          </div>
+          <div class="od-bar" id="od-bar"></div>
+        </div>
+        <div class="table-wrap"><table class="od"><thead><tr><th style="width:40px"><input type="checkbox" id="od-all" aria-label="Select all shown"></th><th>Company</th><th>Sub-industry</th><th class="r">Employees</th><th>List</th><th>Status</th></tr></thead><tbody id="od-rows"></tbody></table></div>
+      </div>
+    </div>`;
+    $("in-owner").value = S.myOwner || store.get("prospectOwner") || "Jeremy";
+    S._odOpts = "";
+  }
+  function renderProspect() {
+    if (S.route.view !== "prospect") return;
+    if (!$("jobs")) { buildProspectShell(); renderJobs(); }
+    const zc = $("zi-conn");
+    zc.className = "conn-pill " + (S.zi.state === "ok" ? "ok" : S.zi.state === "bad" ? "bad" : "");
+    zc.textContent = S.zi.state === "ok" ? "ZoomInfo connected" : S.zi.state === "bad" ? "ZoomInfo unavailable" : "Checking ZoomInfo…";
+    const t = today(); const counts = { Jeremy: 0, David: 0 };
+    for (const a of S.accounts.values()) if (a.source === "zoominfo" && localDay(a.created_at) === t && counts[a.owner] != null) counts[a.owner]++;
+    $("added-today").innerHTML = `Added today: ${OWNERS.map((o) => `${o} <b class="num">${counts[o]}</b>`).join(" · ")}`;
+    $("zi-banner").innerHTML = !canWrite() && S.db ? `<div class="banner">You have view-only access, so you can't add targets.</div>` : S.zi.state === "bad" ? `<div class="banner">${esc(S.zi.msg)}</div>` : "";
+    const ready = ziReady();
+    $("in-go").disabled = !ready; $("in-names").disabled = !ready;
+    renderOndeck();
+  }
+  function renderOndeck() {
+    const rows = $("od-rows"); if (!rows) return;
+    const byName = accountsByName();
+    const subs = [...new Set([...S.ondeck.values()].map((o) => o.sub_industry).filter(Boolean))].sort();
+    const lists = [...new Set([...S.ondeck.values()].map((o) => o.list_name).filter(Boolean))].sort();
+    const sig = subs.join("|") + "#" + lists.join("|");
+    if (S._odOpts !== sig) {
+      S._odOpts = sig;
+      $("od-sub").innerHTML = `<option value="all">All sub-industries</option>` + subs.map((s) => `<option>${esc(s)}</option>`).join("");
+      $("od-list").innerHTML = `<option value="all">All lists</option>` + lists.map((s) => `<option>${esc(s)}</option>`).join("");
+      for (const [k, id, d] of [["q", "od-q", ""], ["status", "od-status", "ondeck"], ["sub", "od-sub", "all"], ["list", "od-list", "all"]]) {
+        const el = $(id); el.value = S.odF[k]; if (el.value !== S.odF[k]) { S.odF[k] = d; el.value = d; }
+      }
+    }
+    if (!S.db || !S.loaded.o) { rows.innerHTML = `<tr><td colspan="6"><div class="empty">${S.db ? '<span class="spinner"></span> Loading On-Deck targets…' : "Open the cockpit in claude.ai to see On-Deck targets."}</div></td></tr>`; renderOdBar(); return; }
+    const vis = odVisible(byName);
+    for (const id of [...S.odSel]) { const o = S.ondeck.get(id); if (!o || odState(o, byName).key === "added") S.odSel.delete(id); }
+    renderOdBar();
+    if (!S.ondeck.size) rows.innerHTML = `<tr><td colspan="6"><div class="empty"><span class="bubble">No On-Deck targets yet.</span><span class="small">Import a CSV with a Company column. Sub-industry and employee columns are picked up when present.</span></div></td></tr>`;
+    else if (!vis.length) rows.innerHTML = `<tr><td colspan="6"><div class="empty">Nothing matches these filters. Switch Show to All, or clear the search.</div></td></tr>`;
+    else rows.innerHTML = vis.map(({ id, o, st }) => {
+      const sel = S.odSel.has(id); const pickable = st.key !== "added";
+      const statusCell = st.key === "added" ? `<a class="chip ok" href="#account-${esc(st.id)}">${st.acc.band === "deal" ? "Live deal" : "On the board"} ↗</a> <span class="small muted">${esc(st.acc.owner || "")}</span>`
+        : st.key === "started" ? `<span class="chip warn">Started</span> <span class="small muted">${esc(o.owner || "")} · ${esc(fmtDate(localDay(o.started_at)))}</span>` : `<span class="chip">On deck</span>`;
+      return `<tr class="${sel ? "sel" : ""}">
+        <td><input type="checkbox" data-od-pick="${esc(id)}" aria-label="Select ${esc(o.name)}" ${sel ? "checked" : ""} ${pickable && canWrite() ? "" : "disabled"}></td>
+        <td><b>${esc(o.name)}</b></td><td>${esc(o.sub_industry || "—")}</td><td class="r num">${fmtInt(o.employee_count)}</td>
+        <td class="small muted">${esc(o.list_name || "")}</td><td>${statusCell}</td></tr>`;
+    }).join("");
+    const pickableShown = vis.filter(({ st }) => st.key !== "added");
+    $("od-all").checked = pickableShown.length > 0 && pickableShown.every(({ id }) => S.odSel.has(id));
+    $("od-all").disabled = !pickableShown.length || !canWrite();
+  }
+  function renderOdBar() {
+    const n = S.odSel.size; const el = $("od-bar"); if (!el) return;
+    const waiting = [...S.ondeck.values()].filter((o) => !o.account_id && !o.started_at).length;
+    el.innerHTML = `<b>${n} selected</b>
+      <button class="btn" type="button" data-act="od-send" ${n && ziReady() ? "" : "disabled"}>${ic("search")} Look up ${n || ""} in ZoomInfo</button>
+      ${n ? `<button class="btn ghost" type="button" data-act="od-clear">Clear</button>` : ""}
+      <span class="small muted">${!ziReady() ? "ZoomInfo needs to be connected first." : n > 2 ? "Guidance is 1–2 companies per rep per day." : `${waiting} not started. Uses the owner above.`}</span>`;
+  }
+  function sendToLookup() {
+    if (!ziReady() || !S.odSel.size) return;
+    const owner = $("in-owner").value; store.set("prospectOwner", owner);
+    const picks = [...S.odSel].map((id) => [id, S.ondeck.get(id)]).filter(([, o]) => o);
+    S.odSel.clear();
+    const ts = nowIso();
+    startJobs(picks.map(([id, o]) => ({ input: o.domain || o.name, extra: { ondeckId: id, listInfo: { sub: o.sub_industry, emp: o.employee_count } } })), owner);
+    for (const [id] of picks) odRef(id).update({ started_at: ts, started_by: S.meId || null, owner, updated_at: ts }).catch(() => {});
+    $("jobs").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
     const tr = e.target.closest("tr[data-href]"); if (tr) { location.hash = tr.dataset.href; return; }
+    const cp = e.target.closest("[data-copy]");
+    if (cp) {
+      const v = cp.dataset.copy;
+      try { await navigator.clipboard.writeText(v); cp.textContent = "Copied"; cp.classList.add("done"); setTimeout(() => { cp.textContent = "Copy"; cp.classList.remove("done"); }, 1400); }
+      catch { const span = cp.parentElement.querySelector(".v"); if (span) { const r = document.createRange(); r.selectNodeContents(span); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } toast("Copy isn't allowed here. The text is selected; press Ctrl+C or ⌘C."); }
+      return;
+    }
+    const sg = e.target.closest("[data-seg]"); if (sg) { S.seg = sg.dataset.seg; store.set("seg", S.seg); renderAccounts(); return; }
     const b = e.target.closest("[data-act]"); if (!b || b.tagName === "SELECT") return;
     const act = b.dataset.act, id = b.dataset.id, accId = S.route.id;
+    const job = b.dataset.job ? S.jobs.find((j) => j.key === b.dataset.job) : null;
     switch (act) {
       case "done": setTaskDone(id, true); break;
       case "undone": e.preventDefault(); setTaskDone(id, false); break;
       case "sync": syncSalesforce(); break;
       case "add-account": S.addAccount = true; $("na-owner").value = S.myOwner || "Jeremy"; renderAccounts(); $("na-name").focus(); break;
       case "cancel-account": S.addAccount = false; renderAccounts(); break;
+      case "af-clear": S.af = { close: "any", cfrom: "", cto: "", stage: "all", added: "any" }; storeJ.set("af", S.af); S._fSeg = null; renderAccounts(); break;
       case "edit-task": S.editTask = id; renderDetail(); { const f = document.querySelector(`form[data-form="edit-task"] input[name="title"]`); if (f) f.focus(); } break;
       case "cancel-edit-task": S.editTask = null; renderDetail(); break;
       case "delete-task": { const t = S.tasks.get(id); if (!t) break; const ok = await w(() => taskRef(id).delete()); if (ok) toast("Task deleted", () => w(() => taskRef(id).set(t))); break; }
@@ -839,6 +1560,13 @@ details.done-box summary::-webkit-details-marker { display: none; }
       case "cancel-contact": S.editContact = null; S.addContact = false; renderDetail(); break;
       case "delete-contact": { const a = S.accounts.get(accId); if (!a) break; const cs = (a.contacts || []).filter((c) => c.id !== id); if (cs.length && !cs.some((c) => c.is_primary)) cs[0] = { ...cs[0], is_primary: true }; S.editContact = null; await w(() => acctRef(accId).update({ contacts: cs, updated_at: nowIso() })); break; }
       case "primary": { const a = S.accounts.get(accId); if (!a) break; await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => ({ ...c, is_primary: c.id === id })), updated_at: nowIso() })); break; }
+      case "zi-more": {
+        const a = S.accounts.get(accId); if (!a) break;
+        if (!ziReady()) { toast(S.zi.state === "bad" ? S.zi.msg : "ZoomInfo isn't ready yet."); break; }
+        location.hash = "#prospect";
+        setTimeout(() => startJobs([{ input: a.domain || a.company_name }], a.owner || S.myOwner || "Jeremy", { accountId: accId }), 0);
+        break;
+      }
       case "gong": pullGong(accId); break;
       case "accept-sugg": b.disabled = true; resolveSuggestion(accId, id, true); break;
       case "dismiss-sugg": b.disabled = true; resolveSuggestion(accId, id, false); break;
@@ -851,27 +1579,76 @@ details.done-box summary::-webkit-details-marker { display: none; }
         if (ok) { toast("Account deleted"); location.hash = "#accounts"; }
         break;
       }
+      // Find targets
+      case "job-remove": S.jobs = S.jobs.filter((j) => j !== job); renderJobs(); break;
+      case "job-retry": if (job) resolveJob(job); break;
+      case "job-pick": if (job) chooseCompany(job, job.options[Number(b.dataset.i)]); break;
+      case "job-more": if (job) { job.accountId = job.dupId; job.state = "company"; renderJobs(); } break;
+      case "job-find": if (job && ziReady()) findContacts(job); break;
+      case "job-enrich": if (job && job.selected.size && ziReady()) { job.confirming = true; renderJobs(); } break;
+      case "job-cancel": if (job) { job.confirming = false; renderJobs(); } break;
+      case "job-confirm": if (job && job.confirming && job.state === "review" && job.selected.size) enrichAndSave(job); break;
+      case "od-import": $("od-file").value = ""; $("od-file").click(); break;
+      case "od-preview-close": S.odPreview = null; renderOdPreview(); break;
+      case "od-preview-save": if (S.odPreview && S.odPreview.add) saveOndeck(S.odPreview); break;
+      case "od-send": sendToLookup(); break;
+      case "od-clear": S.odSel.clear(); renderOndeck(); break;
     }
   });
-  document.addEventListener("click", (e) => { const s = e.target.closest("[data-seg]"); if (!s) return; S.seg = s.dataset.seg; store.set("seg", S.seg); renderAccounts(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Enter") { const tr = e.target.closest && e.target.closest("tr[data-href]"); if (tr) location.hash = tr.dataset.href; } });
+  document.addEventListener("input", (e) => {
+    if (e.target.id === "acct-q") { S.q = e.target.value; renderAccounts(); }
+    if (e.target.id === "od-q") { S.odF.q = e.target.value; storeJ.set("odF", S.odF); renderOndeck(); }
+  });
   document.addEventListener("change", async (e) => {
-    const el = e.target; const act = el.dataset && el.dataset.actChange; if (!act) return;
+    const el = e.target;
+    const afMap = { "af-close": "close", "af-from": "cfrom", "af-to": "cto", "af-stage": "stage", "af-added": "added" };
+    if (afMap[el.id]) { S.af[afMap[el.id]] = el.value; storeJ.set("af", S.af); if (el.id !== "af-from" && el.id !== "af-to") S._fSeg = null; renderAccounts(); return; }
+    const odMap = { "od-status": "status", "od-sub": "sub", "od-list": "list" };
+    if (odMap[el.id]) { S.odF[odMap[el.id]] = el.value; storeJ.set("odF", S.odF); renderOndeck(); return; }
+    if (el.id === "od-all") { const byName = accountsByName(); for (const { id, st } of odVisible(byName)) if (st.key !== "added") el.checked ? S.odSel.add(id) : S.odSel.delete(id); renderOndeck(); return; }
+    if (el.dataset && el.dataset.odPick) { el.checked ? S.odSel.add(el.dataset.odPick) : S.odSel.delete(el.dataset.odPick); renderOndeck(); return; }
+    if (el.id === "in-owner") { store.set("prospectOwner", el.value); return; }
+    if (el.id === "od-file") {
+      const f = el.files && el.files[0]; if (!f) return;
+      if (f.size > 5 * 1024 * 1024) { S.odPreview = { error: "That file is over 5 MB. Export just the target list as CSV." }; renderOdPreview(); return; }
+      let text = ""; try { text = await f.text(); } catch { S.odPreview = { error: "The file couldn't be read." }; renderOdPreview(); return; }
+      if (!/\.csv$/i.test(f.name) && !/,/.test(text.split(/\r?\n/)[0] || "")) { S.odPreview = { error: "Save the spreadsheet as CSV and import that." }; renderOdPreview(); return; }
+      S.odPreview = readTargetCsv(text, f.name); renderOdPreview(); return;
+    }
+    const jc = el.dataset && el.dataset.jobChange;
+    if (jc) {
+      const job = S.jobs.find((j) => j.key === el.dataset.job); if (!job) return;
+      if (jc === "multi") { job.multi = el.checked; if (job.state === "review") preselect(job); }
+      else if (jc === "cand") { if (el.checked) { if (job.selected.size < targetN(job)) job.selected.add(el.dataset.id); } else job.selected.delete(el.dataset.id); job.confirming = false; }
+      else if (jc === "task") job.addTask = el.checked;
+      renderJobs(); return;
+    }
+    const act = el.dataset && el.dataset.actChange; if (!act) return;
     const accId = S.route.id; const a = S.accounts.get(accId); if (!a) return;
     if (act === "stage") await w(() => acctRef(accId).update({ stage: el.value, updated_at: nowIso() }));
     if (act === "owner") await w(() => acctRef(accId).update({ owner: el.value, updated_at: nowIso() }));
     if (act === "contact-status") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, status: el.value } : c), updated_at: nowIso() }));
+    if (act === "linkedin-sent") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, linkedin_sent: el.checked } : c), updated_at: nowIso() }));
   });
   document.addEventListener("submit", async (e) => {
     const f = e.target; e.preventDefault();
     const accId = S.route.id;
-    if (f.id === "add-account-form") {
+    if (f.id === "intake") {
+      if (!ziReady()) return;
+      const owner = $("in-owner").value; store.set("prospectOwner", owner);
+      const lines = $("in-names").value.split(/\n/).map((s) => s.trim()).filter(Boolean);
+      if (!lines.length) { toast("Enter at least one company name or domain."); $("in-names").focus(); return; }
+      if (lines.length > 5) { toast("Enter at most 5 companies at a time (aim for 1–2 a day)."); return; }
+      $("in-names").value = "";
+      startJobs(lines.map((l) => ({ input: l })), owner);
+    } else if (f.id === "add-account-form") {
       const name = $("na-name").value.trim(); if (!name) return;
       const dom = normDomain($("na-domain").value);
-      const dupe = [...S.accounts.entries()].find(([, a]) => (dom && normDomain(a.domain) === dom) || normName(a.company_name) === normName(name));
+      const dupe = findAccount({ domain: dom, name });
       if (dupe) { toast(`${dupe[1].company_name} is already on the board.`); location.hash = `#account-${dupe[0]}`; return; }
       const id = rid("a");
-      const ok = await w(() => acctRef(id).set({ owner: $("na-owner").value, band: "outbound", company_name: name, domain: dom, stage: $("na-stage").value, sf_opportunity_id: null, amount: null, close_date: null, sf_owner: "", last_activity_date: null, contacts: [], created_at: nowIso(), updated_at: nowIso() }));
+      const ok = await w(() => acctRef(id).set({ owner: $("na-owner").value, band: "outbound", company_name: name, domain: dom, stage: $("na-stage").value, source: "manual", sf_opportunity_id: null, amount: null, close_date: null, sf_owner: "", last_activity_date: null, contacts: [], created_at: nowIso(), updated_at: nowIso(), created_by: S.meId || null, created_by_name: S.myOwner || "" }));
       if (ok) { S.addAccount = false; f.reset(); location.hash = `#account-${id}`; }
     } else if (f.id === "task-form") {
       const ok = await addTask(accId, $("nt-title").value, $("nt-due").value, $("nt-contact").value, "manual");
@@ -887,26 +1664,22 @@ details.done-box summary::-webkit-details-marker { display: none; }
       renderDetail();
     } else if (f.dataset.form === "contact") {
       const a = S.accounts.get(accId); if (!a) return;
-      const vals = { name: fv(f, "name").trim(), title: fv(f, "title").trim(), email: fv(f, "email").trim(), phone: fv(f, "phone").trim() };
+      const vals = { name: fv(f, "name").trim(), title: fv(f, "title").trim(), email: fv(f, "email").trim(), phone: fv(f, "phone").trim(), mobile: fv(f, "mobile").trim(), linkedin_url: fv(f, "linkedin").trim() };
       if (!vals.name) return;
       let cs = Array.isArray(a.contacts) ? a.contacts.slice() : [];
       if (f.dataset.id) cs = cs.map((c) => c.id === f.dataset.id ? { ...c, ...vals } : c);
-      else cs.push({ id: rid("c"), ...vals, is_primary: !cs.some((c) => c.is_primary), status: "Active" });
+      else cs.push({ id: rid("c"), ...vals, source: "manual", is_primary: !cs.some((c) => c.is_primary), status: "Not started", linkedin_sent: false, added_at: nowIso() });
       S.editContact = null; S.addContact = false;
       await w(() => acctRef(accId).update({ contacts: cs, updated_at: nowIso() }));
       renderDetail();
     }
   });
 
-  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); }
+  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); renderProspect(); }
 
   // ---------- boot ----------
-  S.route = parseHash();
-  $("view-today").hidden = S.route.view !== "today"; $("view-accounts").hidden = S.route.view !== "accounts"; $("view-account").hidden = S.route.view !== "account";
-  if (S.route.view === "account") buildDetailShell();
-  { const r = S.route; if (r.view === "today") $("nav-today").setAttribute("aria-current", "page"); else $("nav-accounts").setAttribute("aria-current", "page"); }
+  S.route = parseHash(); showView(S.route);
   renderAll();
-  // Roll Today over at midnight.
   let lastDay = today(); setInterval(() => { if (today() !== lastDay) { lastDay = today(); renderAll(); } }, 60000);
 
   (async () => {
@@ -919,17 +1692,21 @@ details.done-box summary::-webkit-details-marker { display: none; }
       try { const me = await user.me(); S.meId = me && me.id; S.meName = (me && me.name) || ""; } catch {}
       try { S.canWrite = await user.can("data.write"); } catch { S.canWrite = null; }
       const first = (S.meName || "").split(/\s+/)[0];
-      if (OWNERS.includes(first) && S.myOwner !== first) { S.myOwner = first; store.set("me", first); }
+      if (OWNERS.includes(first) && S.myOwner !== first) { S.myOwner = first; store.set("me", first); if ($("in-owner")) $("in-owner").value = first; }
     }
     if (db) {
-      const onErr = (e) => { console.error("db", e); S.dbErr = e && e.code === "revoked" ? "Your access to this board changed. Reload the page." : `The board couldn't load (${(e && e.code) || "error"}). Reload the page.`; S.loaded.a = true; S.loaded.t = true; renderAll(); };
+      const onErr = (e) => { console.error("db", e); S.dbErr = e && e.code === "revoked" ? "Your access to this board changed. Reload the page." : `The board couldn't load (${(e && e.code) || "error"}). Reload the page.`; S.loaded.a = S.loaded.t = S.loaded.o = true; renderAll(); };
       const loadT = setTimeout(() => { if (!S.loaded.a || !S.loaded.t) { S.dbErr = "The board is taking a while to load. Check your connection and reload."; renderBanner(); } }, 10000);
-      db.collection("accounts").limit(1000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; if (S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
-      db.collection("tasks").limit(1000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; if (S.loaded.a) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
+      const settle = () => { if (S.loaded.a && S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } };
+      db.collection("accounts").limit(1000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; settle(); renderAll(); }, onErr);
+      db.collection("tasks").limit(1000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; settle(); renderAll(); }, onErr);
+      db.collection("ondeck").limit(1000).onSnapshot((snap) => { S.ondeck = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.o = true; renderProspect(); }, () => { S.loaded.o = true; renderProspect(); });
       db.doc("meta/settings").onSnapshot((snap) => { S.settings = (snap.exists && snap.data()) || {}; renderAccounts(); }, () => {});
       if (S.route.view === "account") { S.notesFor = null; subscribeNotes(S.route.id); }
     }
     renderAll();
+    await checkZoomInfo();
+    renderProspect(); renderJobs();
   })();
 })();
 </script>
