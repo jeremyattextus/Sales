@@ -1,0 +1,935 @@
+<title>TextUs Sales Cockpit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600&family=Raleway:ital,wght@0,400;0,500;0,600;1,500&display=swap">
+<style>
+/* Layout: navy app bar with the owner toggle; one work column below. Today is a flat checklist, Accounts is a ledger, an account is tasks + notes beside contacts + Gong. */
+:root {
+  --navy: #1D4277;
+  --blue: #069FFF;
+  --green: #02E584;
+  --purple: #D26AE9;
+  --bg: #F6F7F9;
+  --surface: #FFFFFF;
+  --surface-2: #EEF2F8;
+  --ink: #17191B;
+  --heading: #1D4277;
+  --muted: #5A6880;
+  --line: #DCE3EE;
+  --link: #0A78C2;
+  --btn: #1D4277;
+  --btn-ink: #FFFFFF;
+  --btn-2: #E4ECF7;
+  --btn-2-ink: #1D4277;
+  --focus: #069FFF;
+  --ok: #0B8A55; --ok-soft: #DDF8EC;
+  --bad: #C13540; --bad-soft: #FBE6E8;
+  --warn: #9A6B00; --warn-soft: #FFF3D6;
+  --gong: #9B3DB4; --gong-soft: #F8EAFC;
+  --deal-soft: #E1F2FF; --deal-ink: #0A5E99;
+  --bar: #1D4277; --bar-ink: #FFFFFF; --bar-muted: #AFC3E2; --bar-seg: #16365F; --bar-seg-on: #FFFFFF; --bar-seg-on-ink: #1D4277;
+  --font-head: 'Alexandria', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Raleway', 'Helvetica Neue', Arial, sans-serif;
+  --grad: linear-gradient(90deg, #069FFF 0%, #02E584 100%);
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
+    --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
+    --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
+    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF;
+    --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
+  --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
+  --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
+  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF;
+  --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bar); }
+h1, h2, h3 { font-family: var(--font-head); color: var(--heading); margin: 0; text-wrap: balance; font-weight: 500; }
+h1 { font-size: 30px; line-height: 1.15; letter-spacing: -.01em; }
+h2 { font-size: 15px; font-weight: 500; letter-spacing: .01em; }
+h3 { font-size: 14px; }
+a { color: var(--link); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.eyebrow { font-family: var(--font-head); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* App bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bar); color: var(--bar-ink); }
+.bar::after { content: ""; display: block; height: 3px; background: var(--grad); }
+.bar-in { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.brand img { height: 30px; width: auto; display: block; }
+.brand span { font-family: var(--font-head); font-weight: 300; font-size: 15px; color: var(--bar-muted); border-left: 1px solid rgba(255,255,255,.25); padding-left: 12px; white-space: nowrap; }
+.nav { display: flex; gap: 4px; }
+.nav a { color: var(--bar-muted); text-decoration: none; font-family: var(--font-head); font-size: 14px; padding: 7px 12px; border-radius: 8px; display: inline-flex; gap: 7px; align-items: center; }
+.nav a:hover { color: var(--bar-ink); }
+.nav a[aria-current="page"] { color: var(--bar-ink); background: rgba(255,255,255,.1); }
+.nav .count { background: var(--blue); color: #0C1524; border-radius: 999px; font-size: 11px; padding: 0 7px; line-height: 18px; font-weight: 600; }
+.nav .count.over { background: #FF8A93; }
+.bar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--bar-seg); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--bar-muted); padding: 5px 13px; border-radius: 999px; font-family: var(--font-head); font-size: 13px; cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--bar-seg-on); color: var(--bar-seg-on-ink); }
+.who { font-size: 13px; color: var(--bar-muted); display: flex; align-items: center; gap: 6px; }
+.who select { background: var(--bar-seg); color: var(--bar-ink); border: 0; border-radius: 6px; padding: 3px 6px; font-size: 13px; }
+
+/* Page */
+main { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 26px 64px; display: grid; gap: 18px; }
+.banner { border-radius: var(--radius); padding: 10px 14px; font-size: 14px; background: var(--warn-soft); color: var(--warn); }
+.banner.info { background: var(--deal-soft); color: var(--deal-ink); }
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.page-head .sub { font-family: var(--font-head); font-weight: 300; font-size: 15px; color: var(--muted); margin-top: 4px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; flex-wrap: wrap; }
+.panel-body { padding: 0 16px 16px; display: grid; gap: 10px; }
+
+/* Buttons and fields */
+.btn { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 8px; padding: 8px 14px; background: var(--btn); color: var(--btn-ink); font-family: var(--font-head); font-size: 13.5px; cursor: pointer; white-space: nowrap; text-decoration: none; }
+.btn:hover { filter: brightness(1.08); }
+.btn.sec { background: var(--btn-2); color: var(--btn-2-ink); }
+.btn.ghost { background: transparent; color: var(--muted); padding: 6px 8px; }
+.btn.ghost:hover { color: var(--ink); background: var(--surface-2); filter: none; }
+.btn.danger { background: var(--bad-soft); color: var(--bad); }
+.btn.gong { background: var(--gong-soft); color: var(--gong); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; filter: none; }
+.icon-btn { border: 0; background: transparent; color: var(--muted); padding: 5px; border-radius: 6px; cursor: pointer; display: inline-flex; }
+.icon-btn:hover { color: var(--ink); background: var(--surface-2); }
+.field, .sel { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 10px; min-width: 0; font-size: 14px; }
+.field:focus, .sel:focus { border-color: var(--focus); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
+textarea.field { resize: vertical; min-height: 70px; width: 100%; line-height: 1.5; }
+.row-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row-form .grow { flex: 1 1 220px; }
+label.lbl { display: grid; gap: 4px; font-size: 12px; color: var(--muted); font-family: var(--font-head); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: end; }
+
+/* Pills */
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; font-size: 12px; padding: 2px 9px; font-family: var(--font-head); white-space: nowrap; background: var(--surface-2); color: var(--muted); }
+.pill.deal { background: var(--deal-soft); color: var(--deal-ink); }
+.pill.out { background: var(--surface-2); color: var(--heading); }
+.pill.over { background: var(--bad-soft); color: var(--bad); }
+.pill.today { background: var(--deal-soft); color: var(--deal-ink); }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.gong { background: var(--gong-soft); color: var(--gong); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.owner-dot { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-family: var(--font-head); font-size: 11px; background: var(--surface-2); color: var(--heading); flex: none; }
+
+/* Checkbox */
+.chk { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; flex: none; display: grid; place-items: center; margin: 0; }
+.chk:hover { border-color: var(--ok); }
+.chk:checked { background: var(--ok); border-color: var(--ok); }
+.chk:checked::after { content: ""; width: 5px; height: 10px; border: solid var(--surface); border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+
+/* Today */
+.focus-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.stat { display: flex; align-items: baseline; gap: 7px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 8px 14px; }
+.stat b { font-family: var(--font-head); font-weight: 500; font-size: 22px; color: var(--heading); }
+.stat.over b { color: var(--bad); }
+.stat span { font-size: 13px; color: var(--muted); }
+.tasklist { list-style: none; margin: 0; padding: 0; }
+.tasklist > li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.tasklist > li:first-child { border-top: 0; }
+.tasklist .t-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.tasklist .t-title { font-weight: 500; overflow-wrap: anywhere; }
+.tasklist .t-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--muted); align-items: center; }
+.tasklist .t-meta a { color: var(--link); text-decoration: none; font-weight: 500; }
+.tasklist .t-meta a:hover { text-decoration: underline; }
+.tasklist .t-side { display: flex; align-items: center; gap: 6px; flex: none; }
+.tasklist li.done .t-title { text-decoration: line-through; color: var(--muted); }
+.group-label { padding: 12px 16px 4px; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); display: grid; gap: 6px; justify-items: center; }
+.empty .bubble { font-family: var(--font-head); color: var(--heading); font-size: 17px; background: var(--surface-2); border-radius: 16px 16px 16px 4px; padding: 10px 16px; }
+
+/* Accounts */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+.tabs button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; color: var(--muted); font-family: var(--font-head); font-size: 13.5px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.tabs button[aria-pressed="true"] { background: var(--navy); color: #FFFFFF; }
+:root[data-theme="dark"] .tabs button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); } }
+.tabs .n { font-size: 11px; opacity: .75; }
+.tools-r { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.table-wrap { overflow-x: auto; }
+table.book { width: 100%; border-collapse: collapse; min-width: 680px; }
+.book th { text-align: left; font-family: var(--font-head); font-weight: 400; font-size: 12px; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.book td { padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.book tr:last-child td { border-bottom: 0; }
+.book tbody tr { cursor: pointer; }
+.book tbody tr:hover td { background: var(--surface-2); }
+.book .co { font-weight: 600; color: var(--heading); }
+.book .dom { font-size: 12.5px; color: var(--muted); }
+.book .r { text-align: right; }
+.taskcount { display: inline-flex; align-items: center; gap: 6px; }
+.taskcount .od { width: 7px; height: 7px; border-radius: 50%; background: var(--bad); }
+.sync-line { font-size: 13px; color: var(--muted); }
+.sync-line.err { color: var(--bad); }
+
+/* Detail */
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+.acct-head { padding: 18px 18px 16px; display: grid; gap: 14px; }
+.acct-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.acct-title h1 { font-size: 28px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px 18px; }
+.fact { display: grid; gap: 3px; min-width: 0; }
+.fact .v { font-family: var(--font-head); font-size: 15px; color: var(--heading); overflow-wrap: anywhere; }
+.fact .v.big { font-size: 20px; }
+.fact select.sel { padding: 4px 8px; }
+.detail-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.col { display: grid; gap: 18px; min-width: 0; }
+@media (max-width: 860px) { .detail-grid { grid-template-columns: minmax(0, 1fr); } }
+.sugg { border: 1px dashed color-mix(in srgb, var(--gong) 55%, transparent); background: var(--gong-soft); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; }
+.sugg-item { display: flex; gap: 10px; align-items: flex-start; }
+.sugg-item p { margin: 0; flex: 1; min-width: 0; font-size: 14px; }
+.sugg-item .acts { display: flex; gap: 4px; flex: none; }
+.edit-row { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.edit-row .field { flex: 1 1 180px; }
+details.done-box summary { cursor: pointer; padding: 10px 16px; color: var(--muted); font-size: 13.5px; list-style: none; border-top: 1px solid var(--line); }
+details.done-box summary::-webkit-details-marker { display: none; }
+.contact { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; }
+.contact.primary { border-color: color-mix(in srgb, var(--blue) 55%, var(--line)); }
+.contact-top { display: flex; align-items: flex-start; gap: 8px; }
+.contact-top .nm { flex: 1; min-width: 0; }
+.contact-top .nm b { display: block; color: var(--heading); font-weight: 600; overflow-wrap: anywhere; }
+.contact-top .nm span { font-size: 13px; color: var(--muted); }
+.contact .lines { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.contact .lines span { user-select: all; overflow-wrap: anywhere; }
+.contact .foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.star { border: 0; background: transparent; cursor: pointer; color: var(--muted); padding: 3px; border-radius: 6px; display: inline-flex; }
+.star.on { color: var(--blue); }
+.star.on svg { fill: currentColor; }
+.notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.note { display: grid; gap: 4px; }
+.note .msg { background: var(--surface-2); border-radius: 14px 14px 14px 4px; padding: 10px 13px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.note .by { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.gong-ctx { display: grid; gap: 8px; }
+.gong-ctx .msg { background: var(--surface-2); border-radius: 14px 14px 4px 14px; padding: 10px 13px; font-size: 14px; }
+.spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+.err { color: var(--bad); font-size: 13.5px; }
+.danger-zone { display: flex; justify-content: flex-end; gap: 8px; align-items: center; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: 14px; z-index: 50; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px); }
+.toast[hidden] { display: none; }
+.toast button { background: transparent; border: 0; color: var(--blue); font-weight: 600; cursor: pointer; padding: 0; }
+@media (max-width: 640px) {
+  .brand span { display: none; }
+  .bar-right { margin-left: 0; width: 100%; justify-content: space-between; }
+  h1 { font-size: 25px; }
+  .tasklist > li { padding: 12px; }
+}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="brand" href="#today"><img alt="TextUs" src="data:image/png;base64,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"><span>Sales Cockpit</span></a>
+    <nav class="nav" aria-label="Views">
+      <a href="#today" id="nav-today">Today <span class="count" id="nav-count" hidden></span></a>
+      <a href="#accounts" id="nav-accounts">Accounts</a>
+    </nav>
+    <div class="bar-right">
+      <div class="seg" role="group" aria-label="Owner" id="owner-seg">
+        <button type="button" data-owner="mine" aria-pressed="true">Mine</button>
+        <button type="button" data-owner="other" aria-pressed="false" id="owner-other">David's</button>
+        <button type="button" data-owner="all" aria-pressed="false">All</button>
+      </div>
+      <label class="who" for="me-sel">You:
+        <select id="me-sel"><option value="">Pick…</option><option>Jeremy</option><option>David</option></select>
+      </label>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+  <div class="banner" id="banner" hidden></div>
+  <section id="view-today" hidden></section>
+  <section id="view-accounts" hidden></section>
+  <section id="view-account" hidden></section>
+</main>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+  // ---------- constants ----------
+  const OWNERS = ["Jeremy", "David"];
+  const SF_USERS = { Jeremy: "005Pe00000MyPQJIA3", David: "005Pe00000RHuxVIAT" };
+  const SF_BASE = "https://textus.lightning.force.com";
+  const OUT_STAGES = ["Target", "Contacted", "Engaged", "Ready"];
+  const CONTACT_STATUS = ["Active", "Engaged", "Dormant", "Dead"];
+  const SF = "Salesforce", GONG = "Gong";
+
+  const ICON = {
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    back: '<path d="M15 18l-6-6 6-6"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/>',
+    out: '<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>',
+    sync: '<path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5M20 20v-4h-4"/>',
+    star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
+    spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  };
+  const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+
+  // ---------- helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const rid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const pad = (n) => String(n).padStart(2, "0");
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = () => ymd(new Date());
+  const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const fmtDate = (s) => { if (!s) return "—"; const [y, m, d] = String(s).slice(0, 10).split("-").map(Number); if (!y) return "—"; const cy = new Date().getFullYear(); return `${MON[m - 1]} ${d}${y !== cy ? ", " + y : ""}`; };
+  const fmtWhen = (iso) => { if (!iso) return ""; const d = new Date(iso); if (isNaN(d)) return ""; const t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); return ymd(d) === today() ? `Today ${t}` : `${fmtDate(ymd(d))} · ${t}`; };
+  const money = (n) => (n == null || n === "" || isNaN(Number(n))) ? "—" : Number(n).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const daysBetween = (a, b) => { const [y1, m1, d1] = a.split("-").map(Number), [y2, m2, d2] = b.split("-").map(Number); return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 864e5); };
+  const dueLabel = (due) => { const t = today(); if (!due) return { cls: "", txt: "No date" }; if (due < t) { const n = daysBetween(due, t); return { cls: "over", txt: n === 1 ? "1 day late" : `${n} days late` }; } if (due === t) return { cls: "today", txt: "Today" }; if (due === addDays(t, 1)) return { cls: "", txt: "Tomorrow" }; return { cls: "", txt: fmtDate(due) }; };
+  const normDomain = (s) => String(s || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split(/[\/?#]/)[0];
+  const normName = (s) => String(s || "").toLowerCase().replace(/&/g, "and").replace(/\b(inc|llc|ltd|corp|corporation|co|company|group|the)\b\.?/g, "").replace(/[^a-z0-9]/g, "");
+  const store = { get(k) { try { return localStorage.getItem("cockpit." + k); } catch { return null; } }, set(k, v) { try { localStorage.setItem("cockpit." + k, v); } catch {} } };
+  const initial = (o) => (o || "?").slice(0, 1).toUpperCase();
+  const fv = (f, n) => { const el = f.elements.namedItem(n); return el ? el.value : ""; };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // ---------- state ----------
+  const S = {
+    db: null, user: null, mcp: null, meId: null, meName: "",
+    myOwner: store.get("me") || "", canWrite: null,
+    accounts: new Map(), tasks: new Map(), notes: new Map(), settings: {},
+    loaded: { a: false, t: false }, dbErr: "", dbAbsent: false,
+    owner: store.get("owner") || "mine", seg: store.get("seg") || "deal", q: "",
+    route: { view: "today", id: null },
+    conn: { [SF]: "unknown", [GONG]: "unknown" },
+    sync: { running: false, msg: "", err: "" },
+    gong: { running: false, err: "" },
+    editTask: null, editContact: null, addContact: false, addAccount: false, confirmDelete: false,
+    notesUnsub: null, notesFor: null, names: {},
+  };
+  const canWrite = () => !!S.db && S.canWrite !== false;
+
+  // ---------- owner filter ----------
+  const otherOwner = () => (S.myOwner === "David" ? "Jeremy" : "David");
+  function ownerMatch(owner) {
+    if (S.owner === "all") return true;
+    if (!S.myOwner) return true;
+    return S.owner === "mine" ? owner === S.myOwner : owner === otherOwner();
+  }
+  function renderOwnerSeg() {
+    $("owner-other").textContent = `${otherOwner()}'s`;
+    $("owner-seg").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.owner === S.owner)));
+    $("me-sel").value = S.myOwner || "";
+  }
+  $("owner-seg").addEventListener("click", (e) => { const b = e.target.closest("button[data-owner]"); if (!b) return; S.owner = b.dataset.owner; store.set("owner", S.owner); renderAll(); });
+  $("me-sel").addEventListener("change", (e) => { S.myOwner = e.target.value; store.set("me", S.myOwner); renderAll(); });
+
+  // ---------- toast ----------
+  let toastT;
+  function toast(msg, undo) {
+    const t = $("toast"); t.innerHTML = `<span>${esc(msg)}</span>${undo ? '<button type="button" id="toast-undo">Undo</button>' : ""}`; t.hidden = false;
+    if (undo) $("toast-undo").onclick = () => { t.hidden = true; undo(); };
+    clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 5000);
+  }
+
+  // ---------- db writes ----------
+  async function w(fn, failMsg) {
+    if (!canWrite()) { toast("You have view-only access to this board."); return false; }
+    try { await fn(); return true; } catch (e) { console.error(e); toast(failMsg || "That change didn't save. Try again."); return false; }
+  }
+  const nowIso = () => new Date().toISOString();
+  const acctRef = (id) => S.db.collection("accounts").doc(id);
+  const taskRef = (id) => S.db.collection("tasks").doc(id);
+  const noteRef = (id) => S.db.collection("notes").doc(id);
+  const touch = (id) => acctRef(id).update({ updated_at: nowIso() }).catch(() => {});
+
+  async function setTaskDone(id, done) {
+    const t = S.tasks.get(id); if (!t) return;
+    const ok = await w(() => taskRef(id).update({ status: done ? "done" : "open", completed_at: done ? nowIso() : null }));
+    if (ok && done) toast(`Done: ${t.title.slice(0, 48)}`, () => setTaskDone(id, false));
+  }
+  async function addTask(accountId, title, due, contactId, source) {
+    title = String(title || "").trim(); if (!title) return false;
+    const id = rid("t");
+    const ok = await w(() => taskRef(id).set({ account_id: accountId, contact_id: contactId || null, title: title.slice(0, 300), due_date: due || today(), status: "open", source: source || "manual", completed_at: null, created_at: nowIso(), created_by: S.meId || null }));
+    if (ok) touch(accountId);
+    return ok;
+  }
+
+  // ---------- connectors ----------
+  function payloadOf(result) {
+    let p = result && result.payload !== undefined ? result.payload : result;
+    if (p && p.content && !p.structuredContent && Array.isArray(p.content)) { const t = p.content.find((c) => c.type === "text"); if (t) p = t.text; }
+    else if (p && p.structuredContent) p = p.structuredContent;
+    if (typeof p === "string") { const i = p.search(/[\[{]/); if (i >= 0) { try { p = JSON.parse(p.slice(i)); } catch {} } }
+    return p;
+  }
+  function errText(e, server) {
+    const s = (e && e.server) || server, msg = String((e && e.message) || "").slice(0, 220);
+    switch (e && e.code) {
+      case "needs_reauth": return `${s} needs to be reconnected. Reconnect it in claude.ai Settings → Connectors, then reload.`;
+      case "server_not_connected": case "server_not_found": return `${s} isn't connected to your claude.ai account. Add it in Settings → Connectors, then reload.`;
+      case "selection_required": return `You have more than one ${s} connector. Pick one when claude.ai asks, then try again.`;
+      case "blocked_by_policy": return `Your organization blocks this ${s} tool for your account.`;
+      case "consent_required": case "approval_required": return `Allow ${s} for this page when claude.ai asks, then try again.`;
+      case "rate_limited": return `${s} is rate-limiting requests. Wait a minute and try again.`;
+      case "server_unavailable": return `${s} didn't respond. Wait a minute and try again.`;
+      case "tool_error": return `${s} returned an error: ${msg || "no details"}`;
+      case "not_granted": case "capability_disabled": case "capability_removed": return `Connectors aren't available in this view. Open the cockpit in claude.ai.`;
+      default: return `${s} request failed${e && e.code ? ` (${e.code})` : ""}. ${msg}`;
+    }
+  }
+  async function callTool(server, tool, input) {
+    if (!S.mcp) throw { code: "not_granted", server, message: "" };
+    try { return payloadOf(await S.mcp.callTool(server, tool, input, { cache: false })); }
+    catch (e) {
+      if (e && e.retryable) { await sleep(Math.min(e.retryAfterMs || 0, 15000) || 900); return payloadOf(await S.mcp.callTool(server, tool, input, { cache: false })); }
+      throw e;
+    }
+  }
+
+  // ---------- Salesforce sync ----------
+  function soqlRecords(p) { return (p && (p.records || (p.result && p.result.records))) || []; }
+  async function soql(q) {
+    return soqlRecords(await callTool(SF, "soqlQuery", { q }));
+  }
+  async function syncSalesforce() {
+    if (S.sync.running || !canWrite()) return;
+    S.sync = { running: true, msg: "Reading open opportunities from Salesforce…", err: "" }; renderAccounts();
+    try {
+      const ownerIds = Object.values(SF_USERS).map((x) => `'${x}'`).join(",");
+      const recs = await soql(`SELECT Id, Name, StageName, Amount, CloseDate, LastActivityDate, OwnerId, Owner.Name, AccountId, Account.Name, Account.Website, (SELECT IsPrimary, ContactId, Contact.Name, Contact.Title, Contact.Email, Contact.Phone FROM OpportunityContactRoles WHERE IsPrimary = true) FROM Opportunity WHERE OwnerId IN (${ownerIds}) AND IsClosed = false ORDER BY CloseDate ASC LIMIT 1000`);
+      const byOpp = new Map(), byDomain = new Map(), byName = new Map();
+      for (const [id, a] of S.accounts) {
+        if (a.sf_opportunity_id) byOpp.set(a.sf_opportunity_id, id);
+        else { if (a.domain) byDomain.set(normDomain(a.domain), id); if (a.company_name) byName.set(normName(a.company_name), id); }
+      }
+      const ownerFor = (oid) => Object.keys(SF_USERS).find((k) => SF_USERS[k] === oid) || "Jeremy";
+      let created = 0, updated = 0, converted = 0; const seen = new Set(); const jobs = [];
+      for (const r of recs) {
+        seen.add(r.Id);
+        const acc = r.Account || {}; const dom = normDomain(acc.Website);
+        const sfFields = {
+          sf_opportunity_id: r.Id, sf_opportunity_name: r.Name || "", sf_account_id: r.AccountId || null,
+          stage: r.StageName || "", amount: r.Amount == null ? null : Number(r.Amount), close_date: r.CloseDate || null,
+          sf_owner: (r.Owner && r.Owner.Name) || "", last_activity_date: r.LastActivityDate || null, sf_closed: false,
+          sf_synced_at: nowIso(), band: "deal",
+        };
+        const role = r.OpportunityContactRoles && r.OpportunityContactRoles.records && r.OpportunityContactRoles.records[0];
+        const pc = role && role.Contact ? { sf_contact_id: role.ContactId, name: role.Contact.Name || "", title: role.Contact.Title || "", email: role.Contact.Email || "", phone: role.Contact.Phone || "" } : null;
+        let id = byOpp.get(r.Id), mode = "update";
+        if (!id) { id = (dom && byDomain.get(dom)) || byName.get(normName(acc.Name)); mode = id ? "convert" : "create"; }
+        if (mode === "convert") { byDomain.delete(dom); byName.delete(normName(acc.Name)); }
+        if (mode === "create") {
+          id = rid("a");
+          const contacts = pc ? [{ id: rid("c"), ...pc, is_primary: true, status: "Active" }] : [];
+          jobs.push(() => acctRef(id).set({ ...sfFields, owner: ownerFor(r.OwnerId), company_name: acc.Name || r.Name, domain: dom, contacts, created_at: nowIso(), updated_at: nowIso() }));
+          created++;
+        } else {
+          const a = S.accounts.get(id) || {}; const patch = { ...sfFields, updated_at: nowIso() };
+          if (mode === "convert") { patch.owner = ownerFor(r.OwnerId); converted++; } else updated++;
+          if (!a.domain && dom) patch.domain = dom;
+          if (pc) {
+            const cs = Array.isArray(a.contacts) ? a.contacts.slice() : [];
+            const hit = cs.find((c) => (c.sf_contact_id && c.sf_contact_id === pc.sf_contact_id) || (pc.email && c.email && c.email.toLowerCase() === pc.email.toLowerCase()));
+            if (!hit) { cs.push({ id: rid("c"), ...pc, is_primary: !cs.some((c) => c.is_primary), status: "Active" }); patch.contacts = cs; }
+          }
+          jobs.push(() => acctRef(id).update(patch));
+        }
+      }
+      // Deals that left the open list: refresh their stage once.
+      const gone = [...S.accounts.entries()].filter(([, a]) => a.sf_opportunity_id && !seen.has(a.sf_opportunity_id) && !a.sf_closed);
+      let closed = 0;
+      if (gone.length) {
+        S.sync.msg = "Checking deals that closed…"; renderAccounts();
+        for (let i = 0; i < gone.length; i += 100) {
+          const chunk = gone.slice(i, i + 100);
+          const cr = await soql(`SELECT Id, StageName, IsClosed, Amount, CloseDate, LastActivityDate, Owner.Name FROM Opportunity WHERE Id IN (${chunk.map(([, a]) => `'${a.sf_opportunity_id}'`).join(",")})`);
+          for (const r of cr) {
+            const hit = chunk.find(([, a]) => a.sf_opportunity_id === r.Id); if (!hit) continue;
+            closed += r.IsClosed ? 1 : 0;
+            jobs.push(() => acctRef(hit[0]).update({ stage: r.StageName || "", sf_closed: !!r.IsClosed, amount: r.Amount == null ? null : Number(r.Amount), close_date: r.CloseDate || null, last_activity_date: r.LastActivityDate || null, sf_owner: (r.Owner && r.Owner.Name) || "", sf_synced_at: nowIso(), updated_at: nowIso() }));
+          }
+        }
+      }
+      S.sync.msg = `Saving ${jobs.length} accounts…`; renderAccounts();
+      let failed = 0;
+      for (let i = 0; i < jobs.length; i += 8) {
+        const res = await Promise.allSettled(jobs.slice(i, i + 8).map((f) => f()));
+        failed += res.filter((x) => x.status === "rejected").length;
+      }
+      const summary = `${recs.length} open opportunities: ${created} new, ${updated} refreshed, ${converted} converted from outbound${closed ? `, ${closed} closed` : ""}.${failed ? ` ${failed} didn't save; sync again.` : ""}`;
+      await S.db.collection("meta").doc("settings").set({ ...S.settings, last_sf_sync: { at: nowIso(), by: S.myOwner || "", summary } }).catch(() => {});
+      S.sync = { running: false, msg: summary, err: "" };
+    } catch (e) {
+      console.error(e);
+      S.sync = { running: false, msg: "", err: errText(e, SF) };
+    }
+    renderAccounts();
+  }
+
+  // ---------- Gong ----------
+  function gongItems(p) {
+    const out = [];
+    const ans = p && (p.answer || (p.result && p.result.answer));
+    if (Array.isArray(ans)) for (const sec of ans) { if (sec && Array.isArray(sec.answerItems)) out.push(...sec.answerItems.map(String)); else if (typeof sec === "string") out.push(sec); else if (sec && sec.text) out.push(String(sec.text)); }
+    else if (typeof ans === "string") out.push(ans);
+    return out.map((s) => s.trim()).filter(Boolean);
+  }
+  async function pullGong(id) {
+    const a = S.accounts.get(id); if (!a || S.gong.running || !canWrite()) return;
+    S.gong = { running: true, err: "" }; renderDetail();
+    try {
+      const isDeal = !!a.sf_opportunity_id;
+      const tool = isDeal ? "ask_deal" : "ask_account";
+      const base = isDeal ? { crmDeal: a.sf_opportunity_id } : { crmAccount: a.sf_account_id || a.company_name };
+      const to = new Date(); const from = new Date(to.getTime() - 60 * 864e5);
+      const win = { fromDateTime: from.toISOString(), toDateTime: to.toISOString() };
+      const [ctx, steps] = await Promise.all([
+        callTool(GONG, tool, { ...base, ...win, question: "Summarize where this stands from recent calls and emails: what the buyer cares about, open concerns, and the last commitments each side made." }),
+        callTool(GONG, tool, { ...base, ...win, question: "What specific next steps should the TextUs rep take now? List each as one short action starting with a verb." }),
+      ]);
+      const context = gongItems(ctx).slice(0, 8);
+      const suggestions = gongItems(steps).slice(0, 8).map((text) => ({ id: rid("s"), text: text.slice(0, 300), status: "pending" }));
+      const calls = (ctx && ctx.numOfCallsSearched) || 0, emails = (ctx && ctx.numOfEmailsSearched) || 0;
+      await acctRef(id).update({ gong: { pulled_at: nowIso(), pulled_by: S.myOwner || "", context, suggestions, calls, emails }, updated_at: nowIso() });
+      S.gong = { running: false, err: (!context.length && !suggestions.length) ? "Gong found no recent calls or emails for this account." : "" };
+    } catch (e) {
+      console.error(e);
+      S.gong = { running: false, err: errText(e, GONG) };
+    }
+    renderDetail();
+  }
+  async function resolveSuggestion(accId, sid, accept) {
+    const a = S.accounts.get(accId); if (!a || !a.gong) return;
+    const s = (a.gong.suggestions || []).find((x) => x.id === sid); if (!s) return;
+    if (accept) { const ok = await addTask(accId, s.text, today(), null, "gong-suggested"); if (!ok) return; }
+    const suggestions = a.gong.suggestions.map((x) => x.id === sid ? { ...x, status: accept ? "accepted" : "dismissed" } : x);
+    await w(() => acctRef(accId).update({ gong: { ...a.gong, suggestions } }));
+  }
+
+  // ---------- routing ----------
+  function parseHash() {
+    const h = location.hash.replace(/^#/, "");
+    if (h === "accounts") return { view: "accounts", id: null };
+    const m = h.match(/^account-([A-Za-z0-9]+)$/); if (m) return { view: "account", id: m[1] };
+    return { view: "today", id: null };
+  }
+  function route() {
+    const r = parseHash();
+    if (r.id !== S.route.id) { S.editTask = null; S.editContact = null; S.addContact = false; S.confirmDelete = false; S.gong = { running: false, err: "" }; }
+    S.route = r;
+    $("view-today").hidden = r.view !== "today"; $("view-accounts").hidden = r.view !== "accounts"; $("view-account").hidden = r.view !== "account";
+    $("nav-today").removeAttribute("aria-current"); $("nav-accounts").removeAttribute("aria-current");
+    $(r.view === "today" ? "nav-today" : "nav-accounts").setAttribute("aria-current", "page");
+    if (r.view === "account") { subscribeNotes(r.id); buildDetailShell(); }
+    renderAll();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
+
+  // ---------- derived ----------
+  const openTasks = () => [...S.tasks.entries()].filter(([, t]) => t.status !== "done");
+  function focusTasks() {
+    const t = today();
+    return openTasks().filter(([, x]) => x.due_date && x.due_date <= t).filter(([, x]) => { const a = S.accounts.get(x.account_id); return a && ownerMatch(a.owner); })
+      .sort((a, b) => (a[1].due_date < b[1].due_date ? -1 : a[1].due_date > b[1].due_date ? 1 : (a[1].created_at || "").localeCompare(b[1].created_at || "")));
+  }
+  function contactOf(acc, cid) { return cid && acc && Array.isArray(acc.contacts) ? acc.contacts.find((c) => c.id === cid) : null; }
+
+  // ---------- banner ----------
+  function renderBanner() {
+    const b = $("banner"); let msg = "", cls = "banner";
+    if (S.dbAbsent) msg = "The shared board isn't available in this view. Open TextUs Sales Cockpit in claude.ai while signed in.";
+    else if (S.dbErr) msg = S.dbErr;
+    else if (S.db && S.canWrite === false) { msg = "You can view this board but not change it. Ask Jeremy for edit access."; cls = "banner info"; }
+    else if (S.db && !S.myOwner) { msg = "Pick who you are in the top bar so Mine shows your accounts."; cls = "banner info"; }
+    b.className = cls; b.textContent = msg; b.hidden = !msg;
+  }
+
+  // ---------- Today ----------
+  function renderToday() {
+    const el = $("view-today"); if (el.hidden && S.route.view !== "today") { renderNavCount(); return; }
+    const t = today(); const items = focusTasks();
+    const over = items.filter(([, x]) => x.due_date < t), due = items.filter(([, x]) => x.due_date === t);
+    const d = new Date(); const dateTxt = d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+    const scope = S.owner === "all" ? "Everyone's accounts" : S.owner === "mine" ? (S.myOwner ? "Your accounts" : "All accounts") : `${otherOwner()}'s accounts`;
+    const row = ([id, x]) => {
+      const a = S.accounts.get(x.account_id) || {}; const c = contactOf(a, x.contact_id); const dl = dueLabel(x.due_date);
+      return `<li><input type="checkbox" class="chk" data-act="done" data-id="${id}" aria-label="Mark done: ${esc(x.title)}">
+        <div class="t-main"><span class="t-title">${esc(x.title)}</span>
+          <span class="t-meta"><a href="#account-${esc(x.account_id)}">${esc(a.company_name || "Unknown account")}</a>${c ? `<span>${ic("user")} ${esc(c.name)}</span>` : ""}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}</span></div>
+        <div class="t-side">${S.owner === "all" ? `<span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span>` : ""}<span class="pill ${dl.cls}">${esc(dl.txt)}</span></div></li>`;
+    };
+    let body;
+    if (!S.db && !S.dbAbsent) body = `<div class="empty"><span class="spinner"></span><span>Loading your board…</span></div>`;
+    else if (S.db && !(S.loaded.a && S.loaded.t)) body = `<div class="empty"><span class="spinner"></span><span>Loading your board…</span></div>`;
+    else if (!items.length) body = `<div class="empty"><span class="bubble">Nothing due. You're caught up.</span><span class="small">Tasks you add on an account show up here on their due date. <a href="#accounts">Open accounts</a></span></div>`;
+    else body = `${over.length ? `<div class="group-label eyebrow">Overdue · ${over.length}</div><ul class="tasklist">${over.map(row).join("")}</ul>` : ""}${due.length ? `<div class="group-label eyebrow">Due today · ${due.length}</div><ul class="tasklist">${due.map(row).join("")}</ul>` : ""}`;
+    el.innerHTML = `<div style="display:grid;gap:18px">
+      <div class="page-head"><div><div class="eyebrow">${esc(dateTxt)}</div><h1>What to work today</h1><div class="sub">${esc(scope)} · due and overdue tasks</div></div>
+        <div class="focus-stats"><div class="stat over"><b class="num">${over.length}</b><span>overdue</span></div><div class="stat"><b class="num">${due.length}</b><span>due today</span></div></div></div>
+      <div class="panel">${body}</div></div>`;
+    renderNavCount();
+  }
+  function renderNavCount() {
+    const t = today(); const items = focusTasks(); const n = $("nav-count");
+    n.hidden = !items.length; n.textContent = items.length; n.classList.toggle("over", items.some(([, x]) => x.due_date < t));
+  }
+
+  // ---------- Accounts ----------
+  function renderAccounts() {
+    if (S.route.view !== "accounts") return;
+    const t = today();
+    const all = [...S.accounts.entries()].filter(([, a]) => ownerMatch(a.owner));
+    const cnt = { outbound: all.filter(([, a]) => a.band !== "deal").length, deal: all.filter(([, a]) => a.band === "deal").length, all: all.length };
+    const q = S.q.trim().toLowerCase();
+    let rows = all.filter(([, a]) => S.seg === "all" || (S.seg === "deal" ? a.band === "deal" : a.band !== "deal"));
+    if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""}`.toLowerCase().includes(q));
+    const open = new Map(); const overdue = new Set();
+    for (const [, x] of openTasks()) { open.set(x.account_id, (open.get(x.account_id) || 0) + 1); if (x.due_date && x.due_date < t) overdue.add(x.account_id); }
+    rows.sort((a, b) => {
+      const A = a[1], B = b[1];
+      if (S.seg !== "outbound" && (A.band === "deal") !== (B.band === "deal")) return A.band === "deal" ? -1 : 1;
+      if (A.band === "deal" && B.band === "deal") { if (!!A.sf_closed !== !!B.sf_closed) return A.sf_closed ? 1 : -1; return String(A.close_date || "9999").localeCompare(String(B.close_date || "9999")); }
+      return String(A.company_name || "").localeCompare(String(B.company_name || ""));
+    });
+    const showDeal = S.seg !== "outbound";
+    const last = S.settings.last_sf_sync;
+    const syncLine = S.sync.err ? `<span class="sync-line err">${esc(S.sync.err)}</span>` : S.sync.running ? `<span class="sync-line"><span class="spinner"></span> ${esc(S.sync.msg)}</span>` : S.sync.msg ? `<span class="sync-line">${esc(S.sync.msg)}</span>` : last ? `<span class="sync-line">Salesforce synced ${esc(fmtWhen(last.at))}${last.by ? ` by ${esc(last.by)}` : ""}</span>` : `<span class="sync-line">Salesforce not synced yet</span>`;
+    const tableBody = rows.map(([id, a]) => {
+      const n = open.get(id) || 0; const isDeal = a.band === "deal";
+      return `<tr data-href="#account-${id}" tabindex="0">
+        <td><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc(isDeal && a.sf_opportunity_name ? a.sf_opportunity_name : a.domain || "")}</div></td>
+        <td><span class="pill ${isDeal ? (a.sf_closed ? "warn" : "deal") : "out"}">${esc(a.stage || (isDeal ? "Deal" : "Target"))}</span></td>
+        <td><span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span> <span class="small">${esc(a.owner || "")}</span></td>
+        <td><span class="taskcount num">${overdue.has(id) ? '<span class="od" title="Has overdue tasks"></span>' : ""}${n || '<span class="muted">0</span>'}</span></td>
+        ${showDeal ? `<td class="r num">${isDeal ? money(a.amount) : '<span class="muted">—</span>'}</td><td class="num">${isDeal ? esc(fmtDate(a.close_date)) : '<span class="muted">—</span>'}</td>` : ""}
+      </tr>`;
+    }).join("");
+    const loading = S.db && !S.loaded.a;
+    const emptyMsg = loading ? `<div class="empty"><span class="spinner"></span><span>Loading accounts…</span></div>`
+      : !S.accounts.size ? `<div class="empty"><span class="bubble">No accounts yet.</span><span class="small">Sync Salesforce to bring in open deals, or add an outbound target by hand.</span></div>`
+      : `<div class="empty"><span>No accounts match${q ? ` “${esc(S.q)}”` : ""} in this view.</span></div>`;
+    if (!$("acc-table")) buildAccountsShell();
+    $("acc-sync").innerHTML = `${syncLine}
+          <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>
+          <button class="btn" type="button" data-act="add-account" ${!canWrite() ? "disabled" : ""}>${ic("plus")} Add target</button>`;
+    $("add-account-panel").hidden = !S.addAccount;
+    $("acc-tabs").innerHTML = `
+          <button type="button" data-seg="outbound" aria-pressed="${S.seg === "outbound"}">Outbound <span class="n num">${cnt.outbound}</span></button>
+          <button type="button" data-seg="deal" aria-pressed="${S.seg === "deal"}">Live deals <span class="n num">${cnt.deal}</span></button>
+          <button type="button" data-seg="all" aria-pressed="${S.seg === "all"}">All <span class="n num">${cnt.all}</span></button>`;
+    $("acc-table").innerHTML = rows.length ? `<div class="table-wrap"><table class="book"><thead><tr><th>Company</th><th>Stage</th><th>Owner</th><th>Open tasks</th>${showDeal ? '<th class="r">Amount</th><th>Close date</th>' : ""}</tr></thead><tbody>${tableBody}</tbody></table></div>` : emptyMsg;
+  }
+  document.addEventListener("input", (e) => { if (e.target.id === "acct-q") { S.q = e.target.value; renderAccounts(); } });
+
+  function buildAccountsShell() {
+    $("view-accounts").innerHTML = `<div style="display:grid;gap:16px">
+      <div class="page-head"><div><div class="eyebrow">The book</div><h1>Accounts</h1></div>
+        <div class="tools-r" id="acc-sync"></div></div>
+      <div class="panel" id="add-account-panel" hidden>
+        <form class="panel-body" id="add-account-form" style="padding-top:16px">
+          <div class="form-grid">
+            <label class="lbl" for="na-name">Company<input class="field" id="na-name" required placeholder="Acme Staffing"></label>
+            <label class="lbl" for="na-domain">Website domain<input class="field" id="na-domain" placeholder="acmestaffing.com"></label>
+            <label class="lbl" for="na-owner">Owner<select class="sel" id="na-owner">${OWNERS.map((o) => `<option>${o}</option>`).join("")}</select></label>
+            <label class="lbl" for="na-stage">Stage<select class="sel" id="na-stage">${OUT_STAGES.map((s) => `<option>${s}</option>`).join("")}</select></label>
+          </div>
+          <div class="row-form"><button class="btn" type="submit">${ic("plus")} Add outbound target</button><button class="btn ghost" type="button" data-act="cancel-account">Cancel</button>
+            <span class="small muted">Deals come in from Salesforce. A target that matches a synced opportunity by domain becomes that deal.</span></div>
+        </form>
+      </div>
+      <div class="toolbar">
+        <div class="tabs" role="group" aria-label="Segment" id="acc-tabs"></div>
+        <label class="sr" for="acct-q">Search accounts</label><input class="field" id="acct-q" type="search" placeholder="Search company, domain, stage" style="flex:0 1 280px">
+      </div>
+      <div class="panel" id="acc-table"></div>
+    </div>`;
+  }
+  // ---------- Account detail ----------
+  function buildDetailShell() {
+    const id = S.route.id;
+    $("view-account").innerHTML = `<div style="display:grid;gap:16px">
+      <a class="back" href="#accounts">${ic("back")} Accounts</a>
+      <div class="panel" id="d-head"></div>
+      <div class="detail-grid">
+        <div class="col">
+          <div class="panel" id="d-tasks-panel">
+            <div class="panel-head"><h2>Tasks</h2><span class="small muted" id="d-task-count"></span></div>
+            <div class="panel-body">
+              <form class="row-form" id="task-form">
+                <label class="sr" for="nt-title">New task</label><input class="field grow" id="nt-title" placeholder="Add a task, e.g. Call about pilot pricing" autocomplete="off">
+                <label class="sr" for="nt-due">Due date</label><input class="field" id="nt-due" type="date" value="${today()}">
+                <label class="sr" for="nt-contact">Contact</label><select class="sel" id="nt-contact"></select>
+                <button class="btn" type="submit">${ic("plus")} Add</button>
+              </form>
+              <div id="d-sugg"></div>
+            </div>
+            <div id="d-tasks"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Notes</h2></div>
+            <div class="panel-body">
+              <form id="note-form" style="display:grid;gap:8px">
+                <label class="sr" for="nn-body">New note</label><textarea class="field" id="nn-body" placeholder="What happened? What did you learn?"></textarea>
+                <div><button class="btn sec" type="submit">Add note</button></div>
+              </form>
+              <ul class="notes" id="d-notes"></ul>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="panel">
+            <div class="panel-head"><h2>Contacts</h2><button class="btn ghost" type="button" data-act="add-contact">${ic("plus")} Add</button></div>
+            <div class="panel-body" id="d-contacts"></div>
+          </div>
+          <div class="panel" id="d-gong"></div>
+          <div class="danger-zone" id="d-danger"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  function renderDetail() {
+    if (S.route.view !== "account") return;
+    const id = S.route.id; const a = S.accounts.get(id);
+    if (!a) {
+      $("d-head").innerHTML = S.loaded.a ? `<div class="empty"><span class="bubble">This account isn't on the board.</span><span class="small">It may have been deleted. <a href="#accounts">Back to accounts</a></span></div>` : `<div class="empty"><span class="spinner"></span><span>Loading account…</span></div>`;
+      ["d-tasks", "d-sugg", "d-contacts", "d-gong", "d-danger"].forEach((k) => ($(k).innerHTML = ""));
+      return;
+    }
+    const isDeal = a.band === "deal";
+    const sfUrl = a.sf_opportunity_id ? `${SF_BASE}/lightning/r/Opportunity/${encodeURIComponent(a.sf_opportunity_id)}/view` : "";
+    $("d-head").innerHTML = `<div class="acct-head">
+      <div class="acct-title"><h1>${esc(a.company_name || "Untitled")}</h1><span class="pill ${isDeal ? "deal" : "out"}">${isDeal ? "Live deal" : "Outbound"}</span>
+        ${a.domain ? `<a class="small" href="https://${esc(normDomain(a.domain))}" target="_blank" rel="noopener">${esc(normDomain(a.domain))}</a>` : ""}
+        ${sfUrl ? `<a class="btn sec" style="margin-left:auto" href="${esc(sfUrl)}" target="_blank" rel="noopener">${ic("out")} Open in Salesforce</a>` : ""}</div>
+      ${isDeal && a.sf_opportunity_name ? `<div class="small muted" style="margin-top:-8px">${esc(a.sf_opportunity_name)}</div>` : ""}
+      <div class="facts">
+        <div class="fact"><span class="eyebrow">Stage</span>${isDeal ? `<span class="v">${esc(a.stage || "—")}${a.sf_closed ? ' <span class="pill warn">Closed</span>' : ""}</span>` : `<select class="sel" id="f-stage" data-act-change="stage" ${canWrite() ? "" : "disabled"}>${OUT_STAGES.map((s) => `<option ${s === a.stage ? "selected" : ""}>${s}</option>`).join("")}</select>`}</div>
+        <div class="fact"><span class="eyebrow">Owner</span><select class="sel" id="f-owner" data-act-change="owner" ${canWrite() ? "" : "disabled"}>${OWNERS.map((o) => `<option ${o === a.owner ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+        ${isDeal ? `<div class="fact"><span class="eyebrow">Amount</span><span class="v big num">${money(a.amount)}</span></div>
+        <div class="fact"><span class="eyebrow">Close date</span><span class="v num">${esc(fmtDate(a.close_date))}</span></div>
+        <div class="fact"><span class="eyebrow">SF owner</span><span class="v">${esc(a.sf_owner || "—")}</span></div>
+        <div class="fact"><span class="eyebrow">Last SF activity</span><span class="v num">${esc(fmtDate(a.last_activity_date))}</span></div>` : ""}
+      </div>
+      ${isDeal ? `<div class="small muted">Deal fields come from Salesforce${a.sf_synced_at ? `, synced ${esc(fmtWhen(a.sf_synced_at))}` : ""}. Change them in Salesforce.</div>` : ""}
+    </div>`;
+    renderDetailTasks(a); renderContacts(a); renderGong(a); renderNotes();
+    $("d-danger").innerHTML = canWrite() ? (S.confirmDelete ? `<span class="small">Delete ${esc(a.company_name)} with its tasks and notes?</span><button class="btn danger" type="button" data-act="delete-account-yes">${ic("trash")} Delete for good</button><button class="btn ghost" type="button" data-act="delete-account-no">Keep it</button>` : `<button class="btn ghost" type="button" data-act="delete-account">${ic("trash")} Delete account</button>`) : "";
+  }
+  function contactOptions(a, sel) {
+    const cs = Array.isArray(a.contacts) ? a.contacts : [];
+    return `<option value="">No contact</option>` + cs.map((c) => `<option value="${esc(c.id)}" ${c.id === sel ? "selected" : ""}>${esc(c.name || "Unnamed")}</option>`).join("");
+  }
+  function renderDetailTasks(a) {
+    const id = S.route.id; const ct = $("nt-contact");
+    if (ct && document.activeElement !== ct) { const v = ct.value; ct.innerHTML = contactOptions(a, v); }
+    const list = $("d-tasks");
+    if (S.editTask && list.contains(document.activeElement)) return;
+    const mine = [...S.tasks.entries()].filter(([, x]) => x.account_id === id);
+    const open = mine.filter(([, x]) => x.status !== "done").sort((x, y) => String(x[1].due_date || "9999").localeCompare(String(y[1].due_date || "9999")));
+    const done = mine.filter(([, x]) => x.status === "done").sort((x, y) => String(y[1].completed_at || "").localeCompare(String(x[1].completed_at || "")));
+    $("d-task-count").textContent = `${open.length} open · ${done.length} done`;
+    const row = ([tid, x], isDone) => {
+      const c = contactOf(a, x.contact_id); const dl = dueLabel(x.due_date);
+      if (S.editTask === tid) return `<li><form class="edit-row" data-form="edit-task" data-id="${tid}">
+          <input class="field" name="title" value="${esc(x.title)}" aria-label="Task title">
+          <input class="field" name="due" type="date" value="${esc(x.due_date || "")}" style="flex:0 1 150px" aria-label="Due date">
+          <select class="sel" name="contact" aria-label="Contact">${contactOptions(a, x.contact_id)}</select>
+          <button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cancel-edit-task">Cancel</button></form></li>`;
+      return `<li class="${isDone ? "done" : ""}"><input type="checkbox" class="chk" data-act="${isDone ? "undone" : "done"}" data-id="${tid}" ${isDone ? "checked" : ""} aria-label="${isDone ? "Reopen" : "Mark done"}: ${esc(x.title)}">
+        <div class="t-main"><span class="t-title">${esc(x.title)}</span>
+          <span class="t-meta">${c ? `<span>${ic("user")} ${esc(c.name)}</span>` : ""}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}${isDone && x.completed_at ? `<span>Done ${esc(fmtWhen(x.completed_at))}</span>` : ""}</span></div>
+        <div class="t-side">${isDone ? "" : `<span class="pill ${dl.cls}">${esc(dl.txt)}</span>`}
+          ${canWrite() ? `${isDone ? "" : `<button class="icon-btn" type="button" data-act="edit-task" data-id="${tid}" aria-label="Edit task">${ic("edit")}</button>`}<button class="icon-btn" type="button" data-act="delete-task" data-id="${tid}" aria-label="Delete task">${ic("trash")}</button>` : ""}</div></li>`;
+    };
+    list.innerHTML = (open.length ? `<ul class="tasklist" style="border-top:1px solid var(--line)">${open.map((r) => row(r, false)).join("")}</ul>` : `<div class="empty small" style="border-top:1px solid var(--line)">No open tasks. Add the next step above.</div>`)
+      + (done.length ? `<details class="done-box" ${S.showDone ? "open" : ""}><summary>Done (${done.length})</summary><ul class="tasklist">${done.map((r) => row(r, true)).join("")}</ul></details>` : "");
+    const det = list.querySelector("details"); if (det) det.addEventListener("toggle", () => (S.showDone = det.open));
+    // Gong suggestions
+    const sug = (a.gong && Array.isArray(a.gong.suggestions) ? a.gong.suggestions : []).filter((s) => s.status === "pending");
+    $("d-sugg").innerHTML = sug.length ? `<div class="sugg"><div class="eyebrow" style="color:var(--gong)">Suggested by Gong · ${sug.length}</div>
+      ${sug.map((s) => `<div class="sugg-item"><p>${esc(s.text)}</p><div class="acts">
+        <button class="btn gong" type="button" data-act="accept-sugg" data-id="${esc(s.id)}" ${canWrite() ? "" : "disabled"}>${ic("check")} Add task</button>
+        <button class="icon-btn" type="button" data-act="dismiss-sugg" data-id="${esc(s.id)}" aria-label="Dismiss suggestion" ${canWrite() ? "" : "disabled"}>${ic("x")}</button></div></div>`).join("")}</div>` : "";
+  }
+  function renderContacts(a) {
+    const el = $("d-contacts");
+    if ((S.editContact || S.addContact) && el.contains(document.activeElement)) return;
+    const cs = Array.isArray(a.contacts) ? a.contacts : [];
+    const form = (c) => `<form class="contact" data-form="contact" data-id="${esc(c ? c.id : "")}" style="gap:8px">
+      <input class="field" name="name" placeholder="Name" value="${esc(c ? c.name : "")}" required aria-label="Name">
+      <input class="field" name="title" placeholder="Title" value="${esc(c ? c.title : "")}" aria-label="Title">
+      <input class="field" name="email" type="email" placeholder="Email" value="${esc(c ? c.email : "")}" aria-label="Email">
+      <input class="field" name="phone" placeholder="Phone" value="${esc(c ? c.phone : "")}" aria-label="Phone">
+      <div class="row-form"><button class="btn" type="submit">${c ? "Save" : "Add contact"}</button><button class="btn ghost" type="button" data-act="cancel-contact">Cancel</button>
+      ${c ? `<button class="btn ghost" type="button" data-act="delete-contact" data-id="${esc(c.id)}" style="margin-left:auto">${ic("trash")} Remove</button>` : ""}</div></form>`;
+    const card = (c) => S.editContact === c.id ? form(c) : `<div class="contact ${c.is_primary ? "primary" : ""}">
+      <div class="contact-top"><button class="star ${c.is_primary ? "on" : ""}" type="button" data-act="primary" data-id="${esc(c.id)}" aria-label="${c.is_primary ? "Primary contact" : "Make primary contact"}" title="${c.is_primary ? "Primary contact" : "Make primary"}" ${canWrite() ? "" : "disabled"}>${ic("star")}</button>
+        <div class="nm"><b>${esc(c.name || "Unnamed")}</b>${c.title ? `<span>${esc(c.title)}</span>` : ""}</div>
+        ${canWrite() ? `<button class="icon-btn" type="button" data-act="edit-contact" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)}">${ic("edit")}</button>` : ""}</div>
+      ${c.email || c.phone ? `<div class="lines">${c.email ? `<span>${esc(c.email)}</span>` : ""}${c.phone ? `<span class="num">${esc(c.phone)}</span>` : ""}</div>` : ""}
+      <div class="foot"><label class="sr" for="cs-${esc(c.id)}">Status</label><select class="sel small" id="cs-${esc(c.id)}" data-act-change="contact-status" data-id="${esc(c.id)}" style="padding:3px 8px" ${canWrite() ? "" : "disabled"}>${CONTACT_STATUS.map((s) => `<option ${s === c.status ? "selected" : ""}>${s}</option>`).join("")}</select>
+        ${c.is_primary ? '<span class="pill deal">Primary</span>' : ""}${c.sf_contact_id ? '<span class="pill">From Salesforce</span>' : ""}</div></div>`;
+    const sorted = cs.slice().sort((x, y) => (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0));
+    el.innerHTML = (S.addContact ? form(null) : "") + (sorted.length ? sorted.map(card).join("") : (S.addContact ? "" : `<div class="small muted">No contacts yet. Add the people you're working with.</div>`));
+  }
+  function renderGong(a) {
+    const g = a.gong; const el = $("d-gong");
+    const avail = !!S.mcp && canWrite();
+    el.innerHTML = `<div class="panel-head"><h2>Gong context</h2>${g && g.pulled_at ? `<span class="small muted">${esc(fmtWhen(g.pulled_at))}</span>` : ""}</div>
+      <div class="panel-body">
+        ${g && g.context && g.context.length ? `<div class="gong-ctx">${g.context.map((x) => `<div class="msg">${esc(x)}</div>`).join("")}</div><div class="small muted">From ${g.calls || 0} calls and ${g.emails || 0} emails in the last 60 days${g.pulled_by ? ` · pulled by ${esc(g.pulled_by)}` : ""}.</div>` : `<div class="small muted">Pull a summary of recent ${a.sf_opportunity_id ? "deal" : "account"} calls and emails. Next steps land in Tasks as suggestions you can add or dismiss.</div>`}
+        ${S.gong.err ? `<div class="err">${esc(S.gong.err)}</div>` : ""}
+        <div><button class="btn gong" type="button" data-act="gong" ${!avail || S.gong.running ? "disabled" : ""}>${S.gong.running ? '<span class="spinner"></span> Asking Gong…' : `${ic("spark")} ${g ? "Refresh Gong context" : "Pull Gong context"}`}</button></div>
+        ${!S.mcp && S.db ? `<div class="small muted">Open the cockpit in claude.ai to use Gong.</div>` : ""}
+      </div>`;
+  }
+  function subscribeNotes(accountId) {
+    if (S.notesFor === accountId) return;
+    if (S.notesUnsub) { try { S.notesUnsub(); } catch {} S.notesUnsub = null; }
+    S.notes = new Map(); S.notesFor = accountId; S.notesLoaded = false;
+    if (!S.db) return;
+    S.notesUnsub = S.db.collection("notes").where("account_id", "==", accountId).limit(500).onSnapshot((snap) => {
+      S.notes = new Map(snap.docs.map((d) => [d.id, d.data()])); S.notesLoaded = true; renderNotes();
+    }, () => { S.notesLoaded = true; renderNotes(); });
+  }
+  function renderNotes() {
+    const el = $("d-notes"); if (!el || S.route.view !== "account") return;
+    const ns = [...S.notes.entries()].sort((a, b) => String(b[1].created_at || "").localeCompare(String(a[1].created_at || "")));
+    if (!S.notesLoaded && S.db) { el.innerHTML = `<li class="small muted">Loading notes…</li>`; return; }
+    el.innerHTML = ns.length ? ns.map(([nid, n]) => `<li class="note"><div class="msg">${esc(n.body)}</div><div class="by"><span>${esc(n.author || "Someone")} · ${esc(fmtWhen(n.created_at))}</span>${canWrite() ? `<button class="icon-btn" type="button" data-act="delete-note" data-id="${esc(nid)}" aria-label="Delete note">${ic("trash")}</button>` : ""}</div></li>`).join("") : `<li class="small muted">No notes yet.</li>`;
+  }
+
+  // ---------- events ----------
+  document.addEventListener("click", async (e) => {
+    const tr = e.target.closest("tr[data-href]"); if (tr) { location.hash = tr.dataset.href; return; }
+    const b = e.target.closest("[data-act]"); if (!b || b.tagName === "SELECT") return;
+    const act = b.dataset.act, id = b.dataset.id, accId = S.route.id;
+    switch (act) {
+      case "done": setTaskDone(id, true); break;
+      case "undone": e.preventDefault(); setTaskDone(id, false); break;
+      case "sync": syncSalesforce(); break;
+      case "add-account": S.addAccount = true; $("na-owner").value = S.myOwner || "Jeremy"; renderAccounts(); $("na-name").focus(); break;
+      case "cancel-account": S.addAccount = false; renderAccounts(); break;
+      case "edit-task": S.editTask = id; renderDetail(); { const f = document.querySelector(`form[data-form="edit-task"] input[name="title"]`); if (f) f.focus(); } break;
+      case "cancel-edit-task": S.editTask = null; renderDetail(); break;
+      case "delete-task": { const t = S.tasks.get(id); if (!t) break; const ok = await w(() => taskRef(id).delete()); if (ok) toast("Task deleted", () => w(() => taskRef(id).set(t))); break; }
+      case "add-contact": S.addContact = true; S.editContact = null; renderDetail(); { const f = document.querySelector(`form[data-form="contact"] input[name="name"]`); if (f) f.focus(); } break;
+      case "edit-contact": S.editContact = id; S.addContact = false; renderDetail(); break;
+      case "cancel-contact": S.editContact = null; S.addContact = false; renderDetail(); break;
+      case "delete-contact": { const a = S.accounts.get(accId); if (!a) break; const cs = (a.contacts || []).filter((c) => c.id !== id); if (cs.length && !cs.some((c) => c.is_primary)) cs[0] = { ...cs[0], is_primary: true }; S.editContact = null; await w(() => acctRef(accId).update({ contacts: cs, updated_at: nowIso() })); break; }
+      case "primary": { const a = S.accounts.get(accId); if (!a) break; await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => ({ ...c, is_primary: c.id === id })), updated_at: nowIso() })); break; }
+      case "gong": pullGong(accId); break;
+      case "accept-sugg": b.disabled = true; resolveSuggestion(accId, id, true); break;
+      case "dismiss-sugg": b.disabled = true; resolveSuggestion(accId, id, false); break;
+      case "delete-note": { const n = S.notes.get(id); const ok = await w(() => noteRef(id).delete()); if (ok && n) toast("Note deleted", () => w(() => noteRef(id).set(n))); break; }
+      case "delete-account": S.confirmDelete = true; renderDetail(); break;
+      case "delete-account-no": S.confirmDelete = false; renderDetail(); break;
+      case "delete-account-yes": {
+        const tids = [...S.tasks.entries()].filter(([, t]) => t.account_id === accId).map(([k]) => k); const nids = [...S.notes.keys()];
+        const ok = await w(async () => { await Promise.all([...tids.map((k) => taskRef(k).delete()), ...nids.map((k) => noteRef(k).delete())]); await acctRef(accId).delete(); });
+        if (ok) { toast("Account deleted"); location.hash = "#accounts"; }
+        break;
+      }
+    }
+  });
+  document.addEventListener("click", (e) => { const s = e.target.closest("[data-seg]"); if (!s) return; S.seg = s.dataset.seg; store.set("seg", S.seg); renderAccounts(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Enter") { const tr = e.target.closest && e.target.closest("tr[data-href]"); if (tr) location.hash = tr.dataset.href; } });
+  document.addEventListener("change", async (e) => {
+    const el = e.target; const act = el.dataset && el.dataset.actChange; if (!act) return;
+    const accId = S.route.id; const a = S.accounts.get(accId); if (!a) return;
+    if (act === "stage") await w(() => acctRef(accId).update({ stage: el.value, updated_at: nowIso() }));
+    if (act === "owner") await w(() => acctRef(accId).update({ owner: el.value, updated_at: nowIso() }));
+    if (act === "contact-status") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, status: el.value } : c), updated_at: nowIso() }));
+  });
+  document.addEventListener("submit", async (e) => {
+    const f = e.target; e.preventDefault();
+    const accId = S.route.id;
+    if (f.id === "add-account-form") {
+      const name = $("na-name").value.trim(); if (!name) return;
+      const dom = normDomain($("na-domain").value);
+      const dupe = [...S.accounts.entries()].find(([, a]) => (dom && normDomain(a.domain) === dom) || normName(a.company_name) === normName(name));
+      if (dupe) { toast(`${dupe[1].company_name} is already on the board.`); location.hash = `#account-${dupe[0]}`; return; }
+      const id = rid("a");
+      const ok = await w(() => acctRef(id).set({ owner: $("na-owner").value, band: "outbound", company_name: name, domain: dom, stage: $("na-stage").value, sf_opportunity_id: null, amount: null, close_date: null, sf_owner: "", last_activity_date: null, contacts: [], created_at: nowIso(), updated_at: nowIso() }));
+      if (ok) { S.addAccount = false; f.reset(); location.hash = `#account-${id}`; }
+    } else if (f.id === "task-form") {
+      const ok = await addTask(accId, $("nt-title").value, $("nt-due").value, $("nt-contact").value, "manual");
+      if (ok) { $("nt-title").value = ""; $("nt-title").focus(); }
+    } else if (f.id === "note-form") {
+      const body = $("nn-body").value.trim(); if (!body) return; const id = rid("n");
+      const ok = await w(() => noteRef(id).set({ account_id: accId, author: S.myOwner || S.meName || "Someone", author_id: S.meId || null, body: body.slice(0, 8000), created_at: nowIso() }));
+      if (ok) { $("nn-body").value = ""; touch(accId); }
+    } else if (f.dataset.form === "edit-task") {
+      const id = f.dataset.id; const title = fv(f, "title").trim(); if (!title) return;
+      S.editTask = null;
+      await w(() => taskRef(id).update({ title: title.slice(0, 300), due_date: fv(f, "due") || today(), contact_id: fv(f, "contact") || null }));
+      renderDetail();
+    } else if (f.dataset.form === "contact") {
+      const a = S.accounts.get(accId); if (!a) return;
+      const vals = { name: fv(f, "name").trim(), title: fv(f, "title").trim(), email: fv(f, "email").trim(), phone: fv(f, "phone").trim() };
+      if (!vals.name) return;
+      let cs = Array.isArray(a.contacts) ? a.contacts.slice() : [];
+      if (f.dataset.id) cs = cs.map((c) => c.id === f.dataset.id ? { ...c, ...vals } : c);
+      else cs.push({ id: rid("c"), ...vals, is_primary: !cs.some((c) => c.is_primary), status: "Active" });
+      S.editContact = null; S.addContact = false;
+      await w(() => acctRef(accId).update({ contacts: cs, updated_at: nowIso() }));
+      renderDetail();
+    }
+  });
+
+  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); }
+
+  // ---------- boot ----------
+  S.route = parseHash();
+  $("view-today").hidden = S.route.view !== "today"; $("view-accounts").hidden = S.route.view !== "accounts"; $("view-account").hidden = S.route.view !== "account";
+  if (S.route.view === "account") buildDetailShell();
+  { const r = S.route; if (r.view === "today") $("nav-today").setAttribute("aria-current", "page"); else $("nav-accounts").setAttribute("aria-current", "page"); }
+  renderAll();
+  // Roll Today over at midnight.
+  let lastDay = today(); setInterval(() => { if (today() !== lastDay) { lastDay = today(); renderAll(); } }, 60000);
+
+  (async () => {
+    const use = (n) => (window.claude && window.claude.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
+    const timer = setTimeout(() => { if (!S.db) { S.dbAbsent = true; renderAll(); } }, 10000);
+    const [db, user, mcp] = await Promise.all([use("db"), use("user"), use("mcp")]);
+    clearTimeout(timer);
+    S.db = db; S.user = user; S.mcp = mcp; S.dbAbsent = !db;
+    if (user) {
+      try { const me = await user.me(); S.meId = me && me.id; S.meName = (me && me.name) || ""; } catch {}
+      try { S.canWrite = await user.can("data.write"); } catch { S.canWrite = null; }
+      const first = (S.meName || "").split(/\s+/)[0];
+      if (OWNERS.includes(first) && S.myOwner !== first) { S.myOwner = first; store.set("me", first); }
+    }
+    if (db) {
+      const onErr = (e) => { S.dbErr = e && e.code === "revoked" ? "Your access to this board changed. Reload the page." : "The board stopped updating. Reload the page."; renderAll(); };
+      const loadT = setTimeout(() => { if (!S.loaded.a || !S.loaded.t) { S.dbErr = "The board is taking a while to load. Check your connection and reload."; renderBanner(); } }, 10000);
+      db.collection("accounts").limit(2000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; if (S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
+      db.collection("tasks").limit(5000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; if (S.loaded.a) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
+      db.doc("meta/settings").onSnapshot((snap) => { S.settings = (snap.exists && snap.data()) || {}; renderAccounts(); }, () => {});
+      if (S.route.view === "account") { S.notesFor = null; subscribeNotes(S.route.id); }
+    }
+    renderAll();
+  })();
+})();
+</script>
