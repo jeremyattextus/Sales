@@ -922,10 +922,10 @@ details.done-box summary::-webkit-details-marker { display: none; }
       if (OWNERS.includes(first) && S.myOwner !== first) { S.myOwner = first; store.set("me", first); }
     }
     if (db) {
-      const onErr = (e) => { S.dbErr = e && e.code === "revoked" ? "Your access to this board changed. Reload the page." : "The board stopped updating. Reload the page."; renderAll(); };
+      const onErr = (e) => { console.error("db", e); S.dbErr = e && e.code === "revoked" ? "Your access to this board changed. Reload the page." : `The board couldn't load (${(e && e.code) || "error"}). Reload the page.`; S.loaded.a = true; S.loaded.t = true; renderAll(); };
       const loadT = setTimeout(() => { if (!S.loaded.a || !S.loaded.t) { S.dbErr = "The board is taking a while to load. Check your connection and reload."; renderBanner(); } }, 10000);
-      db.collection("accounts").limit(2000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; if (S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
-      db.collection("tasks").limit(5000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; if (S.loaded.a) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
+      db.collection("accounts").limit(1000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; if (S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
+      db.collection("tasks").limit(1000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; if (S.loaded.a) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } renderAll(); }, onErr);
       db.doc("meta/settings").onSnapshot((snap) => { S.settings = (snap.exists && snap.data()) || {}; renderAccounts(); }, () => {});
       if (S.route.view === "account") { S.notesFor = null; subscribeNotes(S.route.id); }
     }
