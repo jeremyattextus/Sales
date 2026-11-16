@@ -478,6 +478,46 @@ a.un-title:hover { text-decoration: underline; }
 .agenda .now-line { position: relative; height: 0; margin: 9px 0 9px 60px; border-top: 2px solid var(--blue); }
 .agenda .now-line::before { content: ""; position: absolute; left: -6px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
 .agenda .now-line span { position: absolute; right: 0; top: -9px; background: var(--surface); padding: 0 0 0 6px; font-size: 11px; font-family: var(--font-head); color: var(--link); }
+
+/* Universal page language: day-head + stat strip, one Navy feature card, narrow left / wide right */
+.page { display: grid; gap: 18px; }
+.head-r { display: grid; gap: 8px; justify-items: end; }
+@media (max-width: 640px) { .head-r { justify-items: stretch; width: 100%; } }
+.ds.good b { color: var(--tgt-ink); }
+.ds.deal b { color: var(--deal-ink); }
+.upnext .un-sub { color: var(--bar-muted); font-size: 14px; overflow-wrap: anywhere; }
+.upnext .un-sub a { color: #FFFFFF; }
+.attn { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.attn li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.12); }
+.attn li:first-child { border-top: 0; padding-top: 0; }
+.attn .a-name { color: #FFFFFF; font-family: var(--font-head); font-size: 15px; text-decoration: none; overflow-wrap: anywhere; }
+.attn .a-name:hover { text-decoration: underline; }
+.attn .a-why { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12.5px; color: var(--bar-muted); }
+.attn .a-why .hot { color: #FFB3B9; }
+.attn .a-side { display: flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.attn .a-amt { font-family: var(--font-head); color: #FFFFFF; font-variant-numeric: tabular-nums; }
+.hero-btn { background: rgba(255,255,255,.12); color: #FFFFFF; padding: 5px 10px; font-size: 12.5px; }
+.hero-btn:hover { background: rgba(255,255,255,.2); filter: none; }
+.hero-fields { display: flex; flex-wrap: wrap; gap: 10px 14px; margin-top: 8px; }
+.hero-fields label { display: grid; gap: 4px; font-family: var(--font-head); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--bar-muted); min-width: 0; }
+.upnext .sel, .upnext .field { background: rgba(255,255,255,.1); color: #FFFFFF; border: 1px solid rgba(255,255,255,.22); color-scheme: dark; }
+.upnext .sel option { color: #17191B; background: #FFFFFF; }
+.upnext .field::placeholder { color: rgba(255,255,255,.55); }
+.upnext .sel:focus, .upnext .field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(6,159,255,.3); }
+.upnext .v-static { font-family: var(--font-body); font-size: 14px; letter-spacing: 0; text-transform: none; color: #FFFFFF; padding: 7px 0; }
+.upnext .chip { background: rgba(255,255,255,.12); color: #FFFFFF; }
+.upnext .chip.warn { background: rgba(242,195,91,.2); color: #F6D58A; }
+.upnext .err, .upnext .banner { background: rgba(255,138,147,.15); color: #FFD0D4; }
+.acct-hero h1 { color: #FFFFFF; font-size: 30px; }
+.acct-hero .un-foot { font-size: 12px; color: var(--bar-muted); }
+.intake-hero .intake { grid-template-columns: minmax(0, 150px) minmax(0, 1fr) auto; }
+.intake-hero .lbl { color: var(--bar-muted); }
+@media (max-width: 720px) { .intake-hero .intake { grid-template-columns: minmax(0, 1fr); } }
+.list-tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; justify-content: space-between; }
+.detail-grid { grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); }
+.detail-grid > .col:first-child { order: 2; }
+.detail-grid > .col:last-child { order: 1; }
+@media (max-width: 900px) { .detail-grid { grid-template-columns: minmax(0, 1fr); } .detail-grid > .col:first-child { order: 1; } .detail-grid > .col:last-child { order: 2; } }
 </style>
 
 <header class="bar">
@@ -1189,10 +1229,11 @@ a.un-title:hover { text-decoration: underline; }
   function buildAccountsShell() {
     const deal = S.seg === "deal";
     S._shellKind = S.seg;
-    $("view-accounts").innerHTML = `<div style="display:grid;gap:16px">
-      <div class="page-head"><div><div class="eyebrow">${deal ? '<span class="kind deal">Pipeline</span>' : '<span class="kind tgt">Outbound</span>'}</div><h1>${deal ? "Active Deals" : "Target Accounts"}</h1>
-        <div class="sub">${deal ? "Open Salesforce opportunities owned by Jeremy and David." : "Companies you're prospecting. Open a row to see its contacts."}</div></div>
-        <div class="tools-r" id="acc-sync"></div></div>
+    $("view-accounts").innerHTML = `<div class="page">
+      <div class="day-head"><div><div class="eyebrow">${deal ? '<span class="kind deal">Pipeline</span>' : '<span class="kind tgt">Outbound</span>'}</div><h1>${deal ? "Active Deals" : "Target Accounts"}</h1>
+        <div class="sub">${deal ? "Open New Business opportunities from Salesforce." : "Companies you're prospecting. Open a row to see its contacts."}</div></div>
+        <div class="head-r"><div class="day-strip" id="acc-strip"></div></div></div>
+      <div id="acc-hero"></div>
       <div class="panel" id="add-account-panel" hidden>
         <form class="panel-body" id="add-account-form" style="padding-top:16px">
           <div class="form-grid">
@@ -1205,13 +1246,66 @@ a.un-title:hover { text-decoration: underline; }
             <span class="small muted">To pull contacts from ZoomInfo, use <a href="#prospect">Find targets</a> instead.</span></div>
         </form>
       </div>
-      <div class="toolbar">
-        <div class="filters" id="acc-filters"></div>
-        <label class="sr" for="acct-q">Search</label><input class="field" id="acct-q" type="search" placeholder="${deal ? "Search company, opportunity, stage" : "Search company, contact, industry"}" value="${esc(S.q)}" style="flex:0 1 280px">
+      <div class="panel">
+        <div class="panel-head list-tools">
+          <div class="filters" id="acc-filters"></div>
+          <div class="tools-r"><label class="sr" for="acct-q">Search</label><input class="field" id="acct-q" type="search" placeholder="${deal ? "Search company, opportunity, stage" : "Search company, contact, industry"}" value="${esc(S.q)}" style="width:240px;max-width:100%"><span class="tools-r" id="acc-sync"></span></div>
+        </div>
+        <div id="acc-table"></div>
       </div>
-      <div class="panel" id="acc-table"></div>
     </div>`;
     S._fSeg = null;
+  }
+  // Stat strip + Navy feature card for the two account lists.
+  function renderAccHero(all, open, overdue) {
+    const strip = $("acc-strip"), hero = $("acc-hero"); if (!strip || !hero) return;
+    const t = today(); const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v}</b><span>${l}</span></div>`;
+    const loading = S.db && !S.loaded.a;
+    if (S.seg === "deal") {
+      const deals = all.filter(([, a]) => kindOf(a) === "deal" && !a.sf_closed);
+      const sum = (arr) => arr.reduce((s2, [, a]) => s2 + (Number(a.amount) || 0), 0);
+      const m0 = t.slice(0, 8) + "01", m1 = ymd(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0));
+      const month = deals.filter(([, a]) => a.close_date && a.close_date >= m0 && a.close_date <= m1);
+      const past = deals.filter(([, a]) => a.close_date && a.close_date < t);
+      const ob = deals.filter(([, a]) => a.origin === "outbound");
+      strip.innerHTML = cell(deals.length, "open deals", "deal") + cell(money(sum(deals)), "pipeline") + cell(money(sum(month)), `closing this month · ${month.length}`) + cell(past.length, "past close date", past.length ? "bad" : "") + (ob.length ? cell(ob.length, "from outbound", "good") : "");
+      const noNext = deals.filter(([id]) => !open.get(id));
+      const scored = deals.map(([id, a]) => {
+        const why = []; let score = 0;
+        if (a.close_date && a.close_date < t) { why.push(`<span class="hot">Close date passed ${esc(fmtDate(a.close_date))}</span>`); score += 3; }
+        if (!open.get(id)) { why.push('<span class="hot">No next step</span>'); score += 2; }
+        if (overdue.has(id)) { why.push("Overdue task"); score += 1; }
+        const lastAct = a.last_touch_at ? localDay(a.last_touch_at) : a.last_activity_date;
+        if (!lastAct || daysBetween(lastAct, t) > 21) { why.push(lastAct ? `Quiet since ${fmtDate(lastAct)}` : "No activity logged"); score += 1; }
+        return { id, a, why, score };
+      }).filter((x) => x.score >= 2).sort((x, y) => y.score - x.score || String(x.a.close_date || "9").localeCompare(String(y.a.close_date || "9")));
+      if (loading) { hero.innerHTML = ""; return; }
+      if (!scored.length) { hero.innerHTML = deals.length ? `<div class="upnext quiet"><div class="un-main"><div class="un-lab">Needs attention</div><div class="un-title">Every deal has a next step</div><div class="un-when">Nothing past its close date. Nice.</div></div></div>` : ""; return; }
+      hero.innerHTML = `<div class="upnext"><div class="un-main"><div class="un-lab">Needs attention</div>
+          <div class="un-title">${noNext.length ? `${noNext.length} deal${noNext.length === 1 ? " has" : "s have"} no next step` : `${scored.length} deal${scored.length === 1 ? "" : "s"} slipping`}</div>
+          <div class="un-when">${past.length ? `${past.length} past ${past.length === 1 ? "its" : "their"} close date · ${money(sum(past))} at risk` : "Give each one a dated task so it shows up on Today."}</div></div>
+        <div class="un-prep"><ul class="attn">${scored.slice(0, 4).map(({ id, a, why }) => `<li><div style="min-width:0"><a class="a-name" href="#account-${esc(id)}">${esc(a.company_name)}</a><div class="a-why">${why.join("<span>·</span>")}</div></div>
+          <div class="a-side"><span class="a-amt">${money(a.amount)}</span><a class="btn hero-btn" href="#account-${esc(id)}">Open</a></div></li>`).join("")}</ul>
+          ${scored.length > 4 ? `<div class="small un-muted" style="margin-top:6px">+${scored.length - 4} more below</div>` : ""}</div></div>`;
+    } else {
+      const tg = all.filter(([, a]) => kindOf(a) === "outbound");
+      const active = tg.filter(([, a]) => !["Disqualified", "Nurture"].includes(a.stage));
+      const stale = active.filter(([, a]) => a.stage !== "Meeting booked" && (!a.last_touch_at || daysBetween(localDay(a.last_touch_at), t) > 14));
+      const engaged = tg.filter(([, a]) => a.stage === "Engaged").length, booked = tg.filter(([, a]) => a.stage === "Meeting booked").length;
+      const week = tg.filter(([, a]) => localDay(a.created_at) >= addDays(t, -6)).length;
+      strip.innerHTML = cell(tg.length, "targets", "good") + cell(stale.length, "need a touch", stale.length ? "bad" : "") + cell(engaged, "engaged") + cell(booked, "meetings booked", booked ? "good" : "") + cell(week, "added this week");
+      if (loading) { hero.innerHTML = ""; return; }
+      const pick = stale.slice().sort((x, y) => String(x[1].last_touch_at || "").localeCompare(String(y[1].last_touch_at || "")) || String(x[1].created_at || "").localeCompare(String(y[1].created_at || ""))).slice(0, 4);
+      if (!pick.length) { hero.innerHTML = tg.length ? `<div class="upnext quiet"><div class="un-main"><div class="un-lab">Work next</div><div class="un-title">Every target was touched in the last two weeks</div><div class="un-when">Time to find a few new ones.</div></div><a class="btn un-btn" href="#prospect">${ic("search")} Find targets</a></div>` : `<div class="upnext quiet"><div class="un-main"><div class="un-lab">Get started</div><div class="un-title">No target accounts yet</div><div class="un-when">Pull companies and contacts from ZoomInfo.</div></div><a class="btn un-btn" href="#prospect">${ic("search")} Find targets</a></div>`; return; }
+      const who = (a) => championOf(a) || (a.contacts || []).find((c) => c.is_primary) || (a.contacts || [])[0];
+      hero.innerHTML = `<div class="upnext"><div class="un-main"><div class="un-lab">Work next</div>
+          <div class="un-title">${stale.length} target${stale.length === 1 ? "" : "s"} need${stale.length === 1 ? "s" : ""} a touch</div>
+          <div class="un-when">No email, call or LinkedIn in 14+ days. Start with the longest-waiting.</div>
+          <div class="un-actions"><a class="btn un-btn" href="#prospect">${ic("search")} Find targets</a><button class="btn un-btn ghosty" type="button" data-act="add-account">${ic("plus")} Add by hand</button></div></div>
+        <div class="un-prep"><ul class="attn">${pick.map(([id, a]) => { const c = who(a); return `<li><div style="min-width:0"><a class="a-name" href="#account-${esc(id)}">${esc(a.company_name)}</a>
+            <div class="a-why"><span>${esc(a.stage || "Target")}</span><span>·</span><span class="${a.last_touch_at ? "" : "hot"}">${a.last_touch_at ? `Last touch ${esc(agoLabel(a.last_touch_at))}` : "Never touched"}</span>${c ? `<span>·</span><span>${esc(c.name)}</span>` : ""}</div></div>
+          <div class="a-side">${c && canEmail(c) && canWrite() ? `<button class="btn hero-btn" type="button" data-act="email" data-acc="${esc(id)}" data-id="${esc(c.id)}">${ic("mail")} Email</button>` : ""}${c && (c.phone || c.mobile) && canWrite() ? `<button class="btn hero-btn" type="button" data-act="log-call" data-acc="${esc(id)}" data-id="${esc(c.id)}">${ic("phone")} Log call</button>` : ""}<a class="btn hero-btn" href="#account-${esc(id)}">Open</a></div></li>`; }).join("")}</ul></div></div>`;
+    }
   }
   function renderAccFilters() {
     const el = $("acc-filters"); const f = S.af;
@@ -1293,9 +1387,9 @@ a.un-title:hover { text-decoration: underline; }
       : `<div class="empty"><span>Nothing matches these filters.</span></div>`;
     $("acc-sync").innerHTML = S.seg === "deal" ? `${syncLine}
           <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>`
-      : `<a class="btn ghost" href="#email">${ic("gear")} Email settings</a><a class="btn sec" href="#prospect">${ic("search")} Find targets</a>
-          <button class="btn" type="button" data-act="add-account" ${!canWrite() ? "disabled" : ""}>${ic("plus")} Add by hand</button>`;
+      : `<a class="btn ghost" href="#email">${ic("gear")} Email settings</a>`;
     $("add-account-panel").hidden = !(S.addAccount && S.seg === "outbound");
+    renderAccHero(all, open, overdue);
     renderAccFilters();
     const note = $("acc-note");
     if (note) {
@@ -1330,7 +1424,7 @@ a.un-title:hover { text-decoration: underline; }
   function buildDetailShell() {
     $("view-account").innerHTML = `<div style="display:grid;gap:16px">
       <a class="back" href="#deals" id="d-back">${ic("back")} Active Deals</a>
-      <div class="panel" id="d-head"></div>
+      <div id="d-head"></div>
       <div class="detail-grid">
         <div class="col">
           <div class="panel" id="d-tasks-panel">
@@ -1382,26 +1476,30 @@ a.un-title:hover { text-decoration: underline; }
     const back = $("d-back"); if (back) { back.href = listHash(a); back.innerHTML = `${ic("back")} ${isDeal ? "Active Deals" : "Target Accounts"}`; }
     showView(S.route);
     const sfUrl = a.sf_opportunity_id ? `${SF_BASE}/lightning/r/Opportunity/${encodeURIComponent(a.sf_opportunity_id)}/view` : "";
-    $("d-head").innerHTML = `<div class="acct-head">
-      <div class="acct-title"><h1>${esc(a.company_name || "Untitled")}</h1>${isDeal ? '<span class="kind deal">Active deal</span>' : '<span class="kind tgt">Target account</span>'}${isDeal && a.origin === "outbound" ? '<span class="kind tgt" title="Started as an outbound target">Outbound-sourced</span>' : ""}${!isDeal && canWrite() ? `<button class="btn sec" type="button" data-act="book-meeting" style="margin-left:auto">${ic("champ")} Meeting booked</button>` : ""}
-        ${a.multi_site ? '<span class="chip">Multi-site</span>' : ""}${a.incomplete && !isDeal ? '<span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}
-        ${a.domain ? `<a class="small" href="https://${esc(normDomain(a.domain))}" target="_blank" rel="noopener">${esc(normDomain(a.domain))}</a>` : ""}
-        ${sfUrl ? `<a class="btn sec" style="margin-left:auto" href="${esc(sfUrl)}" target="_blank" rel="noopener">${ic("out")} Open in Salesforce</a>` : ""}</div>
-      ${isDeal && a.sf_opportunity_name ? `<div class="small muted" style="margin-top:-8px">${esc(a.sf_opportunity_name)}</div>` : ""}
-      <div class="facts">
-        <div class="fact"><span class="eyebrow">Stage</span>${isDeal ? `<span class="v">${esc(a.stage || "—")}${a.sf_closed ? ' <span class="pill warn">Closed</span>' : ""}</span>` : `<select class="sel" id="f-stage" data-act-change="stage" ${canWrite() ? "" : "disabled"}>${OUT_STAGES.map((s) => `<option ${s === a.stage ? "selected" : ""}>${s}</option>`).join("")}${a.stage && !OUT_STAGES.includes(a.stage) ? `<option selected>${esc(a.stage)}</option>` : ""}</select>`}</div>
-        <div class="fact"><span class="eyebrow">Champion</span><select class="sel" id="f-champion" data-act-change="champion" ${canWrite() && (a.contacts || []).length ? "" : "disabled"} title="Default contact for this account's tasks"><option value="">${(a.contacts || []).length ? "Not set" : "Add a contact first"}</option>${(a.contacts || []).map((c) => `<option value="${esc(c.id)}" ${c.id === a.champion_id ? "selected" : ""}>${esc(c.name || "Unnamed")}</option>`).join("")}</select></div>
-        <div class="fact"><span class="eyebrow">Owner</span><select class="sel" id="f-owner" data-act-change="owner" ${canWrite() ? "" : "disabled"}>${OWNERS.map((o) => `<option ${o === a.owner ? "selected" : ""}>${o}</option>`).join("")}</select></div>
-        ${isDeal ? `<div class="fact"><span class="eyebrow">Amount</span><span class="v big num">${money(a.amount)}</span></div>
-        <div class="fact"><span class="eyebrow">Close date</span><span class="v num">${esc(fmtDate(a.close_date))}</span></div>
-        <div class="fact"><span class="eyebrow">SF owner</span><span class="v">${esc(a.sf_owner || "—")}</span></div>
-        <div class="fact"><span class="eyebrow">Last SF activity</span><span class="v num">${esc(fmtDate(a.last_activity_date))}</span></div>` : ""}
-        ${a.sub_industry || a.industry ? `<div class="fact"><span class="eyebrow">Industry</span><span class="v">${esc(a.sub_industry || a.industry)}</span></div>` : ""}
-        ${a.employee_count ? `<div class="fact"><span class="eyebrow">Employees</span><span class="v num">${fmtInt(a.employee_count)}</span></div>` : ""}
-        ${!isDeal ? `<div class="fact"><span class="eyebrow">Added</span><span class="v num">${esc(fmtDate(localDay(a.created_at)))}</span></div>` : ""}
-      </div>
-      ${isDeal ? `<div class="small muted">Deal fields come from Salesforce${a.sf_synced_at ? `, synced ${esc(fmtWhen(a.sf_synced_at))}` : ""}. Change them in Salesforce.</div>` : ""}
-    </div>`;
+    const openN = openTasks().filter(([, x]) => x.account_id === id).length;
+    const ch = championOf(a);
+    const lastTouch = a.last_touch_at ? `${agoLabel(a.last_touch_at)} · ${TOUCH_LABEL[a.last_touch_type] || ""}` : "None yet";
+    const facts = isDeal
+      ? [["Amount", money(a.amount)], ["Close date", fmtDate(a.close_date)], ["SF owner", a.sf_owner || "—"], ["Last SF activity", fmtDate(a.last_activity_date)], ["Last touch", lastTouch], ["Open tasks", String(openN)]]
+      : [["Industry", a.sub_industry || a.industry || "—"], ["Employees", a.employee_count ? fmtInt(a.employee_count) : "—"], ["Contacts", String((a.contacts || []).length)], ["Added", fmtDate(localDay(a.created_at))], ["Last touch", lastTouch], ["Open tasks", String(openN)]];
+    const ro = canWrite() ? "" : "disabled";
+    $("d-head").innerHTML = `<div class="upnext acct-hero"><div class="un-main">
+        <div class="un-lab" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${isDeal ? '<span class="kind deal">Active deal</span>' : '<span class="kind tgt">Target account</span>'}${isDeal && a.origin === "outbound" ? '<span class="kind tgt" title="Started as an outbound target">Outbound-sourced</span>' : ""}${a.multi_site ? '<span class="chip">Multi-site</span>' : ""}${a.incomplete && !isDeal ? '<span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}</div>
+        <h1>${esc(a.company_name || "Untitled")}</h1>
+        <div class="un-sub">${isDeal && a.sf_opportunity_name ? esc(a.sf_opportunity_name) + (a.domain ? " · " : "") : ""}${a.domain ? `<a href="https://${esc(normDomain(a.domain))}" target="_blank" rel="noopener">${esc(normDomain(a.domain))}</a>` : ""}</div>
+        <div class="hero-fields">
+          <label>Stage${isDeal ? `<span class="v-static">${esc(a.stage || "—")}${a.sf_closed ? " · Closed" : ""}</span>` : `<select class="sel" id="f-stage" data-act-change="stage" ${ro}>${OUT_STAGES.map((s) => `<option ${s === a.stage ? "selected" : ""}>${s}</option>`).join("")}${a.stage && !OUT_STAGES.includes(a.stage) ? `<option selected>${esc(a.stage)}</option>` : ""}</select>`}</label>
+          <label>Champion<select class="sel" id="f-champion" data-act-change="champion" ${canWrite() && (a.contacts || []).length ? "" : "disabled"} title="Default contact for this account's tasks"><option value="">${(a.contacts || []).length ? "Not set" : "Add a contact first"}</option>${(a.contacts || []).map((c) => `<option value="${esc(c.id)}" ${c.id === a.champion_id ? "selected" : ""}>${esc(c.name || "Unnamed")}</option>`).join("")}</select></label>
+          <label>Owner<select class="sel" id="f-owner" data-act-change="owner" ${ro}>${OWNERS.map((o) => `<option ${o === a.owner ? "selected" : ""}>${o}</option>`).join("")}</select></label>
+        </div>
+        <div class="un-actions">
+          ${sfUrl ? `<a class="btn un-btn" href="${esc(sfUrl)}" target="_blank" rel="noopener">${ic("out")} Open in Salesforce</a>` : ""}
+          ${!isDeal && canWrite() ? `<button class="btn un-btn" type="button" data-act="book-meeting">${ic("champ")} Meeting booked</button>` : ""}
+          ${canWrite() ? `<button class="btn un-btn ghosty" type="button" data-act="log-call-acct">${ic("phone")} Log call</button>` : ""}
+          ${ch && canEmail(ch) && canWrite() ? `<button class="btn un-btn ghosty" type="button" data-act="email" data-acc="${esc(id)}" data-id="${esc(ch.id)}">${ic("mail")} Email ${esc(ch.name.split(" ")[0])}</button>` : ""}
+        </div></div>
+      <div class="un-prep"><dl class="un-facts">${facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+        ${isDeal ? `<div class="un-foot">Deal fields come from Salesforce${a.sf_synced_at ? `, synced ${esc(fmtWhen(a.sf_synced_at))}` : ""}. Change them there.</div>` : ""}</div></div>`;
     renderDetailTasks(a); renderContacts(a); renderGong(a); renderNotes();
     $("d-danger").innerHTML = canWrite() ? (S.confirmDelete ? `<span class="small">Delete ${esc(a.company_name)} with its tasks and notes?</span><button class="btn danger" type="button" data-act="delete-account-yes">${ic("trash")} Delete for good</button><button class="btn ghost" type="button" data-act="delete-account-no">Keep it</button>` : `<button class="btn ghost" type="button" data-act="delete-account">${ic("trash")} Delete account</button>`) : "";
   }
@@ -1881,21 +1979,20 @@ a.un-title:hover { text-decoration: underline; }
     ).sort((a, b) => String(a.o.list_name || "").localeCompare(String(b.o.list_name || "")) || (a.o.rank == null ? 1e9 : a.o.rank) - (b.o.rank == null ? 1e9 : b.o.rank) || String(a.o.name).localeCompare(String(b.o.name)));
   }
   function buildProspectShell() {
-    $("view-prospect").innerHTML = `<div style="display:grid;gap:18px">
-      <div class="page-head"><div><div class="eyebrow">Outbound</div><h1>Find targets</h1><div class="sub">Add 1–2 target companies a day. ZoomInfo finds the HR and plant contacts; they land on the board as an Outbound account.</div></div>
-        <div style="display:grid;gap:6px;justify-items:end"><span class="conn-pill" id="zi-conn"></span><div class="added-today small muted" id="added-today"></div></div></div>
-      <div class="panel">
-        <div class="panel-head"><h2>Look up companies</h2></div>
-        <div class="panel-body">
-          <div id="zi-banner"></div>
-          <form class="intake" id="intake" autocomplete="off">
-            <label class="lbl" for="in-owner">Owner<select class="sel" id="in-owner">${OWNERS.map((o) => `<option>${o}</option>`).join("")}</select></label>
-            <label class="lbl" for="in-names">Company names or domains, one per line (max 5)<textarea class="field" id="in-names" rows="2" placeholder="acmefoods.com&#10;Midwest Plastics Group"></textarea></label>
-            <button class="btn" id="in-go" type="submit">${ic("search")} Look up in ZoomInfo</button>
-          </form>
-          <div class="jobs" id="jobs"></div>
-        </div>
+    $("view-prospect").innerHTML = `<div class="page">
+      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outbound</span></div><h1>Find targets</h1><div class="sub">Add 1–2 target companies a day. They land on Target Accounts with their contacts.</div></div>
+        <div class="head-r"><div class="day-strip" id="pr-strip"></div><span class="conn-pill" id="zi-conn"></span></div></div>
+      <div class="upnext intake-hero" style="grid-template-columns:minmax(0,1fr)">
+        <div class="un-main"><div class="un-lab">Look up companies</div><div class="un-title">Who are you targeting today?</div>
+          <div class="un-when">ZoomInfo finds HR and plant contacts. Searching is free; you approve credits before anything is enriched.</div></div>
+        <div id="zi-banner"></div>
+        <form class="intake" id="intake" autocomplete="off">
+          <label class="lbl" for="in-owner">Owner<select class="sel" id="in-owner">${OWNERS.map((o) => `<option>${o}</option>`).join("")}</select></label>
+          <label class="lbl" for="in-names">Company names or domains, one per line (max 5)<textarea class="field" id="in-names" rows="2" placeholder="acmefoods.com&#10;Midwest Plastics Group"></textarea></label>
+          <button class="btn un-btn" id="in-go" type="submit">${ic("search")} Look up in ZoomInfo</button>
+        </form>
       </div>
+      <div class="jobs" id="jobs"></div>
       <div class="panel">
         <div class="panel-head"><div><h2>On-Deck targets</h2><div class="small muted">Target accounts waiting their turn. Tick 1–2 and look them up.</div></div>
           <button class="btn sec" type="button" data-act="od-import">${ic("upload")} Import list (CSV)</button></div>
@@ -1923,7 +2020,10 @@ a.un-title:hover { text-decoration: underline; }
     zc.textContent = S.zi.state === "ok" ? "ZoomInfo connected" : S.zi.state === "bad" ? "ZoomInfo unavailable" : "Checking ZoomInfo…";
     const t = today(); const counts = { Jeremy: 0, David: 0 };
     for (const a of S.accounts.values()) if (a.source === "zoominfo" && localDay(a.created_at) === t && counts[a.owner] != null) counts[a.owner]++;
-    $("added-today").innerHTML = `Added today: ${OWNERS.map((o) => `${o} <b class="num">${counts[o]}</b>`).join(" · ")}`;
+    const wk = addDays(t, -6); let week = 0; for (const a of S.accounts.values()) if (a.source === "zoominfo" && localDay(a.created_at) >= wk) week++;
+    const odVals = [...S.ondeck.values()]; const waiting = odVals.filter((o) => !o.account_id && !o.started_at).length;
+    const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v}</b><span>${l}</span></div>`;
+    $("pr-strip").innerHTML = cell(waiting, "on deck", "good") + cell(OWNERS.map((o) => counts[o]).join(" · "), "added today (J · D)") + cell(week, "added this week");
     $("zi-banner").innerHTML = !canWrite() && S.db ? `<div class="banner">You have view-only access, so you can't add targets.</div>` : S.zi.state === "bad" ? `<div class="banner">${esc(S.zi.msg)}</div>` : "";
     const ready = ziReady();
     $("in-go").disabled = !ready; $("in-names").disabled = !ready;
@@ -2257,7 +2357,7 @@ a.un-title:hover { text-decoration: underline; }
   // ---------- Email settings view ----------
   function buildEmailShell() {
     $("view-email").innerHTML = `<div style="display:grid;gap:18px">
-      <div class="page-head"><div><div class="eyebrow">Outreach</div><h1>Email settings</h1><div class="sub">Your signature and the shared templates used when emailing contacts.</div></div><span class="conn-pill" id="gm-conn"></span></div>
+      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outreach</span></div><h1>Email settings</h1><div class="sub">Your signature and the shared templates used when emailing contacts.</div></div><div class="head-r"><span class="conn-pill" id="gm-conn"></span><a class="btn ghost" href="#targets">${ic("back")} Target Accounts</a></div></div>
       <div class="detail-grid">
         <div class="panel"><div class="panel-head"><h2 id="sig-h">Your signature</h2></div><div class="panel-body" id="sig-body"></div></div>
         <div class="panel"><div class="panel-head"><h2>Templates</h2><button class="btn ghost" type="button" data-act="tpl-new">${ic("plus")} New</button></div><div class="panel-body" id="tpl-body"></div></div>
