@@ -658,7 +658,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
     S.sync = { running: true, msg: "Reading open opportunities from Salesforce…", err: "" }; renderAccounts();
     try {
       const ownerIds = Object.values(SF_USERS).map((x) => `'${x}'`).join(",");
-      const recs = await soql(`SELECT Id, Name, StageName, Amount, CloseDate, LastActivityDate, OwnerId, Owner.Name, AccountId, Account.Name, Account.Website, (SELECT IsPrimary, ContactId, Contact.Name, Contact.Title, Contact.Email, Contact.Phone FROM OpportunityContactRoles WHERE IsPrimary = true) FROM Opportunity WHERE OwnerId IN (${ownerIds}) AND IsClosed = false ORDER BY CloseDate ASC LIMIT 1000`);
+      const recs = await soql(`SELECT Id, Name, StageName, Amount, CloseDate, LastActivityDate, OwnerId, Owner.Name, AccountId, Account.Name, Account.Website, (SELECT IsPrimary, ContactId, Contact.Name, Contact.Title, Contact.Email, Contact.Phone FROM OpportunityContactRoles WHERE IsPrimary = true) FROM Opportunity WHERE OwnerId IN (${ownerIds}) AND IsClosed = false AND RecordType.DeveloperName = 'New_Business' ORDER BY CloseDate ASC LIMIT 1000`);
       const byOpp = new Map(), byDomain = new Map(), byName = new Map();
       for (const [id, a] of S.accounts) {
         if (a.sf_opportunity_id) byOpp.set(a.sf_opportunity_id, id);
@@ -673,7 +673,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
           sf_opportunity_id: r.Id, sf_opportunity_name: r.Name || "", sf_account_id: r.AccountId || null,
           stage: r.StageName || "", amount: r.Amount == null ? null : Number(r.Amount), close_date: r.CloseDate || null,
           sf_owner: (r.Owner && r.Owner.Name) || "", last_activity_date: r.LastActivityDate || null, sf_closed: false,
-          sf_synced_at: nowIso(), band: "deal",
+          sf_synced_at: nowIso(), band: "deal", sf_excluded: false, sf_record_type: "New Business",
         };
         const role = r.OpportunityContactRoles && r.OpportunityContactRoles.records && r.OpportunityContactRoles.records[0];
         const pc = role && role.Contact ? { sf_contact_id: role.ContactId, name: role.Contact.Name || "", title: role.Contact.Title || "", email: role.Contact.Email || "", phone: role.Contact.Phone || "", source: "salesforce" } : null;
@@ -698,15 +698,17 @@ a.v.call svg.i { width: 14px; height: 14px; }
           jobs.push(() => acctRef(id).update(patch));
         }
       }
-      const gone = [...S.accounts.entries()].filter(([, a]) => a.sf_opportunity_id && !seen.has(a.sf_opportunity_id) && !a.sf_closed);
-      let closed = 0;
+      const gone = [...S.accounts.entries()].filter(([, a]) => a.sf_opportunity_id && !seen.has(a.sf_opportunity_id) && !a.sf_closed && !a.sf_excluded);
+      let closed = 0, excluded = 0;
       if (gone.length) {
         S.sync.msg = "Checking deals that closed…"; renderAccounts();
         for (let i = 0; i < gone.length; i += 100) {
           const chunk = gone.slice(i, i + 100);
-          const cr = await soql(`SELECT Id, StageName, IsClosed, Amount, CloseDate, LastActivityDate, Owner.Name FROM Opportunity WHERE Id IN (${chunk.map(([, a]) => `'${a.sf_opportunity_id}'`).join(",")})`);
+          const cr = await soql(`SELECT Id, StageName, IsClosed, RecordType.Name, RecordType.DeveloperName, Amount, CloseDate, LastActivityDate, Owner.Name FROM Opportunity WHERE Id IN (${chunk.map(([, a]) => `'${a.sf_opportunity_id}'`).join(",")})`);
           for (const r of cr) {
             const hit = chunk.find(([, a]) => a.sf_opportunity_id === r.Id); if (!hit) continue;
+            const rt = r.RecordType || {};
+            if (!r.IsClosed && rt.DeveloperName && rt.DeveloperName !== "New_Business") { excluded++; jobs.push(() => acctRef(hit[0]).update({ sf_excluded: true, sf_record_type: rt.Name || rt.DeveloperName, sf_synced_at: nowIso() })); continue; }
             closed += r.IsClosed ? 1 : 0;
             jobs.push(() => acctRef(hit[0]).update({ stage: r.StageName || "", sf_closed: !!r.IsClosed, amount: r.Amount == null ? null : Number(r.Amount), close_date: r.CloseDate || null, last_activity_date: r.LastActivityDate || null, sf_owner: (r.Owner && r.Owner.Name) || "", sf_synced_at: nowIso(), updated_at: nowIso() }));
           }
@@ -718,7 +720,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
         const res = await Promise.allSettled(jobs.slice(i, i + 8).map((f) => f()));
         failed += res.filter((x) => x.status === "rejected").length;
       }
-      const summary = `${recs.length} open opportunities: ${created} new, ${updated} refreshed, ${converted} converted from outbound${closed ? `, ${closed} closed` : ""}.${failed ? ` ${failed} didn't save; sync again.` : ""}`;
+      const summary = `${recs.length} open New Business opportunities: ${created} new, ${updated} refreshed, ${converted} converted from outbound${closed ? `, ${closed} closed` : ""}${excluded ? `, ${excluded} hidden (not New Business)` : ""}.${failed ? ` ${failed} didn't save; sync again.` : ""}`;
       await S.db.collection("meta").doc("settings").set({ ...S.settings, last_sf_sync: { at: nowIso(), by: S.myOwner || "", summary } }).catch(() => {});
       S.sync = { running: false, msg: summary, err: "" };
     } catch (e) {
@@ -806,7 +808,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
   const openTasks = () => [...S.tasks.entries()].filter(([, t]) => t.status !== "done");
   function focusTasks() {
     const t = today();
-    return openTasks().filter(([, x]) => x.due_date && x.due_date <= t).filter(([, x]) => { const a = S.accounts.get(x.account_id); return a && ownerMatch(a.owner); })
+    return openTasks().filter(([, x]) => x.due_date && x.due_date <= t).filter(([, x]) => { const a = S.accounts.get(x.account_id); return a && !a.sf_excluded && ownerMatch(a.owner); })
       .sort((a, b) => (a[1].due_date < b[1].due_date ? -1 : a[1].due_date > b[1].due_date ? 1 : (a[1].created_at || "").localeCompare(b[1].created_at || "")));
   }
   function contactOf(acc, cid) { return cid && acc && Array.isArray(acc.contacts) ? acc.contacts.find((c) => c.id === cid) : null; }
@@ -949,7 +951,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
     S.seg = S.route.view === "deals" ? "deal" : "outbound";
     if (!$("acc-table") || S._shellKind !== S.seg) buildAccountsShell();
     const t = today();
-    const all = [...S.accounts.entries()].filter(([, a]) => ownerMatch(a.owner));
+    const all = [...S.accounts.entries()].filter(([, a]) => !a.sf_excluded && ownerMatch(a.owner));
     const q = S.q.trim().toLowerCase();
     let rows = all.filter(([, a]) => kindOf(a) === S.seg);
     const segTotal = rows.length;
