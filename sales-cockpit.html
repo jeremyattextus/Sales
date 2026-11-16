@@ -418,6 +418,66 @@ a.v.call svg.i { width: 14px; height: 14px; }
 .ev-meta .owner-dot { width: 18px; height: 18px; font-size: 10px; }
 .sm-join { padding: 4px 10px; font-size: 12px; }
 @media (max-width: 480px) { .ev { grid-template-columns: 72px minmax(0, 1fr); } .sm-join { grid-column: 2; justify-self: start; } }
+
+/* Today, redesigned: day strip, Up next, agenda left, tasks right */
+.today-page { display: grid; gap: 18px; }
+.day-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
+.day-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.ds { display: grid; gap: 0; min-width: 92px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 8px 14px; }
+.ds b { font-family: var(--font-head); font-weight: 500; font-size: 22px; line-height: 1.1; color: var(--heading); }
+.ds span { font-size: 12px; color: var(--muted); }
+.ds.bad b { color: var(--bad); }
+@media (max-width: 640px) { .day-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 6px; } .ds { min-width: 0; padding: 7px 9px; } .ds b { font-size: 19px; } .ds span { font-size: 11px; line-height: 1.25; } }
+.upnext { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px 28px; align-items: center; padding: 20px 24px; border-radius: 18px; color: #FFFFFF;
+  background: radial-gradient(120% 140% at 100% 0%, rgba(6,159,255,.32) 0%, rgba(6,159,255,0) 46%), radial-gradient(90% 120% at 100% 100%, rgba(2,229,132,.16) 0%, rgba(2,229,132,0) 50%), var(--bar); }
+.upnext.quiet { grid-template-columns: minmax(0, 1fr) auto; }
+@media (max-width: 760px) { .upnext, .upnext.quiet { grid-template-columns: minmax(0, 1fr); padding: 18px; } }
+.un-main { display: grid; gap: 4px; min-width: 0; }
+.un-lab { font-family: var(--font-head); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--bar-muted); }
+.un-title { font-family: var(--font-head); font-weight: 500; font-size: 24px; line-height: 1.2; color: #FFFFFF; text-decoration: none; overflow-wrap: anywhere; text-wrap: balance; }
+a.un-title:hover { text-decoration: underline; }
+.un-when { color: var(--bar-muted); font-size: 14px; }
+.un-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.un-btn { background: var(--blue); color: #0C1524; }
+.un-btn.ghosty { background: transparent; color: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+.un-prep { background: rgba(255,255,255,.08); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.un-acct { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.un-acct a { color: #FFFFFF; font-family: var(--font-head); font-size: 16px; text-decoration: none; }
+.un-acct a:hover { text-decoration: underline; }
+.un-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px 14px; margin: 0; }
+.un-facts dt { font-family: var(--font-head); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--bar-muted); }
+.un-facts dd { margin: 0; font-size: 14px; color: #FFFFFF; overflow-wrap: anywhere; }
+.un-muted { color: var(--bar-muted); }
+.today-grid { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.agenda { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 78px); max-height: calc(100vh - 96px); overflow: auto; }
+@media (max-width: 900px) { .today-grid { grid-template-columns: minmax(0, 1fr); } .agenda { position: static; max-height: none; order: 2; } .tasks-panel { order: 1; } }
+.task-kind.tabs button { padding: 4px 11px; font-size: 12.5px; }
+.dotk { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dotk.deal { background: var(--blue); }
+.dotk.tgt { background: var(--green); }
+.over-label { color: var(--bad); }
+.agenda-body { padding: 0 16px 14px; }
+.agenda-foot { padding-top: 10px; }
+.agenda .evs { list-style: none; margin: 0; padding: 0; }
+.agenda .ev { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 10px; align-items: start; padding: 0; border: 0; margin: 0; background: none; border-radius: 0; }
+.agenda .ev-t { font-size: 12px; font-weight: 600; color: var(--muted); padding-top: 9px; text-align: right; }
+.agenda .ev-main { border-left: 3px solid var(--line); padding: 7px 0 9px 12px; display: grid; gap: 3px; }
+.agenda .ev.mtg .ev-main { border-left-color: color-mix(in srgb, var(--navy) 55%, var(--line)); }
+.agenda .ev.ext .ev-main { border-left-color: var(--blue); }
+.agenda .ev.solo .ev-main { border-left-style: dashed; }
+.agenda .ev.solo .ev-title { color: var(--muted); font-weight: 400; }
+.agenda .ev.past { opacity: .5; }
+.agenda .ev.now .ev-main { background: var(--deal-soft); border-radius: 0 10px 10px 0; border-left-color: var(--blue); }
+.agenda .ev.now .ev-t { color: var(--deal-ink); }
+.agenda .ev-title { font-weight: 500; font-size: 14px; }
+.join-link { font-size: 12px; font-weight: 600; color: var(--link); text-decoration: none; }
+.join-link:hover { text-decoration: underline; }
+.agenda .gap { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 10px; align-items: center; }
+.agenda .gap .ev-t { padding-top: 0; font-weight: 400; }
+.agenda .gap > span:last-child { border-left: 3px dotted color-mix(in srgb, var(--green) 70%, var(--line)); padding: 7px 0 7px 12px; font-size: 12.5px; color: var(--tgt-ink); font-family: var(--font-head); }
+.agenda .now-line { position: relative; height: 0; margin: 9px 0 9px 60px; border-top: 2px solid var(--blue); }
+.agenda .now-line::before { content: ""; position: absolute; left: -6px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+.agenda .now-line span { position: absolute; right: 0; top: -9px; background: var(--surface); padding: 0 0 0 6px; font-size: 11px; font-family: var(--font-head); color: var(--link); }
 </style>
 
 <header class="bar">
@@ -658,11 +718,66 @@ a.v.call svg.i { width: 14px; height: 14px; }
     renderSchedule();
   }
   const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(/\s/g, "").toLowerCase();
+  // Day strip + Up next card, both driven by the calendar and the task counts.
+  function calReady() { return S.cal.key === calOwners().join("+") + "|" + calDate() && !S.cal.loading; }
+  function renderDayStrip() {
+    const el = $("day-strip"); if (!el) return;
+    const c = S._dayCounts || { over: 0, due: 0 };
+    const isToday = S.cal.day === "today";
+    const evs = calReady() ? S.cal.events.filter((e) => !e.ooo && e.mtg) : null;
+    const left = evs && isToday ? evs.filter((e) => new Date(e.e).getTime() > Date.now()).length : null;
+    const ext = evs ? evs.filter((e) => e.extDomains.length).length : null;
+    const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v == null ? "–" : v}</b><span>${l}</span></div>`;
+    el.innerHTML = (isToday ? cell(left, left === 1 ? "meeting left" : "meetings left") : cell(evs ? evs.length : null, "meetings tomorrow")) + cell(ext, "external") + cell(c.due, "tasks due") + cell(c.over, "overdue", c.over ? "bad" : "");
+  }
+  function accountForEvent(e) {
+    const idx = domainIndex();
+    for (const d of e.extDomains) { const id = idx.get(d); if (id) return id; }
+    return null;
+  }
+  function renderUpNext() {
+    const el = $("upnext"); if (!el) return;
+    if (!S.mcp || !calReady()) { el.innerHTML = ""; return; }
+    const now = Date.now(); const isToday = S.cal.day === "today";
+    const evs = S.cal.events.filter((e) => !e.ooo && e.mtg);
+    const cur = isToday ? evs.find((e) => new Date(e.s).getTime() <= now && new Date(e.e).getTime() > now) : null;
+    const nxt = isToday ? evs.find((e) => new Date(e.s).getTime() > now) : evs[0];
+    const ev = cur || nxt;
+    if (!ev) {
+      const c = S._dayCounts || { over: 0, due: 0 };
+      el.innerHTML = `<div class="upnext quiet"><div><div class="un-lab">${isToday ? "Rest of the day" : "Tomorrow"}</div><div class="un-title">${isToday ? "No more meetings today" : "No meetings tomorrow"}</div>
+        <div class="un-when">${c.due + c.over ? `Clear runway for ${c.due + c.over} task${c.due + c.over === 1 ? "" : "s"}${c.over ? `, ${c.over} overdue` : ""}.` : "Nothing due. A good time to find new targets."}</div></div>
+        ${c.due + c.over ? "" : `<a class="btn un-btn" href="#prospect">${ic("search")} Find targets</a>`}</div>`;
+      return;
+    }
+    const st = new Date(ev.s).getTime();
+    const mins = Math.round((st - now) / 60000);
+    const when = cur ? `Now · until ${fmtTime(ev.e)}` : !isToday ? `Tomorrow · ${fmtTime(ev.s)}–${fmtTime(ev.e)}` : `${fmtTime(ev.s)}–${fmtTime(ev.e)} · ${mins >= 60 ? `in ${Math.floor(mins / 60)}h ${mins % 60}m` : `in ${mins} min`}`;
+    const accId = accountForEvent(ev); const a = accId && S.accounts.get(accId);
+    let prep = "";
+    if (a) {
+      const ch = championOf(a); const openN = openTasks().filter(([, x]) => x.account_id === accId).length;
+      const facts = [
+        ["Stage", a.stage || "—"],
+        a.band === "deal" ? ["Amount", money(a.amount)] : ["Contacts", String((a.contacts || []).length)],
+        ["Champion", ch ? ch.name : "Not set"],
+        ["Open tasks", String(openN)],
+        ["Last touch", a.last_touch_at ? `${agoLabel(a.last_touch_at)} · ${TOUCH_LABEL[a.last_touch_type] || ""}` : a.last_activity_date ? `SF ${fmtDate(a.last_activity_date)}` : "None yet"],
+      ];
+      prep = `<div class="un-prep"><div class="un-acct"><span class="kind ${a.band === "deal" ? "deal" : "tgt"}">${a.band === "deal" ? "Deal" : "Target"}</span><a href="#account-${esc(accId)}">${esc(a.company_name)}</a></div>
+        <dl class="un-facts">${facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>`;
+    } else if (ev.extDomains.length) prep = `<div class="un-prep"><div class="small un-muted">External · ${esc(ev.extDomains.join(", "))} · not on the board</div></div>`;
+    el.innerHTML = `<div class="upnext"><div class="un-main"><div class="un-lab">${cur ? "In progress" : isToday ? "Up next" : "First up tomorrow"}${S.cal.events.length && calOwners().length > 1 ? ` · ${ev.owners.join(" & ")}` : ""}</div>
+        <a class="un-title" href="${esc(ev.link)}" target="_blank" rel="noopener">${esc(ev.title)}</a><div class="un-when num">${esc(when)}</div>
+        <div class="un-actions">${ev.join ? `<a class="btn un-btn" href="${esc(ev.join)}" target="_blank" rel="noopener">Join meeting</a>` : ""}${a ? `<a class="btn un-btn ghosty" href="#account-${esc(accId)}">Open account</a>` : ""}</div></div>${prep}</div>`;
+  }
+
   function renderSchedule() {
+    renderUpNext(); renderDayStrip();
     const el = $("sched"); if (!el) return;
     const owners = calOwners(); const d = calDate();
-    const whose = owners.length > 1 ? "Team calendar" : owners[0] === S.myOwner ? "Your calendar" : `${owners[0]}'s calendar`;
-    const head = `<div class="panel-head"><h2>${esc(whose)}</h2><div class="row-form" style="gap:6px">
+    const whose = owners.length > 1 ? "Team agenda" : owners[0] === S.myOwner ? "Agenda" : `${owners[0]}'s agenda`;
+    const head = `<div class="panel-head"><h2>${esc(whose)}</h2><div class="row-form" style="gap:4px">
         <div class="tabs cal-day" role="group" aria-label="Day"><button type="button" data-calday="today" aria-pressed="${S.cal.day === "today"}">Today</button><button type="button" data-calday="tomorrow" aria-pressed="${S.cal.day === "tomorrow"}">Tomorrow</button></div>
         <button class="icon-btn" type="button" data-act="cal-refresh" aria-label="Refresh calendar" title="Refresh">${ic("sync")}</button></div></div>`;
     if (!S.mcp) { el.innerHTML = head + `<div class="panel-body small muted">Open the cockpit in claude.ai to see your calendar.</div>`; return; }
@@ -671,24 +786,37 @@ a.v.call svg.i { width: 14px; height: 14px; }
     const now = Date.now(); const isToday = d === today();
     const idx = domainIndex();
     const evs = S.cal.events.filter((e) => !e.ooo);
-    const mtgs = evs.filter((e) => e.mtg); const ext = mtgs.filter((e) => e.extDomains.length);
-    const upcoming = isToday ? evs.find((e) => new Date(e.e).getTime() > now && e.mtg) : null;
-    const row = (e) => {
+    const item = (e) => {
       const st = new Date(e.s).getTime(), en = new Date(e.e).getTime();
       const state = !isToday ? "" : en <= now ? "past" : st <= now ? "now" : "";
       const accs = [...new Set(e.extDomains.map((dm) => idx.get(dm)).filter(Boolean))].map((id) => { const a = S.accounts.get(id); return `<a class="kind ${kindOf(a) === "deal" ? "deal" : "tgt"}" href="#account-${esc(id)}" title="Open ${esc(a.company_name)}">${esc(a.company_name)}</a>`; }).join("");
-      return `<li class="ev ${state} ${e.focus ? "focus" : ""}">
-        <span class="ev-t num">${esc(fmtTime(e.s))}<span class="muted">–${esc(fmtTime(e.e))}</span></span>
+      return `<li class="ev ${state} ${e.mtg ? "mtg" : "solo"} ${e.extDomains.length ? "ext" : ""}">
+        <span class="ev-t num">${esc(fmtTime(e.s))}</span>
         <div class="ev-main"><a class="ev-title" href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.title)}</a>
-          <div class="ev-meta">${owners.length > 1 ? e.owners.map((o) => `<span class="owner-dot" title="${esc(o)}">${esc(initial(o))}</span>`).join("") : ""}${accs}${e.extDomains.length && !accs ? `<span class="chip">External · ${esc(e.extDomains[0])}</span>` : ""}${!e.mtg ? `<span class="small muted">${e.focus ? "Focus time" : "Just you"}</span>` : ""}${state === "now" ? '<span class="pill today">Now</span>' : ""}</div></div>
-        ${e.join && state !== "past" ? `<a class="btn sec sm-join" href="${esc(e.join)}" target="_blank" rel="noopener">Join</a>` : ""}</li>`;
+          <div class="ev-meta"><span class="small muted num">${esc(fmtTime(e.s))}–${esc(fmtTime(e.e))}</span>${owners.length > 1 ? e.owners.map((o) => `<span class="owner-dot" title="${esc(o)}">${esc(initial(o))}</span>`).join("") : ""}${accs}${e.extDomains.length && !accs ? `<span class="chip">External</span>` : ""}${e.join && state !== "past" ? `<a class="join-link" href="${esc(e.join)}" target="_blank" rel="noopener">Join</a>` : ""}</div></div></li>`;
     };
-    const allDay = S.cal.allDay.length ? `<div class="flags" style="margin-bottom:6px">${S.cal.allDay.map((a) => `<span class="chip ${a.ooo ? "warn" : ""}">${owners.length > 1 ? esc(initial(a.owner)) + " · " : ""}All day: ${esc(a.title)}</span>`).join("")}</div>` : "";
-    const errs = S.cal.errs.map((x) => `<div class="err">${esc(x)}</div>`).join("");
-    const next = upcoming ? `<div class="up-next"><span class="eyebrow">Up next</span><b>${esc(upcoming.title)}</b><span class="small muted">${esc(fmtTime(upcoming.s))}${(() => { const m = Math.round((new Date(upcoming.s).getTime() - now) / 60000); return m > 0 ? ` · in ${m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + " min"}` : " · now"; })()}</span></div>` : "";
-    el.innerHTML = head + `<div class="panel-body">${errs}${next}
-      <div class="small muted">${mtgs.length} meeting${mtgs.length === 1 ? "" : "s"} · ${ext.length} external${S.cal.at ? ` · updated ${esc(fmtTime(new Date(S.cal.at).toISOString()))}` : ""}</div>
-      ${allDay}${evs.length ? `<ul class="evs">${evs.map(row).join("")}</ul>` : `<div class="empty small"><span class="bubble">${isToday ? "Nothing on the calendar today." : "Nothing on the calendar tomorrow."}</span></div>`}</div>`;
+    // Weave in a Now line and open stretches (30+ min, 8am–6pm) so free call time is visible.
+    const out = []; let nowPlaced = !isToday;
+    const dayAt = (h) => { const x = new Date(d + "T00:00:00"); x.setHours(h, 0, 0, 0); return x.getTime(); };
+    const wStart = dayAt(8), wEnd = dayAt(18);
+    let cursor = wStart;
+    const gap = (from, to) => {
+      const a = Math.max(from, wStart, isToday ? now : 0), b = Math.min(to, wEnd);
+      if (b - a >= 30 * 60000) { const m = Math.round((b - a) / 60000); out.push(`<li class="gap"><span class="ev-t num">${esc(fmtTime(new Date(a).toISOString()))}</span><span>Open · ${m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? " " + (m % 60) + "m" : ""}` : m + " min"}</span></li>`); }
+    };
+    for (const e of evs) {
+      const st = new Date(e.s).getTime(), en = new Date(e.e).getTime();
+      if (!nowPlaced && st > now) { out.push(`<li class="now-line" aria-label="Now"><span>Now · ${esc(fmtTime(new Date(now).toISOString()))}</span></li>`); nowPlaced = true; }
+      gap(cursor, st);
+      out.push(item(e));
+      cursor = Math.max(cursor, en);
+    }
+    if (!nowPlaced && now < wEnd + 6 * 3600e3) out.push(`<li class="now-line" aria-label="Now"><span>Now · ${esc(fmtTime(new Date(now).toISOString()))}</span></li>`);
+    gap(cursor, wEnd);
+    const allDay = S.cal.allDay.length ? `<div class="flags" style="padding:0 0 8px">${S.cal.allDay.map((a) => `<span class="chip ${a.ooo ? "warn" : ""}">${owners.length > 1 ? esc(initial(a.owner)) + " · " : ""}All day: ${esc(a.title)}</span>`).join("")}</div>` : "";
+    const errs = S.cal.errs.map((x) => `<div class="err" style="margin-bottom:8px">${esc(x)}</div>`).join("");
+    el.innerHTML = head + `<div class="agenda-body">${errs}${allDay}${evs.length ? `<ul class="evs">${out.join("")}</ul>` : `<div class="empty small"><span class="bubble">${isToday ? "Nothing on the calendar today." : "Nothing on the calendar tomorrow."}</span></div>`}
+      ${S.cal.at ? `<div class="small muted agenda-foot">Updated ${esc(fmtTime(new Date(S.cal.at).toISOString()))}</div>` : ""}</div>`;
   }
 
   // ---------- owner filter ----------
@@ -998,7 +1126,9 @@ a.v.call svg.i { width: 14px; height: 14px; }
     const items = S.todayKind === "all" ? allItems : allItems.filter(([, x]) => kindOf(S.accounts.get(x.account_id)) === S.todayKind);
     const over = items.filter(([, x]) => x.due_date < t), due = items.filter(([, x]) => x.due_date === t);
     const dateTxt = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-    const scope = S.owner === "all" ? "Everyone's accounts" : S.owner === "mine" ? (S.myOwner ? "Your accounts" : "All accounts") : `${otherOwner()}'s accounts`;
+    const hr = new Date().getHours();
+    const hello = `${hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening"}${S.myOwner && S.owner === "mine" ? ", " + S.myOwner : ""}`;
+    const scope = S.owner === "all" ? "Showing the whole team" : S.owner === "mine" ? (S.myOwner ? "" : "Showing all accounts") : `Showing ${otherOwner()}'s day`;
     const row = ([id, x]) => {
       const a = S.accounts.get(x.account_id) || {}; const tc = taskContact(a, x); const dl = dueLabel(x.due_date);
       return `<li><input type="checkbox" class="chk" data-act="done" data-id="${id}" aria-label="Mark done: ${esc(x.title)}">
@@ -1010,18 +1140,27 @@ a.v.call svg.i { width: 14px; height: 14px; }
     if (S.dbAbsent) body = `<div class="empty"><span>Open the cockpit in claude.ai to see your tasks.</span></div>`;
     else if (!S.db || !(S.loaded.a && S.loaded.t)) body = `<div class="empty"><span class="spinner"></span><span>Loading your board…</span></div>`;
     else if (!items.length) body = `<div class="empty"><span class="bubble">Nothing due${S.todayKind === "deal" ? " on your deals" : S.todayKind === "outbound" ? " on your targets" : ""}. You're caught up.</span><span class="small">Tasks you add on an account show up here on their due date. <a href="#deals">Active Deals</a> · <a href="#targets">Target Accounts</a></span></div>`;
-    else body = `${over.length ? `<div class="group-label eyebrow">Overdue · ${over.length}</div><ul class="tasklist">${over.map(row).join("")}</ul>` : ""}${due.length ? `<div class="group-label eyebrow">Due today · ${due.length}</div><ul class="tasklist">${due.map(row).join("")}</ul>` : ""}`;
-    el.innerHTML = `<div style="display:grid;gap:18px">
-      <div class="page-head"><div><div class="eyebrow">${esc(dateTxt)}</div><h1>What to work today</h1><div class="sub">${esc(scope)} · due and overdue tasks</div></div>
-        <div class="focus-stats"><div class="stat over"><b class="num">${over.length}</b><span>overdue</span></div><div class="stat"><b class="num">${due.length}</b><span>due today</span></div></div></div>
-      <div class="today-tools"><div class="tabs" role="group" aria-label="Task type">
-          <button type="button" data-tkind="all" aria-pressed="${S.todayKind === "all"}">All <span class="n num">${allItems.length}</span></button>
-          <button type="button" data-tkind="deal" aria-pressed="${S.todayKind === "deal"}"><span class="kind deal" style="padding:0;background:none">Active deals</span> <span class="n num">${kindCount.deal}</span></button>
-          <button type="button" data-tkind="outbound" aria-pressed="${S.todayKind === "outbound"}"><span class="kind tgt" style="padding:0;background:none">Outbound targets</span> <span class="n num">${kindCount.outbound}</span></button>
-        </div></div>
-      <div class="today-grid"><div class="panel">${body}</div><div class="panel" id="sched"></div></div></div>`;
+    else body = `${over.length ? `<div class="group-label eyebrow over-label">Overdue · ${over.length}</div><ul class="tasklist">${over.map(row).join("")}</ul>` : ""}${due.length ? `<div class="group-label eyebrow">Due today · ${due.length}</div><ul class="tasklist">${due.map(row).join("")}</ul>` : ""}`;
+    S._dayCounts = { over: over.length, due: due.length };
+    el.innerHTML = `<div class="today-page">
+      <div class="day-head"><div><div class="eyebrow">${esc(dateTxt)}</div><h1>${esc(hello)}</h1>${scope ? `<div class="sub">${esc(scope)}</div>` : ""}</div>
+        <div class="day-strip" id="day-strip"></div></div>
+      <div id="upnext"></div>
+      <div class="today-grid">
+        <aside class="panel agenda" id="sched" aria-label="Agenda"></aside>
+        <section class="panel tasks-panel" aria-labelledby="tasks-h">
+          <div class="panel-head"><h2 id="tasks-h">Tasks</h2>
+            <div class="tabs task-kind" role="group" aria-label="Task type">
+              <button type="button" data-tkind="all" aria-pressed="${S.todayKind === "all"}">All <span class="n num">${allItems.length}</span></button>
+              <button type="button" data-tkind="deal" aria-pressed="${S.todayKind === "deal"}"><span class="dotk deal" aria-hidden="true"></span>Deals <span class="n num">${kindCount.deal}</span></button>
+              <button type="button" data-tkind="outbound" aria-pressed="${S.todayKind === "outbound"}"><span class="dotk tgt" aria-hidden="true"></span>Targets <span class="n num">${kindCount.outbound}</span></button>
+            </div></div>
+          ${body}
+        </section>
+      </div></div>`;
     renderSchedule();
   }
+
   function renderNavCount() {
     const t = today(); const items = focusTasks(); const n = $("nav-count");
     n.hidden = !items.length; n.textContent = items.length; n.classList.toggle("over", items.some(([, x]) => x.due_date < t));
