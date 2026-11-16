@@ -315,6 +315,13 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
 .kind::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .kind.deal { background: var(--deal-soft); color: var(--deal-ink); }
 .kind.tgt { background: var(--tgt-soft); color: var(--tgt-ink); }
+.champ-chip { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-head); font-size: 11.5px; padding: 1px 8px 1px 6px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); white-space: nowrap; }
+.champ-chip svg.i { width: 13px; height: 13px; }
+.champ-btn { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; font-size: 11.5px; font-family: var(--font-head); padding: 1px 9px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.champ-btn svg.i { width: 13px; height: 13px; }
+.champ-btn:hover { color: var(--warn); border-color: var(--warn); }
+.contact.champion { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+.t-meta .via { color: var(--muted); font-size: 12px; }
 .pill.tgt { background: var(--tgt-soft); color: var(--tgt-ink); }
 .nav .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .nav .dot.deal { background: var(--blue); }
@@ -418,6 +425,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
     chev: '<path d="M9 6l6 6-6 6"/>',
+    champ: '<circle cx="12" cy="9" r="5.5"/><path d="M8.6 13.4L7 21l5-2.6 5 2.6-1.6-7.6"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
 
@@ -734,6 +742,14 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       .sort((a, b) => (a[1].due_date < b[1].due_date ? -1 : a[1].due_date > b[1].due_date ? 1 : (a[1].created_at || "").localeCompare(b[1].created_at || "")));
   }
   function contactOf(acc, cid) { return cid && acc && Array.isArray(acc.contacts) ? acc.contacts.find((c) => c.id === cid) : null; }
+  // A task with no contact chosen goes to the account's champion; "none" means no contact on purpose.
+  const championOf = (acc) => contactOf(acc, acc && acc.champion_id);
+  function taskContact(acc, x) {
+    if (x.contact_id === "none") return { c: null, via: false };
+    if (x.contact_id) { const c = contactOf(acc, x.contact_id); if (c) return { c, via: false }; }
+    const ch = championOf(acc); return { c: ch, via: !!ch };
+  }
+  const contactTag = (tc) => (tc.c ? `<span title="${tc.via ? "Champion (default contact)" : ""}">${ic(tc.via ? "champ" : "user")} ${esc(tc.c.name)}${tc.via ? ' <span class="via">· champion</span>' : ""}</span>` : "");
   function findAccount({ zid, domain, name }) {
     const d = normDomain(domain), n = normName(name);
     for (const [id, a] of S.accounts) {
@@ -768,10 +784,10 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     const dateTxt = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
     const scope = S.owner === "all" ? "Everyone's accounts" : S.owner === "mine" ? (S.myOwner ? "Your accounts" : "All accounts") : `${otherOwner()}'s accounts`;
     const row = ([id, x]) => {
-      const a = S.accounts.get(x.account_id) || {}; const c = contactOf(a, x.contact_id); const dl = dueLabel(x.due_date);
+      const a = S.accounts.get(x.account_id) || {}; const tc = taskContact(a, x); const dl = dueLabel(x.due_date);
       return `<li><input type="checkbox" class="chk" data-act="done" data-id="${id}" aria-label="Mark done: ${esc(x.title)}">
         <div class="t-main"><span class="t-title">${esc(x.title)}</span>
-          <span class="t-meta">${kindOf(a) === "deal" ? '<span class="kind deal" title="Deal management">Deal</span>' : '<span class="kind tgt" title="Outbound target">Target</span>'}<a href="#account-${esc(x.account_id)}">${esc(a.company_name || "Unknown account")}</a>${c ? `<span>${ic("user")} ${esc(c.name)}</span>` : ""}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}</span></div>
+          <span class="t-meta">${kindOf(a) === "deal" ? '<span class="kind deal" title="Deal management">Deal</span>' : '<span class="kind tgt" title="Outbound target">Target</span>'}<a href="#account-${esc(x.account_id)}">${esc(a.company_name || "Unknown account")}</a>${contactTag(tc)}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}</span></div>
         <div class="t-side">${S.owner === "all" ? `<span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span>` : ""}<span class="pill ${dl.cls}">${esc(dl.txt)}</span></div></li>`;
     };
     let body;
@@ -931,14 +947,14 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
   }
 
   function contactsStrip(accId, a) {
-    const cs = (Array.isArray(a.contacts) ? a.contacts : []).slice().sort((x, y) => (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
+    const cs = (Array.isArray(a.contacts) ? a.contacts : []).slice().sort((x, y) => (y.id === a.champion_id ? 1 : 0) - (x.id === a.champion_id ? 1 : 0) || (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
     const ro = canWrite() ? "" : "disabled";
     const phone = (v, dnc, k) => (v ? `<div class="cline"><span class="k">${k}</span><span class="v">${esc(v)}</span>${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
     const cards = cs.map((c) => {
       const st = cStatus(c.status);
       const liSearch = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent([c.name, a.company_name].filter(Boolean).join(" "))}`;
       return `<div class="contact ${c.is_primary ? "primary" : ""}">
-        <div class="contact-top"><div class="nm"><b>${esc(c.name || "Unnamed")}</b>${c.title ? `<span>${esc(c.title)}</span>` : ""}</div></div>
+        <div class="contact-top"><div class="nm"><b>${esc(c.name || "Unnamed")}</b>${c.title ? `<span>${esc(c.title)}</span>` : ""}</div>${c.id === a.champion_id ? `<span class="champ-chip">${ic("champ")} Champion</span>` : canWrite() ? `<button class="champ-btn" type="button" data-act="champion" data-acc="${esc(accId)}" data-id="${esc(c.id)}">${ic("champ")} Make champion</button>` : ""}</div>
         <div class="flags">${c.persona_tier ? `<span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>` : ""}${c.is_primary ? '<span class="chip">Primary</span>' : ""}
           ${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : `<a class="chip" href="${esc(liSearch)}" target="_blank" rel="noopener">Find on LinkedIn ↗</a>`}${confFlags(c.zi_accuracy, c.zi_updated)}</div>
         ${c.email || c.phone || c.mobile ? `<div class="lines" style="gap:4px">${c.email ? `<div class="cline"><span class="k">Email</span><span class="v">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : ""}${phone(c.phone, c.phone_dnc, "Direct")}${phone(c.mobile, c.mobile_dnc, "Mobile")}</div>` : ""}
@@ -1012,6 +1028,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       ${isDeal && a.sf_opportunity_name ? `<div class="small muted" style="margin-top:-8px">${esc(a.sf_opportunity_name)}</div>` : ""}
       <div class="facts">
         <div class="fact"><span class="eyebrow">Stage</span>${isDeal ? `<span class="v">${esc(a.stage || "—")}${a.sf_closed ? ' <span class="pill warn">Closed</span>' : ""}</span>` : `<select class="sel" id="f-stage" data-act-change="stage" ${canWrite() ? "" : "disabled"}>${OUT_STAGES.map((s) => `<option ${s === a.stage ? "selected" : ""}>${s}</option>`).join("")}${a.stage && !OUT_STAGES.includes(a.stage) ? `<option selected>${esc(a.stage)}</option>` : ""}</select>`}</div>
+        <div class="fact"><span class="eyebrow">Champion</span><select class="sel" id="f-champion" data-act-change="champion" ${canWrite() && (a.contacts || []).length ? "" : "disabled"} title="Default contact for this account's tasks"><option value="">${(a.contacts || []).length ? "Not set" : "Add a contact first"}</option>${(a.contacts || []).map((c) => `<option value="${esc(c.id)}" ${c.id === a.champion_id ? "selected" : ""}>${esc(c.name || "Unnamed")}</option>`).join("")}</select></div>
         <div class="fact"><span class="eyebrow">Owner</span><select class="sel" id="f-owner" data-act-change="owner" ${canWrite() ? "" : "disabled"}>${OWNERS.map((o) => `<option ${o === a.owner ? "selected" : ""}>${o}</option>`).join("")}</select></div>
         ${isDeal ? `<div class="fact"><span class="eyebrow">Amount</span><span class="v big num">${money(a.amount)}</span></div>
         <div class="fact"><span class="eyebrow">Close date</span><span class="v num">${esc(fmtDate(a.close_date))}</span></div>
@@ -1028,7 +1045,8 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
   }
   function contactOptions(a, sel) {
     const cs = Array.isArray(a.contacts) ? a.contacts : [];
-    return `<option value="">No contact</option>` + cs.map((c) => `<option value="${esc(c.id)}" ${c.id === sel ? "selected" : ""}>${esc(c.name || "Unnamed")}</option>`).join("");
+    const ch = championOf(a); sel = sel || "";
+    return `<option value="" ${sel === "" ? "selected" : ""}>${ch ? `Champion: ${esc(ch.name)}` : "Champion (not set)"}</option><option value="none" ${sel === "none" ? "selected" : ""}>No contact</option>` + cs.map((c) => `<option value="${esc(c.id)}" ${c.id === sel ? "selected" : ""}>${esc(c.name || "Unnamed")}${c.id === (a.champion_id || "") ? " (champion)" : ""}</option>`).join("");
   }
   function renderDetailTasks(a) {
     const id = S.route.id; const ct = $("nt-contact");
@@ -1040,7 +1058,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     const done = mine.filter(([, x]) => x.status === "done").sort((x, y) => String(y[1].completed_at || "").localeCompare(String(x[1].completed_at || "")));
     $("d-task-count").textContent = `${open.length} open · ${done.length} done`;
     const row = ([tid, x], isDone) => {
-      const c = contactOf(a, x.contact_id); const dl = dueLabel(x.due_date);
+      const tc = taskContact(a, x); const dl = dueLabel(x.due_date);
       if (S.editTask === tid) return `<li><form class="edit-row" data-form="edit-task" data-id="${tid}">
           <input class="field" name="title" value="${esc(x.title)}" aria-label="Task title">
           <input class="field" name="due" type="date" value="${esc(x.due_date || "")}" style="flex:0 1 150px" aria-label="Due date">
@@ -1048,7 +1066,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
           <button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cancel-edit-task">Cancel</button></form></li>`;
       return `<li class="${isDone ? "done" : ""}"><input type="checkbox" class="chk" data-act="${isDone ? "undone" : "done"}" data-id="${tid}" ${isDone ? "checked" : ""} aria-label="${isDone ? "Reopen" : "Mark done"}: ${esc(x.title)}">
         <div class="t-main"><span class="t-title">${esc(x.title)}</span>
-          <span class="t-meta">${c ? `<span>${ic("user")} ${esc(c.name)}</span>` : ""}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}${isDone && x.completed_at ? `<span>Done ${esc(fmtWhen(x.completed_at))}</span>` : ""}</span></div>
+          <span class="t-meta">${contactTag(tc)}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}${isDone && x.completed_at ? `<span>Done ${esc(fmtWhen(x.completed_at))}</span>` : ""}</span></div>
         <div class="t-side">${isDone ? "" : `<span class="pill ${dl.cls}">${esc(dl.txt)}</span>`}
           ${canWrite() ? `${isDone ? "" : `<button class="icon-btn" type="button" data-act="edit-task" data-id="${tid}" aria-label="Edit task">${ic("edit")}</button>`}<button class="icon-btn" type="button" data-act="delete-task" data-id="${tid}" aria-label="Delete task">${ic("trash")}</button>` : ""}</div></li>`;
     };
@@ -1088,9 +1106,11 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       const st = cStatus(c.status);
       const liSearch = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent([c.name, a.company_name].filter(Boolean).join(" "))}`;
       const sourced = c.source === "zoominfo";
-      return `<div class="contact ${c.is_primary ? "primary" : ""}">
+      const isChamp = c.id === a.champion_id;
+      return `<div class="contact ${c.is_primary ? "primary" : ""} ${isChamp ? "champion" : ""}">
       <div class="contact-top"><button class="star ${c.is_primary ? "on" : ""}" type="button" data-act="primary" data-id="${esc(c.id)}" aria-label="${c.is_primary ? "Primary contact" : "Make primary contact"}" title="${c.is_primary ? "Primary contact" : "Make primary"}" ${canWrite() ? "" : "disabled"}>${ic("star")}</button>
         <div class="nm"><b>${esc(c.name || "Unnamed")}</b>${c.title ? `<span>${esc(c.title)}</span>` : ""}</div>
+        ${isChamp ? `<span class="champ-chip" title="Default contact for this account's tasks">${ic("champ")} Champion</span>` : canWrite() ? `<button class="champ-btn" type="button" data-act="champion" data-id="${esc(c.id)}" title="Make this person the default contact for tasks">${ic("champ")} Make champion</button>` : ""}
         ${canWrite() ? `<button class="icon-btn" type="button" data-act="edit-contact" data-id="${esc(c.id)}" aria-label="Edit ${esc(c.name)}">${ic("edit")}</button>` : ""}</div>
       <div class="flags">${c.persona_tier ? `<span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>` : ""}
         ${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : `<a class="chip" href="${esc(liSearch)}" target="_blank" rel="noopener" title="Search LinkedIn for this name and company">Find on LinkedIn ↗</a>`}
@@ -1101,7 +1121,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
         <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${canWrite() ? "" : "disabled"}> LinkedIn sent</label>
         ${c.is_primary ? '<span class="pill deal">Primary</span>' : ""}</div></div>`;
     };
-    const sorted = cs.slice().sort((x, y) => (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
+    const sorted = cs.slice().sort((x, y) => (y.id === a.champion_id ? 1 : 0) - (x.id === a.champion_id ? 1 : 0) || (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
     el.innerHTML = (S.addContact ? form(null) : "") + (sorted.length ? sorted.map(card).join("") : (S.addContact ? "" : `<div class="small muted">No contacts yet. Add one, or search ZoomInfo for HR and plant contacts.</div>`));
   }
   function renderGong(a) {
@@ -1626,7 +1646,8 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       case "add-contact": S.addContact = true; S.editContact = null; renderDetail(); { const f = document.querySelector(`form[data-form="contact"] input[name="name"]`); if (f) f.focus(); } break;
       case "edit-contact": S.editContact = id; S.addContact = false; renderDetail(); break;
       case "cancel-contact": S.editContact = null; S.addContact = false; renderDetail(); break;
-      case "delete-contact": { const a = S.accounts.get(accId); if (!a) break; const cs = (a.contacts || []).filter((c) => c.id !== id); if (cs.length && !cs.some((c) => c.is_primary)) cs[0] = { ...cs[0], is_primary: true }; S.editContact = null; await w(() => acctRef(accId).update({ contacts: cs, updated_at: nowIso() })); break; }
+      case "delete-contact": { const a = S.accounts.get(accId); if (!a) break; const cs = (a.contacts || []).filter((c) => c.id !== id); if (cs.length && !cs.some((c) => c.is_primary)) cs[0] = { ...cs[0], is_primary: true }; S.editContact = null; await w(() => acctRef(accId).update({ contacts: cs, ...(a.champion_id === id ? { champion_id: null } : {}), updated_at: nowIso() })); break; }
+      case "champion": { const aid = b.dataset.acc || accId; if (!S.accounts.get(aid)) break; const ok = await w(() => acctRef(aid).update({ champion_id: id, updated_at: nowIso() })); if (ok) toast("Champion set. Tasks without a contact now go to them."); break; }
       case "primary": { const a = S.accounts.get(accId); if (!a) break; await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => ({ ...c, is_primary: c.id === id })), updated_at: nowIso() })); break; }
       case "zi-more": {
         const a = S.accounts.get(accId); if (!a) break;
@@ -1696,6 +1717,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     const accId = el.dataset.acc || S.route.id; const a = S.accounts.get(accId); if (!a) return;
     if (act === "stage") await w(() => acctRef(accId).update({ stage: el.value, updated_at: nowIso() }));
     if (act === "owner") await w(() => acctRef(accId).update({ owner: el.value, updated_at: nowIso() }));
+    if (act === "champion") await w(() => acctRef(accId).update({ champion_id: el.value || null, updated_at: nowIso() }));
     if (act === "contact-status") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, status: el.value } : c), updated_at: nowIso() }));
     if (act === "linkedin-sent") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, linkedin_sent: el.checked } : c), updated_at: nowIso() }));
   });
