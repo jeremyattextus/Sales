@@ -346,6 +346,19 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
 a.v.call { color: var(--link); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; user-select: text; font-weight: 500; }
 a.v.call:hover { text-decoration: underline; }
 a.v.call svg.i { width: 14px; height: 14px; }
+
+/* Email */
+.sm-btn { padding: 3px 9px; font-size: 12.5px; color: var(--link); }
+.modal { position: fixed; inset: 0; z-index: 40; background: rgba(12,21,36,.55); display: grid; place-items: start center; overflow-y: auto; padding: calc(24px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal[hidden] { display: none; }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; width: 100%; max-width: 720px; min-width: 0; }
+.sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 18px 6px; }
+.sheet-body { padding: 8px 18px 18px; display: grid; gap: 12px; }
+.sheet-body textarea.field { min-height: 220px; font-size: 14.5px; }
+.cp-to { font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; overflow-wrap: anywhere; }
+.cp-to .k { font-family: var(--font-head); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.cp-sig { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: var(--surface-2); }
+.sig-preview { background: #FFFFFF; color: #17191B; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
 </style>
 
 <header class="bar">
@@ -376,8 +389,10 @@ a.v.call svg.i { width: 14px; height: 14px; }
   <section id="view-accounts" hidden></section>
   <section id="view-account" hidden></section>
   <section id="view-prospect" hidden></section>
+  <section id="view-email" hidden></section>
 </main>
 <input type="file" id="od-file" accept=".csv,text/csv" hidden>
+<div class="modal" id="compose" hidden></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script>
@@ -388,9 +403,9 @@ a.v.call svg.i { width: 14px; height: 14px; }
   const SF_USERS = { Jeremy: "005Pe00000MyPQJIA3", David: "005Pe00000RHuxVIAT" };
   const SF_BASE = "https://textus.lightning.force.com";
   const OUT_STAGES = ["Target", "Contacted", "Engaged", "Ready", "Nurture", "Disqualified"];
-  const CONTACT_STATUS = ["Not started", "Contacted", "Connected", "Meeting booked", "Not interested", "Bad data"];
+  const CONTACT_STATUS = ["Not started", "Contacted", "Connected", "Meeting booked", "Not interested", "Opted out", "Bad data"];
   const STATUS_ALIAS = { Active: "Connected", Engaged: "Connected", Dormant: "Not interested", Dead: "Bad data", "In sequence": "Contacted" };
-  const SF = "Salesforce", GONG = "Gong", ZI = "ZoomInfo";
+  const SF = "Salesforce", GONG = "Gong", ZI = "ZoomInfo", GMAIL = "Gmail";
 
   // ZoomInfo targeting (carried over from the Outbound Dashboard)
   const MIN_QUALIFIED = 3;
@@ -428,6 +443,8 @@ a.v.call svg.i { width: 14px; height: 14px; }
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
     chev: '<path d="M9 6l6 6-6 6"/>',
+    mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
     phone: '<path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/>',
     champ: '<circle cx="12" cy="9" r="5.5"/><path d="M8.6 13.4L7 21l5-2.6 5 2.6-1.6-7.6"/>',
   };
@@ -482,7 +499,8 @@ a.v.call svg.i { width: 14px; height: 14px; }
     owner: store.get("owner") || "mine", todayKind: store.get("todayKind") || "all", q: "", expanded: new Set(),
     af: Object.assign({ close: "any", cfrom: "", cto: "", stage: "all", added: "any" }, storeJ.get("af") || {}),
     route: { view: "today", id: null },
-    zi: { state: "checking", msg: "" },
+    zi: { state: "checking", msg: "" }, gm: { state: "checking", msg: "" },
+    templates: new Map(), sigs: new Map(), compose: null, tplEdit: null,
     sync: { running: false, msg: "", err: "" },
     gong: { running: false, err: "" },
     editTask: null, editContact: null, addContact: false, addAccount: false, confirmDelete: false,
@@ -718,7 +736,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
   }
 
   // ---------- routing ----------
-  const VIEWS = ["today", "accounts", "account", "prospect"];
+  const VIEWS = ["today", "accounts", "account", "prospect", "email"];
   const kindOf = (a) => (a && a.band === "deal" ? "deal" : "outbound");
   const listHash = (a) => (kindOf(a) === "deal" ? "#deals" : "#targets");
   function parseHash() {
@@ -726,6 +744,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
     if (h === "deals" || h === "accounts") return { view: "deals", id: null };
     if (h === "targets") return { view: "targets", id: null };
     if (h === "prospect") return { view: "prospect", id: null };
+    if (h === "email") return { view: "email", id: null };
     const m = h.match(/^account-([A-Za-z0-9-]+)$/); if (m) return { view: "account", id: m[1] };
     return { view: "today", id: null };
   }
@@ -947,7 +966,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
       : `<div class="empty"><span>Nothing matches these filters.</span></div>`;
     $("acc-sync").innerHTML = S.seg === "deal" ? `${syncLine}
           <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>`
-      : `<a class="btn sec" href="#prospect">${ic("search")} Find targets</a>
+      : `<a class="btn ghost" href="#email">${ic("gear")} Email settings</a><a class="btn sec" href="#prospect">${ic("search")} Find targets</a>
           <button class="btn" type="button" data-act="add-account" ${!canWrite() ? "disabled" : ""}>${ic("plus")} Add by hand</button>`;
     $("add-account-panel").hidden = !(S.addAccount && S.seg === "outbound");
     renderAccFilters();
@@ -974,7 +993,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
           ${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : `<a class="chip" href="${esc(liSearch)}" target="_blank" rel="noopener">Find on LinkedIn ↗</a>`}${confFlags(c.zi_accuracy, c.zi_updated)}</div>
         ${c.email || c.phone || c.mobile ? `<div class="lines" style="gap:4px">${c.email ? `<div class="cline"><span class="k">Email</span><span class="v">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : ""}${phone(c.phone, c.phone_dnc, "Direct")}${phone(c.mobile, c.mobile_dnc, "Mobile")}</div>` : ""}
         <div class="foot"><label class="sr" for="xs-${esc(accId)}-${esc(c.id)}">Status</label><select class="sel small" id="xs-${esc(accId)}-${esc(c.id)}" data-act-change="contact-status" data-acc="${esc(accId)}" data-id="${esc(c.id)}" style="padding:3px 8px" ${ro}>${CONTACT_STATUS.map((s) => `<option ${s === st ? "selected" : ""}>${s}</option>`).join("")}</select>
-          <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-acc="${esc(accId)}" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${ro}> LinkedIn sent</label></div></div>`;
+          <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-acc="${esc(accId)}" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${ro}> LinkedIn sent</label>${canWrite() ? emailBtn(accId, c) : ""}${lastEmailed(c)}</div></div>`;
     }).join("");
     return `${cs.length ? `<div class="xcontacts">${cards}</div>` : `<div class="small muted" style="padding-top:6px">No contacts yet.</div>`}
       <div class="xmore"><a href="#account-${esc(accId)}">Open account: tasks, notes${a.band === "deal" ? ", Gong" : ""} →</a>${a.band !== "deal" && cs.length ? '<span>Sourced contacts: call only. Don\'t text until they opt in.</span>' : ""}</div>`;
@@ -1133,7 +1152,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
       ${c.email || c.phone || c.mobile ? `<div class="lines" style="gap:4px">${c.email ? `<div class="cline"><span class="k">Email</span><span class="v">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : ""}${phone(c.phone, c.phone_dnc, "Direct")}${phone(c.mobile, c.mobile_dnc, "Mobile")}</div>` : ""}
       ${sourced ? '<div class="calls-note">Sourced contact: call only. Don\'t text until they opt in.</div>' : ""}
       <div class="foot"><label class="sr" for="cs-${esc(c.id)}">Status</label><select class="sel small" id="cs-${esc(c.id)}" data-act-change="contact-status" data-id="${esc(c.id)}" style="padding:3px 8px" ${canWrite() ? "" : "disabled"}>${CONTACT_STATUS.map((s) => `<option ${s === st ? "selected" : ""}>${s}</option>`).join("")}</select>
-        <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${canWrite() ? "" : "disabled"}> LinkedIn sent</label>
+        <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${canWrite() ? "" : "disabled"}> LinkedIn sent</label>${canWrite() ? emailBtn(S.route.id, c) : ""}${lastEmailed(c)}
         ${c.is_primary ? '<span class="pill deal">Primary</span>' : ""}</div></div>`;
     };
     const sorted = cs.slice().sort((x, y) => (y.id === a.champion_id ? 1 : 0) - (x.id === a.champion_id ? 1 : 0) || (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
@@ -1633,6 +1652,199 @@ a.v.call svg.i { width: 14px; height: 14px; }
     $("jobs").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  // ---------- Email (Gmail connector) ----------
+  const LOGO_EMAIL = "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";
+  const SIG_DEFAULTS = { mode: "custom", name: "", title: "", phone: "", email: "", company: "TextUs", website: "textus.com", booking: "", address: "", logo: true };
+  const MERGE_HELP = "{first_name} {last_name} {full_name} {title} {company} {my_name} {my_first_name}";
+  function mySig() {
+    const saved = (S.myOwner && S.sigs.get(S.myOwner)) || {};
+    const d = { ...SIG_DEFAULTS };
+    if (S.myOwner === "Jeremy") Object.assign(d, { name: "Jeremy O'Hara", title: "Director of Sales", email: "jeremy.ohara@textus.com" });
+    if (S.myOwner === "David") Object.assign(d, { name: "David Walker", email: "david.walker@textus.com" });
+    return { ...d, ...saved };
+  }
+  const urlOf = (u) => (u ? (/^https?:\/\//i.test(u) ? u : "https://" + u) : "");
+  function sigHtml(sg, forEmail) {
+    const lines = [];
+    const st = "font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;color:#17191B;";
+    lines.push(`<div style="font-weight:bold;font-size:14px;color:#1D4277;">${esc(sg.name || "Your name")}</div>`);
+    if (sg.title || sg.company) lines.push(`<div style="color:#5A6880;">${esc([sg.title, sg.company].filter(Boolean).join(" · "))}</div>`);
+    const contact = [sg.phone ? esc(sg.phone) : "", sg.email ? `<a href="mailto:${esc(sg.email)}" style="color:#0A78C2;text-decoration:none;">${esc(sg.email)}</a>` : "", sg.website ? `<a href="${esc(urlOf(sg.website))}" style="color:#0A78C2;text-decoration:none;">${esc(sg.website.replace(/^https?:\/\//, ""))}</a>` : ""].filter(Boolean);
+    if (contact.length) lines.push(`<div>${contact.join(' <span style="color:#B8C2D1;">|</span> ')}</div>`);
+    if (sg.booking) lines.push(`<div style="margin-top:4px;"><a href="${esc(urlOf(sg.booking))}" style="color:#069FFF;font-weight:bold;text-decoration:none;">Book time with me →</a></div>`);
+    if (sg.address) lines.push(`<div style="color:#8A96A8;font-size:11px;margin-top:4px;">${esc(sg.address)}</div>`);
+    const logo = sg.logo ? `<tr><td style="padding:0 0 8px 0;"><img src="${forEmail ? "cid:att0" : "data:image/png;base64," + LOGO_EMAIL}" width="160" height="30" alt="TextUs" style="display:block;border:0;width:160px;height:30px;"></td></tr>` : "";
+    return `<table cellpadding="0" cellspacing="0" border="0" style="${st}margin-top:18px;border-collapse:collapse;"><tr><td style="border-left:3px solid #069FFF;padding:2px 0 2px 12px;"><table cellpadding="0" cellspacing="0" border="0" style="${st}border-collapse:collapse;">${logo}<tr><td style="${st}">${lines.join("")}</td></tr></table></td></tr></table>`;
+  }
+  function sigText(sg) {
+    return ["--", sg.name, [sg.title, sg.company].filter(Boolean).join(" · "), [sg.phone, sg.email, sg.website].filter(Boolean).join(" | "), sg.booking ? `Book time with me: ${urlOf(sg.booking)}` : "", sg.address].filter(Boolean).join("\n");
+  }
+  function mergeFields(text, a, c) {
+    const parts = String(c.name || "").trim().split(/\s+/);
+    const sg = mySig();
+    const map = { first_name: parts[0] || "", last_name: parts.slice(1).join(" "), full_name: c.name || "", title: c.title || "", company: a.company_name || "", my_name: sg.name || S.myOwner || "", my_first_name: (sg.name || S.myOwner || "").split(/\s+/)[0] || "" };
+    return String(text || "").replace(/\{(\w+)\}/g, (m, k) => (k in map ? map[k] : m));
+  }
+  const textToHtml = (t) => `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#17191B;">${String(t).split(/\n{2,}/).map((p) => `<p style="margin:0 0 12px 0;">${esc(p).replace(/\n/g, "<br>")}</p>`).join("")}</div>`;
+  const canEmail = (c) => c && c.email && !["Opted out", "Bad data"].includes(cStatus(c.status));
+  const emailBtn = (accId, c) => (canEmail(c) ? `<button class="btn ghost sm-btn" type="button" data-act="email" data-acc="${esc(accId)}" data-id="${esc(c.id)}" title="Email ${esc(c.name)}">${ic("mail")} Email</button>` : "");
+  const lastEmailed = (c) => (c.last_emailed_at ? `<span class="small muted" title="Last email sent from the cockpit">Emailed ${esc(fmtDate(localDay(c.last_emailed_at)))}</span>` : "");
+  async function checkGmail() {
+    if (!S.mcp) { S.gm = { state: "bad", msg: "Connectors aren't available in this view. Open the cockpit in claude.ai." }; return; }
+    try {
+      const res = await S.mcp.listTools(GMAIL);
+      const s = ((res && res.servers) || []).find((x) => x.server === GMAIL);
+      if (!s) S.gm = { state: "bad", msg: "Gmail isn't connected to your claude.ai account. Add it in Settings → Connectors, then reload." };
+      else if (s.authStatus === "needs_reauth") S.gm = { state: "bad", msg: "Gmail needs to be reconnected in claude.ai Settings → Connectors. Then reload." };
+      else if (!s.tools || !s.tools.length) S.gm = { state: "bad", msg: "Gmail isn't ready for this page. If you have more than one Gmail connector, pick one when claude.ai asks." };
+      else S.gm = { state: "ok", msg: "" };
+    } catch (e) { S.gm = { state: "bad", msg: errText(e, GMAIL) }; }
+  }
+
+  function openCompose(accId, cid) {
+    const a = S.accounts.get(accId); const c = contactOf(a, cid); if (!a || !c) return;
+    if (!S.myOwner) { toast("Pick who you are in the top bar first, so the email uses your signature."); return; }
+    const tpls = [...S.templates.entries()].sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
+    const stored = store.get("lastTpl");
+    const first = tpls.find(([id]) => id === stored) || tpls[0];
+    S.compose = { accId, cid, tplId: first ? first[0] : "", subject: first ? mergeFields(first[1].subject, a, c) : "", body: first ? mergeFields(first[1].body, a, c) : "", follow: true, followDays: 3, confirming: false, busy: "", err: "", done: null };
+    renderCompose(true);
+  }
+  function closeCompose() { S.compose = null; $("compose").hidden = true; $("compose").innerHTML = ""; document.body.style.overflow = ""; }
+  function renderCompose(full) {
+    const cp = S.compose; const el = $("compose");
+    if (!cp) { el.hidden = true; return; }
+    const a = S.accounts.get(cp.accId) || {}; const c = contactOf(a, cp.cid) || {};
+    const sg = mySig(); const gmailOk = S.gm.state === "ok";
+    if (full) {
+      const tpls = [...S.templates.entries()].sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
+      el.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cp-h">
+        <div class="sheet-head"><div><div class="eyebrow">${a.band === "deal" ? '<span class="kind deal">Deal</span>' : '<span class="kind tgt">Target</span>'} ${esc(a.company_name || "")}</div><h2 id="cp-h" style="font-size:20px">Email ${esc(c.name || "")}</h2></div>
+          <button class="icon-btn" type="button" data-act="compose-close" aria-label="Close">${ic("x")}</button></div>
+        <div class="sheet-body">
+          <div class="cp-to"><span class="k">To</span> <b>${esc(c.name)}</b> <span class="muted">&lt;${esc(c.email)}&gt;</span>${c.title ? ` <span class="small muted">· ${esc(c.title)}</span>` : ""}</div>
+          <label class="lbl" for="cp-tpl">Template<select class="sel" id="cp-tpl"><option value="">Blank email</option>${tpls.map(([id, t]) => `<option value="${esc(id)}" ${id === cp.tplId ? "selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>
+          <label class="lbl" for="cp-subject">Subject<input class="field" id="cp-subject" value="${esc(cp.subject)}" maxlength="200"></label>
+          <label class="lbl" for="cp-body">Message<textarea class="field" id="cp-body" rows="11">${esc(cp.body)}</textarea></label>
+          <div class="cp-sig"><div class="eyebrow">Signature · ${sg.mode === "gmail" ? "your Gmail signature" : "cockpit signature"}</div>
+            ${sg.mode === "gmail" ? `<div class="small muted">Gmail adds the signature you set up in Gmail when this is ${"sent or drafted"}.</div>` : `<div class="sig-preview">${sigHtml(sg, false)}</div>`}
+            <a class="small" href="#email" data-act="compose-close">Edit signature and templates</a></div>
+          <label class="switch small"><input type="checkbox" id="cp-follow" ${cp.follow ? "checked" : ""}> After sending, add a follow-up task in <input class="field" id="cp-days" type="number" min="1" max="30" value="${cp.followDays}" style="width:64px;padding:3px 6px"> days</label>
+          <div id="cp-status"></div>
+          <div class="row-form" id="cp-actions"></div>
+        </div></div>`;
+      el.hidden = false; document.body.style.overflow = "hidden";
+      setTimeout(() => { const b = $("cp-body"); if (b) b.focus(); }, 0);
+    }
+    const st = $("cp-status");
+    st.innerHTML = cp.err ? `<div class="err">${esc(cp.err)}</div>`
+      : cp.done ? `<div class="banner info">${esc(cp.done.msg)} ${cp.done.url ? `<a href="${esc(cp.done.url)}" target="_blank" rel="noopener">Open in Gmail ↗</a>` : ""}</div>`
+      : !gmailOk ? `<div class="banner">${esc(S.gm.msg || "Checking Gmail…")}</div>` : "";
+    const busy = !!cp.busy;
+    $("cp-actions").innerHTML = cp.done
+      ? `<button class="btn" type="button" data-act="compose-close">Done</button>`
+      : cp.confirming
+      ? `<button class="btn" type="button" data-act="compose-send-yes" ${busy ? "disabled" : ""}>${cp.busy === "send" ? '<span class="spinner"></span> Sending…' : `${ic("mail")} Send to ${esc(c.email)}`}</button><button class="btn ghost" type="button" data-act="compose-send-no" ${busy ? "disabled" : ""}>Back</button>`
+      : `<button class="btn" type="button" data-act="compose-send" ${gmailOk && !busy ? "" : "disabled"}>${ic("mail")} Send now</button>
+         <button class="btn sec" type="button" data-act="compose-draft" ${gmailOk && !busy ? "" : "disabled"}>${cp.busy === "draft" ? '<span class="spinner"></span> Saving…' : "Save as Gmail draft"}</button>
+         <button class="btn ghost" type="button" data-act="compose-close">Cancel</button>`;
+  }
+  function readCompose() {
+    const cp = S.compose; if (!cp || cp.done) return;
+    if ($("cp-subject")) cp.subject = $("cp-subject").value;
+    if ($("cp-body")) cp.body = $("cp-body").value;
+    if ($("cp-follow")) cp.follow = $("cp-follow").checked;
+    if ($("cp-days")) cp.followDays = Math.max(1, Math.min(30, Number($("cp-days").value) || 3));
+  }
+  async function deliver(mode) {
+    readCompose();
+    const cp = S.compose; if (!cp || cp.busy) return;
+    const a = S.accounts.get(cp.accId); const c = contactOf(a, cp.cid);
+    if (!a || !c) { cp.err = "That contact is no longer on the account."; renderCompose(); return; }
+    if (!cp.subject.trim() || !cp.body.trim()) { cp.err = "Add a subject and a message first."; cp.confirming = false; renderCompose(); return; }
+    const left = (cp.subject + cp.body).match(/\{\w+\}/g);
+    if (left) { cp.err = `Fill in or remove ${[...new Set(left)].join(", ")} before sending.`; cp.confirming = false; renderCompose(); return; }
+    cp.busy = mode; cp.err = ""; renderCompose();
+    const sg = mySig(); const gmailSig = sg.mode === "gmail";
+    const input = { to: [c.email], subject: cp.subject.trim(), body: cp.body + (gmailSig ? "" : "\n\n" + sigText(sg)), htmlBody: textToHtml(cp.body) + (gmailSig ? "" : sigHtml(sg, true)), includeSignature: gmailSig };
+    if (!gmailSig && sg.logo) input.attachments = [{ content: LOGO_EMAIL, filename: "textus.png", mimeType: "image/png", inline: true }];
+    let res;
+    try { res = await spendTool(GMAIL, mode === "send" ? "send_message" : "create_draft", input); }
+    catch (e) { cp.busy = ""; cp.confirming = false; cp.err = errText(e, GMAIL) + (mode === "send" ? " Check your Gmail Sent folder before trying again." : ""); renderCompose(); return; }
+    const r = res && (res.message || res.draft || res);
+    const url = (r && (r.viewUrl || (r.message && r.message.viewUrl))) || "";
+    const ts = nowIso(); const subj = cp.subject.trim();
+    const noteId = rid("n");
+    noteRef(noteId).set({ account_id: cp.accId, author: S.myOwner || "Someone", author_id: S.meId || null, body: `${mode === "send" ? "Emailed" : "Drafted an email to"} ${c.name}: “${subj}”`, created_at: ts, kind: "email" }).catch(() => {});
+    if (mode === "send") {
+      const cs = (a.contacts || []).map((x) => x.id === c.id ? { ...x, last_emailed_at: ts, email_count: (x.email_count || 0) + 1, status: cStatus(x.status) === "Not started" ? "Contacted" : x.status } : x);
+      const patch = { contacts: cs, updated_at: ts };
+      if (a.band !== "deal" && a.stage === "Target") patch.stage = "Contacted";
+      acctRef(cp.accId).update(patch).catch(() => {});
+      if (cp.follow) await addTask(cp.accId, `Follow up with ${c.name} on “${subj.slice(0, 80)}”`, addDays(today(), cp.followDays), c.id, "manual");
+    }
+    if (cp.tplId) store.set("lastTpl", cp.tplId);
+    cp.busy = ""; cp.confirming = false;
+    cp.done = { msg: mode === "send" ? `Sent to ${c.email}. Logged on the account${cp.follow ? `, with a follow-up due ${fmtDate(addDays(today(), cp.followDays))}` : ""}.` : `Saved to your Gmail drafts. It's logged on the account; send it from Gmail when ready.`, url };
+    renderCompose();
+  }
+
+  // ---------- Email settings view ----------
+  function buildEmailShell() {
+    $("view-email").innerHTML = `<div style="display:grid;gap:18px">
+      <div class="page-head"><div><div class="eyebrow">Outreach</div><h1>Email settings</h1><div class="sub">Your signature and the shared templates used when emailing contacts.</div></div><span class="conn-pill" id="gm-conn"></span></div>
+      <div class="detail-grid">
+        <div class="panel"><div class="panel-head"><h2 id="sig-h">Your signature</h2></div><div class="panel-body" id="sig-body"></div></div>
+        <div class="panel"><div class="panel-head"><h2>Templates</h2><button class="btn ghost" type="button" data-act="tpl-new">${ic("plus")} New</button></div><div class="panel-body" id="tpl-body"></div></div>
+      </div></div>`;
+    S._sigFor = null;
+  }
+  function renderEmailSettings() {
+    if (S.route.view !== "email") return;
+    if (!$("sig-body")) buildEmailShell();
+    const gc = $("gm-conn"); gc.className = "conn-pill " + (S.gm.state === "ok" ? "ok" : S.gm.state === "bad" ? "bad" : ""); gc.textContent = S.gm.state === "ok" ? "Gmail connected" : S.gm.state === "bad" ? "Gmail unavailable" : "Checking Gmail…";
+    const sb = $("sig-body");
+    if (!S.myOwner) sb.innerHTML = `<div class="small muted">Pick who you are in the top bar to set up your signature.</div>`;
+    else if (S._sigFor !== S.myOwner || !sb.querySelector("form")) {
+      S._sigFor = S.myOwner; const sg = mySig();
+      $("sig-h").textContent = `${S.myOwner}'s signature`;
+      const f = (id, label, v, ph, type) => `<label class="lbl" for="sg-${id}">${label}<input class="field" id="sg-${id}" name="${id}" type="${type || "text"}" value="${esc(v)}" placeholder="${esc(ph || "")}"></label>`;
+      sb.innerHTML = `<form id="sig-form" style="display:grid;gap:12px">
+        <div class="row-form" role="radiogroup" aria-label="Signature source">
+          <label class="switch"><input type="radio" name="mode" value="custom" ${sg.mode !== "gmail" ? "checked" : ""}> Cockpit signature (below)</label>
+          <label class="switch"><input type="radio" name="mode" value="gmail" ${sg.mode === "gmail" ? "checked" : ""}> My Gmail signature</label></div>
+        <div class="form-grid">${f("name", "Name", sg.name, "Jeremy O'Hara")}${f("title", "Title", sg.title, "Director of Sales")}${f("company", "Company", sg.company, "TextUs")}${f("phone", "Phone", sg.phone, "(555) 010-2000")}${f("email", "Email", sg.email, "you@textus.com", "email")}${f("website", "Website", sg.website, "textus.com")}</div>
+        ${f("booking", "Booking link (optional)", sg.booking, "https://meetings.hubspot.com/you")}
+        ${f("address", "Business mailing address", sg.address, "Street, City, State ZIP")}
+        <div class="small muted" style="margin-top:-6px">US anti-spam law expects a physical address on outreach email.</div>
+        <label class="switch"><input type="checkbox" name="logo" ${sg.logo ? "checked" : ""}> Include the TextUs logo</label>
+        <div><div class="eyebrow" style="margin-bottom:6px">Preview</div><div class="sig-preview" id="sig-preview"></div></div>
+        <div class="row-form"><button class="btn" type="submit" ${canWrite() ? "" : "disabled"}>Save signature</button><span class="small muted" id="sig-saved"></span></div>
+      </form>`;
+      renderSigPreview();
+    }
+    const tb = $("tpl-body");
+    if (S.tplEdit && tb.contains(document.activeElement)) return;
+    const tpls = [...S.templates.entries()].sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
+    const form = (id, t) => `<form class="contact" data-form="tpl" data-id="${esc(id || "")}" style="gap:8px">
+        <label class="lbl">Name<input class="field" name="name" value="${esc(t.name || "")}" required placeholder="First touch: HR"></label>
+        <label class="lbl">Subject<input class="field" name="subject" value="${esc(t.subject || "")}" required></label>
+        <label class="lbl">Message<textarea class="field" name="body" rows="9" required>${esc(t.body || "")}</textarea></label>
+        <div class="small muted">Merge fields: ${esc(MERGE_HELP)}</div>
+        <div class="row-form"><button class="btn" type="submit">Save template</button><button class="btn ghost" type="button" data-act="tpl-cancel">Cancel</button>
+          ${id ? `<button class="btn ghost" type="button" data-act="tpl-delete" data-id="${esc(id)}" style="margin-left:auto">${ic("trash")} Delete</button>` : ""}</div></form>`;
+    tb.innerHTML = (S.tplEdit === "new" ? form("", {}) : "") + (tpls.length ? tpls.map(([id, t]) => S.tplEdit === id ? form(id, t) : `<div class="contact"><div class="contact-top"><div class="nm"><b>${esc(t.name)}</b><span>${esc(t.subject)}</span></div>${canWrite() ? `<button class="icon-btn" type="button" data-act="tpl-edit" data-id="${esc(id)}" aria-label="Edit ${esc(t.name)}">${ic("edit")}</button>` : ""}</div><div class="small muted" style="white-space:pre-wrap;max-height:4.6em;overflow:hidden">${esc(t.body)}</div></div>`).join("") : (S.tplEdit === "new" ? "" : `<div class="small muted">No templates yet. Click New to write one.</div>`));
+  }
+  function sigFromForm() {
+    const f = $("sig-form"); if (!f) return mySig();
+    const g = (n) => fv(f, n).trim();
+    return { mode: (f.querySelector('input[name="mode"]:checked') || {}).value || "custom", name: g("name"), title: g("title"), company: g("company"), phone: g("phone"), email: g("email"), website: g("website"), booking: g("booking"), address: g("address"), logo: !!f.querySelector('input[name="logo"]').checked };
+  }
+  function renderSigPreview() {
+    const el = $("sig-preview"); if (!el) return; const sg = sigFromForm();
+    el.innerHTML = sg.mode === "gmail" ? `<div class="small muted">Gmail adds the signature you've set up in Gmail settings.</div>` : `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#17191B">Hi Samantha,<br><br>…</div>${sigHtml(sg, false)}`;
+  }
+
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
     const tk = e.target.closest("[data-tkind]"); if (tk) { S.todayKind = tk.dataset.tkind; store.set("todayKind", S.todayKind); renderToday(); return; }
@@ -1664,6 +1876,16 @@ a.v.call svg.i { width: 14px; height: 14px; }
       case "delete-contact": { const a = S.accounts.get(accId); if (!a) break; const cs = (a.contacts || []).filter((c) => c.id !== id); if (cs.length && !cs.some((c) => c.is_primary)) cs[0] = { ...cs[0], is_primary: true }; S.editContact = null; await w(() => acctRef(accId).update({ contacts: cs, ...(a.champion_id === id ? { champion_id: null } : {}), updated_at: nowIso() })); break; }
       case "champion": { const aid = b.dataset.acc || accId; if (!S.accounts.get(aid)) break; const ok = await w(() => acctRef(aid).update({ champion_id: id, updated_at: nowIso() })); if (ok) toast("Champion set. Tasks without a contact now go to them."); break; }
       case "primary": { const a = S.accounts.get(accId); if (!a) break; await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => ({ ...c, is_primary: c.id === id })), updated_at: nowIso() })); break; }
+      case "email": openCompose(b.dataset.acc || accId, id); break;
+      case "compose-close": closeCompose(); break;
+      case "compose-send": readCompose(); if (S.compose) { S.compose.confirming = true; S.compose.err = ""; renderCompose(); } break;
+      case "compose-send-no": if (S.compose) { S.compose.confirming = false; renderCompose(); } break;
+      case "compose-send-yes": deliver("send"); break;
+      case "compose-draft": deliver("draft"); break;
+      case "tpl-new": S.tplEdit = "new"; renderEmailSettings(); break;
+      case "tpl-edit": S.tplEdit = id; renderEmailSettings(); break;
+      case "tpl-cancel": S.tplEdit = null; renderEmailSettings(); break;
+      case "tpl-delete": { const t = S.templates.get(id); const ok = await w(() => S.db.collection("templates").doc(id).delete()); if (ok) { S.tplEdit = null; toast("Template deleted", () => w(() => S.db.collection("templates").doc(id).set(t))); } break; }
       case "zi-more": {
         const a = S.accounts.get(accId); if (!a) break;
         if (!ziReady()) { toast(S.zi.state === "bad" ? S.zi.msg : "ZoomInfo isn't ready yet."); break; }
@@ -1699,15 +1921,25 @@ a.v.call svg.i { width: 14px; height: 14px; }
       case "od-clear": S.odSel.clear(); renderOndeck(); break;
     }
   });
+  $("compose").addEventListener("mousedown", (e) => { if (e.target.id === "compose" && S.compose && !S.compose.busy) closeCompose(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.compose && !S.compose.busy) closeCompose(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches && e.target.matches("tr[data-href]")) location.hash = e.target.dataset.href; });
   document.addEventListener("input", (e) => {
     if (e.target.id === "acct-q") { S.q = e.target.value; renderAccounts(); }
+    if (e.target.closest && e.target.closest("#sig-form")) renderSigPreview();
     if (e.target.id === "od-q") { S.odF.q = e.target.value; storeJ.set("odF", S.odF); renderOndeck(); }
   });
   document.addEventListener("change", async (e) => {
     const el = e.target;
     const afMap = { "af-close": "close", "af-from": "cfrom", "af-to": "cto", "af-stage": "stage", "af-added": "added" };
     if (afMap[el.id]) { S.af[afMap[el.id]] = el.value; storeJ.set("af", S.af); if (el.id !== "af-from" && el.id !== "af-to") S._fSeg = null; renderAccounts(); return; }
+    if (el.closest && el.closest("#sig-form")) { renderSigPreview(); return; }
+    if (el.id === "cp-tpl" && S.compose) {
+      const cp = S.compose; const a = S.accounts.get(cp.accId); const c = contactOf(a, cp.cid); const t = S.templates.get(el.value);
+      cp.tplId = el.value; cp.subject = t ? mergeFields(t.subject, a, c) : ""; cp.body = t ? mergeFields(t.body, a, c) : ""; cp.err = "";
+      $("cp-subject").value = cp.subject; $("cp-body").value = cp.body; renderCompose(); return;
+    }
+    if (el.id === "cp-follow" || el.id === "cp-days") { readCompose(); return; }
     const odMap = { "od-status": "status", "od-sub": "sub", "od-list": "list" };
     if (odMap[el.id]) { S.odF[odMap[el.id]] = el.value; storeJ.set("odF", S.odF); renderOndeck(); return; }
     if (el.id === "od-all") { const byName = accountsByName(); for (const { id, st } of odVisible(byName)) if (st.key !== "added") el.checked ? S.odSel.add(id) : S.odSel.delete(id); renderOndeck(); return; }
@@ -1739,6 +1971,22 @@ a.v.call svg.i { width: 14px; height: 14px; }
   document.addEventListener("submit", async (e) => {
     const f = e.target; e.preventDefault();
     const accId = S.route.id;
+    if (f.id === "sig-form") {
+      if (!S.myOwner) return;
+      const sg = sigFromForm();
+      const ok = await w(() => S.db.collection("signatures").doc(S.myOwner).set({ ...sg, updated_at: nowIso(), updated_by: S.meId || null }));
+      if (ok) { const el = $("sig-saved"); if (el) el.textContent = "Saved."; toast("Signature saved"); }
+      return;
+    }
+    if (f.dataset.form === "tpl") {
+      const data = { name: fv(f, "name").trim(), subject: fv(f, "subject").trim(), body: fv(f, "body"), updated_at: nowIso(), updated_by: S.myOwner || "" };
+      if (!data.name || !data.subject || !data.body.trim()) return;
+      const id = f.dataset.id || rid("tpl");
+      if (!f.dataset.id) { data.created_at = nowIso(); data.created_by = S.myOwner || ""; }
+      const ok = await w(() => f.dataset.id ? S.db.collection("templates").doc(id).update(data) : S.db.collection("templates").doc(id).set(data));
+      if (ok) { S.tplEdit = null; renderEmailSettings(); toast("Template saved"); }
+      return;
+    }
     if (f.id === "intake") {
       if (!ziReady()) return;
       const owner = $("in-owner").value; store.set("prospectOwner", owner);
@@ -1780,7 +2028,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
     }
   });
 
-  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); renderProspect(); }
+  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); renderProspect(); renderEmailSettings(); }
 
   // ---------- boot ----------
   S.route = parseHash(); showView(S.route);
@@ -1805,12 +2053,15 @@ a.v.call svg.i { width: 14px; height: 14px; }
       const settle = () => { if (S.loaded.a && S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } };
       db.collection("accounts").limit(1000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; settle(); renderAll(); }, onErr);
       db.collection("tasks").limit(1000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; settle(); renderAll(); }, onErr);
+      db.collection("templates").limit(200).onSnapshot((snap) => { S.templates = new Map(snap.docs.map((d) => [d.id, d.data()])); renderEmailSettings(); }, () => {});
+      db.collection("signatures").limit(50).onSnapshot((snap) => { S.sigs = new Map(snap.docs.map((d) => [d.id, d.data()])); S._sigFor = null; renderEmailSettings(); }, () => {});
       db.collection("ondeck").limit(1000).onSnapshot((snap) => { S.ondeck = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.o = true; renderProspect(); }, () => { S.loaded.o = true; renderProspect(); });
       db.doc("meta/settings").onSnapshot((snap) => { S.settings = (snap.exists && snap.data()) || {}; renderAccounts(); }, () => {});
       if (S.route.view === "account") { S.notesFor = null; subscribeNotes(S.route.id); }
     }
     renderAll();
-    await checkZoomInfo();
+    await Promise.all([checkZoomInfo(), checkGmail()]);
+    renderEmailSettings(); if (S.compose) renderCompose();
     renderProspect(); renderJobs();
   })();
 })();
