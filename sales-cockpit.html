@@ -343,6 +343,9 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
 .today-tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; }
 @media (prefers-reduced-motion: reduce) { .book .exp svg { transition: none; } }
 @media (max-width: 640px) { .book tr.xrow > td { padding-left: 14px; } }
+a.v.call { color: var(--link); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; user-select: text; font-weight: 500; }
+a.v.call:hover { text-decoration: underline; }
+a.v.call svg.i { width: 14px; height: 14px; }
 </style>
 
 <header class="bar">
@@ -425,6 +428,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
     chev: '<path d="M9 6l6 6-6 6"/>',
+    phone: '<path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/>',
     champ: '<circle cx="12" cy="9" r="5.5"/><path d="M8.6 13.4L7 21l5-2.6 5 2.6-1.6-7.6"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
@@ -456,6 +460,17 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
   const initial = (o) => (o || "?").slice(0, 1).toUpperCase();
   const fv = (f, n) => { const el = f.elements.namedItem(n); return el ? el.value : ""; };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Click-to-call through Zoom Phone. Extensions are dropped; do-not-call numbers stay plain text.
+  function zoomHref(v) {
+    const main = String(v || "").split(/\s*(?:ext\.?|x|#)\s*\d+\s*$/i)[0];
+    let d = main.replace(/[^\d+]/g, "");
+    if (!d.startsWith("+")) { d = d.replace(/\D/g, ""); if (d.length === 10) d = "+1" + d; else if (d.length === 11 && d[0] === "1") d = "+" + d; else if (d) d = "+" + d; }
+    return d.replace(/\D/g, "").length >= 7 ? "zoomphonecall://" + d : "";
+  }
+  function callLink(v, dnc) {
+    const h = dnc ? "" : zoomHref(v);
+    return h ? `<a class="v call" href="${h}" title="Call with Zoom Phone">${ic("phone")}${esc(v)}</a>` : `<span class="v">${esc(v)}</span>`;
+  }
   const cStatus = (s) => STATUS_ALIAS[s] || s || "Not started";
 
   // ---------- state ----------
@@ -949,7 +964,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
   function contactsStrip(accId, a) {
     const cs = (Array.isArray(a.contacts) ? a.contacts : []).slice().sort((x, y) => (y.id === a.champion_id ? 1 : 0) - (x.id === a.champion_id ? 1 : 0) || (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
     const ro = canWrite() ? "" : "disabled";
-    const phone = (v, dnc, k) => (v ? `<div class="cline"><span class="k">${k}</span><span class="v">${esc(v)}</span>${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
+    const phone = (v, dnc, k) => (v ? `<div class="cline"><span class="k">${k}</span>${callLink(v, dnc)}${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
     const cards = cs.map((c) => {
       const st = cStatus(c.status);
       const liSearch = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent([c.name, a.company_name].filter(Boolean).join(" "))}`;
@@ -1100,7 +1115,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       <input class="field" name="linkedin" placeholder="LinkedIn URL" value="${esc(c ? c.linkedin_url : "")}" aria-label="LinkedIn URL">
       <div class="row-form"><button class="btn" type="submit">${c ? "Save" : "Add contact"}</button><button class="btn ghost" type="button" data-act="cancel-contact">Cancel</button>
       ${c ? `<button class="btn ghost" type="button" data-act="delete-contact" data-id="${esc(c.id)}" style="margin-left:auto">${ic("trash")} Remove</button>` : ""}</div></form>`;
-    const phone = (v, dnc, k) => (v ? `<div class="cline"><span class="k">${k}</span><span class="v">${esc(v)}</span>${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
+    const phone = (v, dnc, k) => (v ? `<div class="cline"><span class="k">${k}</span>${callLink(v, dnc)}${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
     const card = (c) => {
       if (S.editContact === c.id) return form(c);
       const st = cStatus(c.status);
