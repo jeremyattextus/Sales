@@ -74,17 +74,18 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 /* App bar */
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bar); color: var(--bar-ink); }
 .bar::after { content: ""; display: block; height: 3px; background: var(--grad); }
-.bar-in { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; }
+.bar-in { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
 .brand img { height: 30px; width: auto; display: block; }
 .brand span { font-family: var(--font-head); font-weight: 300; font-size: 15px; color: var(--bar-muted); border-left: 1px solid rgba(255,255,255,.25); padding-left: 12px; white-space: nowrap; }
 .nav { display: flex; gap: 4px; flex-wrap: wrap; }
-.nav a { color: var(--bar-muted); text-decoration: none; font-family: var(--font-head); font-size: 14px; padding: 7px 12px; border-radius: 8px; display: inline-flex; gap: 7px; align-items: center; }
+.nav a { color: var(--bar-muted); text-decoration: none; font-family: var(--font-head); font-size: 14px; padding: 7px 10px; border-radius: 8px; display: inline-flex; gap: 7px; align-items: center; }
 .nav a:hover { color: var(--bar-ink); }
 .nav a[aria-current="page"] { color: var(--bar-ink); background: rgba(255,255,255,.1); }
 .nav .count { background: var(--blue); color: #0C1524; border-radius: 999px; font-size: 11px; padding: 0 7px; line-height: 18px; font-weight: 600; }
 .nav .count.over { background: #FF8A93; }
-.bar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 1240px) and (min-width: 641px) { .brand span { display: none; } }
 .seg { display: inline-flex; background: var(--bar-seg); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { border: 0; background: transparent; color: var(--bar-muted); padding: 5px 13px; border-radius: 999px; font-family: var(--font-head); font-size: 13px; cursor: pointer; white-space: nowrap; }
 .seg button[aria-pressed="true"] { background: var(--bar-seg-on); color: var(--bar-seg-on-ink); }
@@ -388,6 +389,35 @@ a.v.call svg.i { width: 14px; height: 14px; }
 .touch.stale { color: var(--bad); }
 .touch.none { color: var(--muted); }
 .bad-num { text-decoration: line-through; color: var(--muted); }
+
+/* Theme switch */
+.theme-btn { display: inline-grid; place-items: center; border: 0; background: var(--bar-seg); color: var(--bar-ink); border-radius: 999px; width: 32px; height: 32px; padding: 0; font-family: var(--font-head); font-size: 12.5px; cursor: pointer; }
+.theme-btn:hover { filter: brightness(1.15); }
+.theme-btn svg.i { width: 16px; height: 16px; }
+.today-tools .tabs { flex-wrap: wrap; border-radius: 18px; }
+/* Today: tasks beside calendar */
+.today-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .today-grid { grid-template-columns: minmax(0, 1fr); } }
+.cal-day.tabs button { padding: 3px 10px; font-size: 12px; }
+.up-next { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px 12px 12px 4px; background: var(--deal-soft); color: var(--deal-ink); }
+.up-next b { font-family: var(--font-head); font-weight: 500; font-size: 15px; color: var(--heading); overflow-wrap: anywhere; }
+.up-next .eyebrow { color: var(--deal-ink); }
+.evs { list-style: none; margin: 0; padding: 0; }
+.ev { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.ev:first-child { border-top: 0; }
+.ev.past { opacity: .5; }
+.ev.now { background: var(--deal-soft); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-radius: 10px; border-top-color: transparent; }
+.ev.focus .ev-title { color: var(--muted); }
+.ev-t { font-size: 12.5px; color: var(--ink); font-weight: 600; white-space: nowrap; }
+.ev-t .muted { font-weight: 400; }
+.ev-main { min-width: 0; display: grid; gap: 3px; }
+.ev-title { color: var(--ink); text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
+.ev-title:hover { color: var(--link); text-decoration: underline; }
+.ev-meta { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.ev-meta a.kind { text-decoration: none; text-transform: none; letter-spacing: 0; font-size: 11.5px; }
+.ev-meta .owner-dot { width: 18px; height: 18px; font-size: 10px; }
+.sm-join { padding: 4px 10px; font-size: 12px; }
+@media (max-width: 480px) { .ev { grid-template-columns: 72px minmax(0, 1fr); } .sm-join { grid-column: 2; justify-self: start; } }
 </style>
 
 <header class="bar">
@@ -400,6 +430,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
       <a href="#prospect" id="nav-prospect">Find targets</a>
     </nav>
     <div class="bar-right">
+      <button type="button" class="theme-btn" id="theme-btn" aria-label="Theme"></button>
       <div class="seg" role="group" aria-label="Owner" id="owner-seg">
         <button type="button" data-owner="mine" aria-pressed="true">Mine</button>
         <button type="button" data-owner="other" aria-pressed="false" id="owner-other">David's</button>
@@ -473,6 +504,9 @@ a.v.call svg.i { width: 14px; height: 14px; }
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
     chev: '<path d="M9 6l6 6-6 6"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+    moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+    contrast: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/>',
     mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/>',
     gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
     phone: '<path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/>',
@@ -544,6 +578,118 @@ a.v.call svg.i { width: 14px; height: 14px; }
   let jobSeq = 0;
   const canWrite = () => !!S.db && S.canWrite !== false;
   const ziReady = () => canWrite() && !!S.mcp && S.zi.state === "ok";
+
+  // ---------- Theme ----------
+  const THEMES = ["auto", "light", "dark"];
+  function applyTheme(t) {
+    const root = document.documentElement;
+    if (t === "light" || t === "dark") root.setAttribute("data-theme", t); else root.removeAttribute("data-theme");
+    const b = $("theme-btn"); if (!b) return;
+    const lbl = t === "dark" ? "Dark" : t === "light" ? "Light" : "Auto";
+    b.innerHTML = ic(t === "dark" ? "moon" : t === "light" ? "sun" : "contrast");
+    b.title = `Theme: ${lbl}. Click to switch.`;
+    b.setAttribute("aria-label", `Theme: ${lbl}. Click to switch.`);
+  }
+  S.theme = store.get("theme") || "auto";
+  applyTheme(S.theme);
+
+  // ---------- Calendar (Google Calendar connector) ----------
+  const GCAL = "Google Calendar";
+  const CAL_EMAIL = { Jeremy: "jeremy.ohara@textus.com", David: "david.walker@textus.com" };
+  const FREE_DOMAINS = new Set(["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "aol.com", "live.com", "msn.com", "me.com", "comcast.net"]);
+  S.cal = { key: "", events: [], allDay: [], loading: false, errs: [], at: 0, day: store.get("calDay") === "tomorrow" ? "tomorrow" : "today" };
+  const calOwners = () => (!S.myOwner || S.owner === "all" ? OWNERS.slice() : S.owner === "mine" ? [S.myOwner] : [otherOwner()]);
+  const calDate = () => (S.cal.day === "tomorrow" ? addDays(today(), 1) : today());
+  function domainIndex() {
+    const m = new Map();
+    for (const [id, a] of S.accounts) {
+      if (a.sf_excluded) continue;
+      const add = (d) => { d = normDomain(d); if (d && !FREE_DOMAINS.has(d) && !m.has(d)) m.set(d, id); };
+      add(a.domain);
+      for (const c of a.contacts || []) if (c.email && c.email.includes("@")) add(c.email.split("@")[1]);
+    }
+    return m;
+  }
+  function parseCal(p, owner) {
+    const email = CAL_EMAIL[owner];
+    const list = (p && (p.events || p.items)) || [];
+    const timed = [], allDay = [];
+    for (const e of list) {
+      if (!e || e.status === "cancelled" || e.eventType === "WORKING_LOCATION") continue;
+      const att = e.attendees || [];
+      const me = att.find((x) => x.self || (x.email || "").toLowerCase() === email);
+      if (me && me.responseStatus === "declined") continue;
+      if (!(e.start && e.start.dateTime)) { if (e.start && e.start.date) allDay.push({ id: e.id, title: e.summary || "(busy)", owner, ooo: e.eventType === "OUT_OF_OFFICE" }); continue; }
+      const others = att.filter((x) => { const em = (x.email || "").toLowerCase(); return em && em !== email && !x.resource && !em.includes("resource.calendar.google.com"); });
+      const extDomains = [...new Set(others.map((x) => (x.email || "").toLowerCase()).filter((em) => !em.endsWith("@textus.com")).map((em) => em.split("@")[1]).filter(Boolean))];
+      const cd = e.conferenceData || {};
+      const join = (cd.videoEntryPoint && cd.videoEntryPoint.uri) || ((cd.entryPoints || []).find((x) => x.entryPointType === "video") || {}).uri || (/^https?:\/\//i.test(e.location || "") ? e.location : "") || e.hangoutLink || "";
+      timed.push({ id: e.id, s: e.start.dateTime, e: (e.end && e.end.dateTime) || e.start.dateTime, title: e.summary || "(busy)", link: e.htmlLink || "", join, owners: [owner], mtg: others.length > 0, extDomains, ooo: e.eventType === "OUT_OF_OFFICE", focus: e.eventType === "FOCUS_TIME" });
+    }
+    return { timed, allDay };
+  }
+  async function loadCalendar(force) {
+    const owners = calOwners(); const d = calDate();
+    const key = owners.join("+") + "|" + d;
+    if (!S.mcp) return;
+    if (S.cal.loading && S.cal.key === key) return;
+    if (!force && S.cal.key === key && Date.now() - S.cal.at < 5 * 60e3) return;
+    S.cal = { ...S.cal, key, loading: true, errs: [] }; renderSchedule();
+    const byId = new Map(); const allDay = []; const errs = [];
+    await Promise.all(owners.map(async (o) => {
+      try {
+        let token = null, guard = 0;
+        do {
+          const input = { calendarId: CAL_EMAIL[o], startTime: `${d}T00:00:00`, endTime: `${d}T23:59:59`, orderBy: "startTime", pageSize: 100 };
+          if (token) input.pageToken = token;
+          const p = await callTool(GCAL, "list_events", input);
+          const { timed, allDay: ad } = parseCal(p, o);
+          for (const ev of timed) { const k = ev.id || ev.s + ev.title; if (byId.has(k)) byId.get(k).owners.push(o); else byId.set(k, ev); }
+          allDay.push(...ad);
+          token = p && p.nextPageToken; guard++;
+        } while (token && guard < 4);
+      } catch (e) {
+        const mine = o === S.myOwner;
+        errs.push(mine ? errText(e, GCAL) : `Couldn't read ${o}'s calendar${e && e.code ? ` (${e.code})` : ""}. ${o} can share it with you in Google Calendar (Settings → Share with specific people → See all event details).`);
+      }
+    }));
+    if (S.cal.key !== key) return; // filter changed mid-load
+    S.cal = { ...S.cal, events: [...byId.values()].sort((a, b) => new Date(a.s) - new Date(b.s)), allDay, loading: false, errs, at: Date.now() };
+    renderSchedule();
+  }
+  const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(/\s/g, "").toLowerCase();
+  function renderSchedule() {
+    const el = $("sched"); if (!el) return;
+    const owners = calOwners(); const d = calDate();
+    const whose = owners.length > 1 ? "Team calendar" : owners[0] === S.myOwner ? "Your calendar" : `${owners[0]}'s calendar`;
+    const head = `<div class="panel-head"><h2>${esc(whose)}</h2><div class="row-form" style="gap:6px">
+        <div class="tabs cal-day" role="group" aria-label="Day"><button type="button" data-calday="today" aria-pressed="${S.cal.day === "today"}">Today</button><button type="button" data-calday="tomorrow" aria-pressed="${S.cal.day === "tomorrow"}">Tomorrow</button></div>
+        <button class="icon-btn" type="button" data-act="cal-refresh" aria-label="Refresh calendar" title="Refresh">${ic("sync")}</button></div></div>`;
+    if (!S.mcp) { el.innerHTML = head + `<div class="panel-body small muted">Open the cockpit in claude.ai to see your calendar.</div>`; return; }
+    const stale = S.cal.key !== owners.join("+") + "|" + d;
+    if (stale || (S.cal.loading && !S.cal.events.length)) { el.innerHTML = head + `<div class="panel-body"><div class="small muted"><span class="spinner"></span> Loading calendar…</div></div>`; if (stale && !S.cal.loading) setTimeout(() => loadCalendar(false), 0); return; }
+    const now = Date.now(); const isToday = d === today();
+    const idx = domainIndex();
+    const evs = S.cal.events.filter((e) => !e.ooo);
+    const mtgs = evs.filter((e) => e.mtg); const ext = mtgs.filter((e) => e.extDomains.length);
+    const upcoming = isToday ? evs.find((e) => new Date(e.e).getTime() > now && e.mtg) : null;
+    const row = (e) => {
+      const st = new Date(e.s).getTime(), en = new Date(e.e).getTime();
+      const state = !isToday ? "" : en <= now ? "past" : st <= now ? "now" : "";
+      const accs = [...new Set(e.extDomains.map((dm) => idx.get(dm)).filter(Boolean))].map((id) => { const a = S.accounts.get(id); return `<a class="kind ${kindOf(a) === "deal" ? "deal" : "tgt"}" href="#account-${esc(id)}" title="Open ${esc(a.company_name)}">${esc(a.company_name)}</a>`; }).join("");
+      return `<li class="ev ${state} ${e.focus ? "focus" : ""}">
+        <span class="ev-t num">${esc(fmtTime(e.s))}<span class="muted">–${esc(fmtTime(e.e))}</span></span>
+        <div class="ev-main"><a class="ev-title" href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.title)}</a>
+          <div class="ev-meta">${owners.length > 1 ? e.owners.map((o) => `<span class="owner-dot" title="${esc(o)}">${esc(initial(o))}</span>`).join("") : ""}${accs}${e.extDomains.length && !accs ? `<span class="chip">External · ${esc(e.extDomains[0])}</span>` : ""}${!e.mtg ? `<span class="small muted">${e.focus ? "Focus time" : "Just you"}</span>` : ""}${state === "now" ? '<span class="pill today">Now</span>' : ""}</div></div>
+        ${e.join && state !== "past" ? `<a class="btn sec sm-join" href="${esc(e.join)}" target="_blank" rel="noopener">Join</a>` : ""}</li>`;
+    };
+    const allDay = S.cal.allDay.length ? `<div class="flags" style="margin-bottom:6px">${S.cal.allDay.map((a) => `<span class="chip ${a.ooo ? "warn" : ""}">${owners.length > 1 ? esc(initial(a.owner)) + " · " : ""}All day: ${esc(a.title)}</span>`).join("")}</div>` : "";
+    const errs = S.cal.errs.map((x) => `<div class="err">${esc(x)}</div>`).join("");
+    const next = upcoming ? `<div class="up-next"><span class="eyebrow">Up next</span><b>${esc(upcoming.title)}</b><span class="small muted">${esc(fmtTime(upcoming.s))}${(() => { const m = Math.round((new Date(upcoming.s).getTime() - now) / 60000); return m > 0 ? ` · in ${m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + " min"}` : " · now"; })()}</span></div>` : "";
+    el.innerHTML = head + `<div class="panel-body">${errs}${next}
+      <div class="small muted">${mtgs.length} meeting${mtgs.length === 1 ? "" : "s"} · ${ext.length} external${S.cal.at ? ` · updated ${esc(fmtTime(new Date(S.cal.at).toISOString()))}` : ""}</div>
+      ${allDay}${evs.length ? `<ul class="evs">${evs.map(row).join("")}</ul>` : `<div class="empty small"><span class="bubble">${isToday ? "Nothing on the calendar today." : "Nothing on the calendar tomorrow."}</span></div>`}</div>`;
+  }
 
   // ---------- owner filter ----------
   const otherOwner = () => (S.myOwner === "David" ? "Jeremy" : "David");
@@ -873,7 +1019,8 @@ a.v.call svg.i { width: 14px; height: 14px; }
           <button type="button" data-tkind="deal" aria-pressed="${S.todayKind === "deal"}"><span class="kind deal" style="padding:0;background:none">Active deals</span> <span class="n num">${kindCount.deal}</span></button>
           <button type="button" data-tkind="outbound" aria-pressed="${S.todayKind === "outbound"}"><span class="kind tgt" style="padding:0;background:none">Outbound targets</span> <span class="n num">${kindCount.outbound}</span></button>
         </div></div>
-      <div class="panel">${body}</div></div>`;
+      <div class="today-grid"><div class="panel">${body}</div><div class="panel" id="sched"></div></div></div>`;
+    renderSchedule();
   }
   function renderNavCount() {
     const t = today(); const items = focusTasks(); const n = $("nav-count");
@@ -2026,6 +2173,8 @@ a.v.call svg.i { width: 14px; height: 14px; }
 
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
+    if (e.target.closest("#theme-btn")) { S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]; store.set("theme", S.theme); applyTheme(S.theme); return; }
+    const cd = e.target.closest("[data-calday]"); if (cd) { S.cal.day = cd.dataset.calday; store.set("calDay", S.cal.day); renderSchedule(); return; }
     const tlb = e.target.closest("[data-tl]"); if (tlb) { S.tlFilter = tlb.dataset.tl; S.tlAll = false; renderTimeline(); return; }
     const call = e.target.closest("a.call");
     if (call) { const acc = call.dataset.acc, cid = call.dataset.cid, num = call.textContent.trim(); if (acc && canWrite()) setTimeout(() => openCallLog(acc, cid, num, "call"), 400); return; }
@@ -2064,6 +2213,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
       case "book-meeting": openCallLog(accId, "", "", "meeting"); break;
       case "cl-close": closeCallLog(); break;
       case "tl-all": S.tlAll = true; renderTimeline(); break;
+      case "cal-refresh": loadCalendar(true); break;
       case "compose-close": closeCompose(); break;
       case "compose-send": readCompose(); if (S.compose) { S.compose.confirming = true; S.compose.err = ""; renderCompose(); } break;
       case "compose-send-no": if (S.compose) { S.compose.confirming = false; renderCompose(); } break;
@@ -2235,7 +2385,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
   // ---------- boot ----------
   S.route = parseHash(); showView(S.route);
   renderAll();
-  let lastDay = today(); setInterval(() => { if (today() !== lastDay) { lastDay = today(); renderAll(); } }, 60000);
+  let lastDay = today(); setInterval(() => { if (today() !== lastDay) { lastDay = today(); renderAll(); } else if (S.route.view === "today") { renderSchedule(); loadCalendar(false); } }, 60000);
 
   (async () => {
     const use = (n) => (window.claude && window.claude.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null));
@@ -2264,6 +2414,7 @@ a.v.call svg.i { width: 14px; height: 14px; }
     renderAll();
     await Promise.all([checkZoomInfo(), checkGmail()]);
     renderEmailSettings(); if (S.compose) renderCompose();
+    if (S.route.view === "today") renderSchedule();
     renderProspect(); renderJobs();
   })();
 })();
