@@ -28,6 +28,7 @@
   --warn: #9A6B00; --warn-soft: #FFF3D6;
   --gong: #9B3DB4; --gong-soft: #F8EAFC;
   --deal-soft: #E1F2FF; --deal-ink: #0A5E99;
+  --tgt-soft: #DDF8EC; --tgt-ink: #0B7A4B;
   --bar: #1D4277; --bar-ink: #FFFFFF; --bar-muted: #AFC3E2; --bar-seg: #16365F; --bar-seg-on: #FFFFFF; --bar-seg-on-ink: #1D4277;
   --font-head: 'Alexandria', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Raleway', 'Helvetica Neue', Arial, sans-serif;
@@ -39,7 +40,7 @@
     --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
     --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
     --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF;
+    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6;
     --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
     color-scheme: dark;
   }
@@ -48,7 +49,7 @@
   --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
   --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
   --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF;
+  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6;
   --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
   color-scheme: dark;
 }
@@ -77,7 +78,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
 .brand img { height: 30px; width: auto; display: block; }
 .brand span { font-family: var(--font-head); font-weight: 300; font-size: 15px; color: var(--bar-muted); border-left: 1px solid rgba(255,255,255,.25); padding-left: 12px; white-space: nowrap; }
-.nav { display: flex; gap: 4px; }
+.nav { display: flex; gap: 4px; flex-wrap: wrap; }
 .nav a { color: var(--bar-muted); text-decoration: none; font-family: var(--font-head); font-size: 14px; padding: 7px 12px; border-radius: 8px; display: inline-flex; gap: 7px; align-items: center; }
 .nav a:hover { color: var(--bar-ink); }
 .nav a[aria-current="page"] { color: var(--bar-ink); background: rgba(255,255,255,.1); }
@@ -308,6 +309,33 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
 .od input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); }
 .od .r { text-align: right; }
 .added-today { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Deal vs target coding: blue = active deals, green = target accounts */
+.kind { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-head); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.kind::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.kind.deal { background: var(--deal-soft); color: var(--deal-ink); }
+.kind.tgt { background: var(--tgt-soft); color: var(--tgt-ink); }
+.pill.tgt { background: var(--tgt-soft); color: var(--tgt-ink); }
+.nav .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.nav .dot.deal { background: var(--blue); }
+.nav .dot.tgt { background: var(--green); }
+.book.k-deal thead th { background: var(--deal-soft); color: var(--deal-ink); }
+.book.k-tgt thead th { background: var(--tgt-soft); color: var(--tgt-ink); }
+.book .exp { width: 26px; height: 26px; padding: 0; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; display: inline-grid; place-items: center; flex: none; }
+.book .exp svg { transition: transform .15s; width: 14px; height: 14px; }
+.book tr.open .exp svg { transform: rotate(90deg); }
+.book .co-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.book tr.open > td { background: var(--surface-2); border-bottom-color: transparent; }
+.book tr.xrow { cursor: default; }
+.book tr.xrow:hover td { background: var(--surface-2); }
+.book tr.xrow > td { background: var(--surface-2); padding: 2px 14px 16px 50px; }
+.xcontacts { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.xcontacts .contact { background: var(--surface); }
+.xmore { font-size: 13px; color: var(--muted); padding-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
+.tabs button[aria-pressed="true"] .kind { color: inherit; }
+.today-tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; }
+@media (prefers-reduced-motion: reduce) { .book .exp svg { transition: none; } }
+@media (max-width: 640px) { .book tr.xrow > td { padding-left: 14px; } }
 </style>
 
 <header class="bar">
@@ -315,7 +343,8 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     <a class="brand" href="#today"><img alt="TextUs" src="data:image/png;base64,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"><span>Sales Cockpit</span></a>
     <nav class="nav" aria-label="Views">
       <a href="#today" id="nav-today">Today <span class="count" id="nav-count" hidden></span></a>
-      <a href="#accounts" id="nav-accounts">Accounts</a>
+      <a href="#deals" id="nav-deals"><span class="dot deal" aria-hidden="true"></span>Active Deals</a>
+      <a href="#targets" id="nav-targets"><span class="dot tgt" aria-hidden="true"></span>Target Accounts</a>
       <a href="#prospect" id="nav-prospect">Find targets</a>
     </nav>
     <div class="bar-right">
@@ -388,6 +417,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
+    chev: '<path d="M9 6l6 6-6 6"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
 
@@ -426,7 +456,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     myOwner: store.get("me") || "", canWrite: null,
     accounts: new Map(), tasks: new Map(), notes: new Map(), ondeck: new Map(), settings: {},
     loaded: { a: false, t: false, o: false }, dbErr: "", dbAbsent: false,
-    owner: store.get("owner") || "mine", seg: store.get("seg") || "deal", q: "",
+    owner: store.get("owner") || "mine", todayKind: store.get("todayKind") || "all", q: "", expanded: new Set(),
     af: Object.assign({ close: "any", cfrom: "", cto: "", stage: "all", added: "any" }, storeJ.get("af") || {}),
     route: { view: "today", id: null },
     zi: { state: "checking", msg: "" },
@@ -666,17 +696,25 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
 
   // ---------- routing ----------
   const VIEWS = ["today", "accounts", "account", "prospect"];
+  const kindOf = (a) => (a && a.band === "deal" ? "deal" : "outbound");
+  const listHash = (a) => (kindOf(a) === "deal" ? "#deals" : "#targets");
   function parseHash() {
     const h = location.hash.replace(/^#/, "");
-    if (h === "accounts") return { view: "accounts", id: null };
+    if (h === "deals" || h === "accounts") return { view: "deals", id: null };
+    if (h === "targets") return { view: "targets", id: null };
     if (h === "prospect") return { view: "prospect", id: null };
     const m = h.match(/^account-([A-Za-z0-9-]+)$/); if (m) return { view: "account", id: m[1] };
     return { view: "today", id: null };
   }
+  const isList = (v) => v === "deals" || v === "targets";
+  function navFor(r) {
+    if (r.view === "account") { const a = S.accounts.get(r.id); return a ? (kindOf(a) === "deal" ? "deals" : "targets") : null; }
+    return isList(r.view) ? r.view : r.view;
+  }
   function showView(r) {
-    for (const v of VIEWS) $("view-" + v).hidden = r.view !== v;
-    for (const n of ["today", "accounts", "prospect"]) $("nav-" + n).removeAttribute("aria-current");
-    $(r.view === "today" ? "nav-today" : r.view === "prospect" ? "nav-prospect" : "nav-accounts").setAttribute("aria-current", "page");
+    for (const v of VIEWS) $("view-" + v).hidden = (isList(r.view) ? "accounts" : r.view) !== v;
+    for (const n of ["today", "deals", "targets", "prospect"]) $("nav-" + n).removeAttribute("aria-current");
+    const n = navFor(r); if (n && $("nav-" + n)) $("nav-" + n).setAttribute("aria-current", "page");
   }
   function route() {
     const r = parseHash();
@@ -722,7 +760,10 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     renderNavCount();
     if (S.route.view !== "today") return;
     const el = $("view-today");
-    const t = today(); const items = focusTasks();
+    const t = today(); const allItems = focusTasks();
+    const kindCount = { deal: 0, outbound: 0 };
+    for (const [, x] of allItems) kindCount[kindOf(S.accounts.get(x.account_id))]++;
+    const items = S.todayKind === "all" ? allItems : allItems.filter(([, x]) => kindOf(S.accounts.get(x.account_id)) === S.todayKind);
     const over = items.filter(([, x]) => x.due_date < t), due = items.filter(([, x]) => x.due_date === t);
     const dateTxt = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
     const scope = S.owner === "all" ? "Everyone's accounts" : S.owner === "mine" ? (S.myOwner ? "Your accounts" : "All accounts") : `${otherOwner()}'s accounts`;
@@ -730,17 +771,22 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       const a = S.accounts.get(x.account_id) || {}; const c = contactOf(a, x.contact_id); const dl = dueLabel(x.due_date);
       return `<li><input type="checkbox" class="chk" data-act="done" data-id="${id}" aria-label="Mark done: ${esc(x.title)}">
         <div class="t-main"><span class="t-title">${esc(x.title)}</span>
-          <span class="t-meta"><a href="#account-${esc(x.account_id)}">${esc(a.company_name || "Unknown account")}</a>${c ? `<span>${ic("user")} ${esc(c.name)}</span>` : ""}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}</span></div>
+          <span class="t-meta">${kindOf(a) === "deal" ? '<span class="kind deal" title="Deal management">Deal</span>' : '<span class="kind tgt" title="Outbound target">Target</span>'}<a href="#account-${esc(x.account_id)}">${esc(a.company_name || "Unknown account")}</a>${c ? `<span>${ic("user")} ${esc(c.name)}</span>` : ""}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}</span></div>
         <div class="t-side">${S.owner === "all" ? `<span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span>` : ""}<span class="pill ${dl.cls}">${esc(dl.txt)}</span></div></li>`;
     };
     let body;
     if (S.dbAbsent) body = `<div class="empty"><span>Open the cockpit in claude.ai to see your tasks.</span></div>`;
     else if (!S.db || !(S.loaded.a && S.loaded.t)) body = `<div class="empty"><span class="spinner"></span><span>Loading your board…</span></div>`;
-    else if (!items.length) body = `<div class="empty"><span class="bubble">Nothing due. You're caught up.</span><span class="small">Tasks you add on an account show up here on their due date. <a href="#accounts">Open accounts</a></span></div>`;
+    else if (!items.length) body = `<div class="empty"><span class="bubble">Nothing due${S.todayKind === "deal" ? " on your deals" : S.todayKind === "outbound" ? " on your targets" : ""}. You're caught up.</span><span class="small">Tasks you add on an account show up here on their due date. <a href="#deals">Active Deals</a> · <a href="#targets">Target Accounts</a></span></div>`;
     else body = `${over.length ? `<div class="group-label eyebrow">Overdue · ${over.length}</div><ul class="tasklist">${over.map(row).join("")}</ul>` : ""}${due.length ? `<div class="group-label eyebrow">Due today · ${due.length}</div><ul class="tasklist">${due.map(row).join("")}</ul>` : ""}`;
     el.innerHTML = `<div style="display:grid;gap:18px">
       <div class="page-head"><div><div class="eyebrow">${esc(dateTxt)}</div><h1>What to work today</h1><div class="sub">${esc(scope)} · due and overdue tasks</div></div>
         <div class="focus-stats"><div class="stat over"><b class="num">${over.length}</b><span>overdue</span></div><div class="stat"><b class="num">${due.length}</b><span>due today</span></div></div></div>
+      <div class="today-tools"><div class="tabs" role="group" aria-label="Task type">
+          <button type="button" data-tkind="all" aria-pressed="${S.todayKind === "all"}">All <span class="n num">${allItems.length}</span></button>
+          <button type="button" data-tkind="deal" aria-pressed="${S.todayKind === "deal"}"><span class="kind deal" style="padding:0;background:none">Active deals</span> <span class="n num">${kindCount.deal}</span></button>
+          <button type="button" data-tkind="outbound" aria-pressed="${S.todayKind === "outbound"}"><span class="kind tgt" style="padding:0;background:none">Outbound targets</span> <span class="n num">${kindCount.outbound}</span></button>
+        </div></div>
       <div class="panel">${body}</div></div>`;
   }
   function renderNavCount() {
@@ -769,8 +815,11 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     switch (S.af.added) { case "today": return today(); case "7": return addDays(today(), -6); case "30": return addDays(today(), -29); default: return ""; }
   }
   function buildAccountsShell() {
+    const deal = S.seg === "deal";
+    S._shellKind = S.seg;
     $("view-accounts").innerHTML = `<div style="display:grid;gap:16px">
-      <div class="page-head"><div><div class="eyebrow">The book</div><h1>Accounts</h1></div>
+      <div class="page-head"><div><div class="eyebrow">${deal ? '<span class="kind deal">Pipeline</span>' : '<span class="kind tgt">Outbound</span>'}</div><h1>${deal ? "Active Deals" : "Target Accounts"}</h1>
+        <div class="sub">${deal ? "Open Salesforce opportunities owned by Jeremy and David." : "Companies you're prospecting. Open a row to see its contacts."}</div></div>
         <div class="tools-r" id="acc-sync"></div></div>
       <div class="panel" id="add-account-panel" hidden>
         <form class="panel-body" id="add-account-form" style="padding-top:16px">
@@ -785,10 +834,9 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
         </form>
       </div>
       <div class="toolbar">
-        <div class="tabs" role="group" aria-label="Segment" id="acc-tabs"></div>
-        <label class="sr" for="acct-q">Search accounts</label><input class="field" id="acct-q" type="search" placeholder="Search company, domain, stage" style="flex:0 1 280px">
+        <div class="filters" id="acc-filters"></div>
+        <label class="sr" for="acct-q">Search</label><input class="field" id="acct-q" type="search" placeholder="${deal ? "Search company, opportunity, stage" : "Search company, contact, industry"}" value="${esc(S.q)}" style="flex:0 1 280px">
       </div>
-      <div class="filters" id="acc-filters"></div>
       <div class="panel" id="acc-table"></div>
     </div>`;
     S._fSeg = null;
@@ -808,18 +856,18 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
         <label class="lbl" for="af-added">Added<select class="sel" id="af-added">${[["any", "Any time"], ["today", "Today"], ["7", "Last 7 days"], ["30", "Last 30 days"]].map(([v, l]) => `<option value="${v}" ${f.added === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
         ${f.stage !== "all" || f.added !== "any" ? `<button class="btn ghost clear" type="button" data-act="af-clear">Clear</button>` : ""}
         <span class="result-note" id="acc-note"></span>`;
-    } else el.innerHTML = `<span class="result-note" id="acc-note"></span>`;
+    }
   }
   function renderAccounts() {
-    if (S.route.view !== "accounts") return;
-    if (!$("acc-table")) buildAccountsShell();
+    if (!isList(S.route.view)) return;
+    S.seg = S.route.view === "deals" ? "deal" : "outbound";
+    if (!$("acc-table") || S._shellKind !== S.seg) buildAccountsShell();
     const t = today();
     const all = [...S.accounts.entries()].filter(([, a]) => ownerMatch(a.owner));
-    const cnt = { outbound: all.filter(([, a]) => a.band !== "deal").length, deal: all.filter(([, a]) => a.band === "deal").length, all: all.length };
     const q = S.q.trim().toLowerCase();
-    let rows = all.filter(([, a]) => S.seg === "all" || (S.seg === "deal" ? a.band === "deal" : a.band !== "deal"));
+    let rows = all.filter(([, a]) => kindOf(a) === S.seg);
     const segTotal = rows.length;
-    if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""} ${a.sub_industry || ""}`.toLowerCase().includes(q));
+    if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""} ${a.sub_industry || ""} ${(a.contacts || []).map((c) => c.name + " " + (c.title || "")).join(" ")}`.toLowerCase().includes(q));
     if (S.seg === "deal") {
       const r = closeRange();
       if (r) rows = rows.filter(([, a]) => a.close_date && (!r[0] || a.close_date >= r[0]) && (!r[1] || a.close_date <= r[1]));
@@ -831,7 +879,6 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     for (const [, x] of openTasks()) { open.set(x.account_id, (open.get(x.account_id) || 0) + 1); if (x.due_date && x.due_date < t) overdue.add(x.account_id); }
     rows.sort((a, b) => {
       const A = a[1], B = b[1];
-      if (S.seg === "all" && (A.band === "deal") !== (B.band === "deal")) return A.band === "deal" ? -1 : 1;
       if (A.band === "deal" && B.band === "deal") { if (!!A.sf_closed !== !!B.sf_closed) return A.sf_closed ? 1 : -1; return String(A.close_date || "9999").localeCompare(String(B.close_date || "9999")); }
       if (S.seg === "outbound") return String(B.created_at || "").localeCompare(String(A.created_at || ""));
       return String(A.company_name || "").localeCompare(String(B.company_name || ""));
@@ -840,54 +887,72 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     const syncLine = S.sync.err ? `<span class="sync-line err">${esc(S.sync.err)}</span>` : S.sync.running ? `<span class="sync-line"><span class="spinner"></span> ${esc(S.sync.msg)}</span>` : S.sync.msg ? `<span class="sync-line">${esc(S.sync.msg)}</span>` : last ? `<span class="sync-line">Salesforce synced ${esc(fmtWhen(last.at))}${last.by ? ` by ${esc(last.by)}` : ""}</span>` : `<span class="sync-line">Salesforce not synced yet</span>`;
     const ownerCell = (a) => `<td><span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span> <span class="small">${esc(a.owner || "")}</span></td>`;
     const taskCell = (id) => { const n = open.get(id) || 0; return `<td><span class="taskcount num">${overdue.has(id) ? '<span class="od" title="Has overdue tasks"></span>' : ""}${n || '<span class="muted">0</span>'}</span></td>`; };
-    const stagePill = (a) => { const isDeal = a.band === "deal"; return `<span class="pill ${isDeal ? (a.sf_closed ? "warn" : "deal") : "out"}">${esc(a.stage || (isDeal ? "Deal" : "Target"))}</span>${a.incomplete && !isDeal ? ' <span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}`; };
+    const stagePill = (a) => { const isDeal = a.band === "deal"; return `<span class="pill ${isDeal ? (a.sf_closed ? "warn" : "deal") : "tgt"}">${esc(a.stage || (isDeal ? "Deal" : "Target"))}</span>${a.incomplete && !isDeal ? ' <span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}`; };
     let head, body;
+    const coCell = (id, a, sub) => { const open = S.expanded.has(id); const n = (a.contacts || []).length;
+      return `<td><div class="co-cell"><button class="exp" type="button" data-act="toggle-row" data-id="${esc(id)}" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} contacts for ${esc(a.company_name)}" title="${n} contact${n === 1 ? "" : "s"}">${ic("chev")}</button>
+        <div style="min-width:0"><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc(sub)}</div></div></div></td>`; };
+    const xrow = (id, a, cols) => S.expanded.has(id) ? `<tr class="xrow"><td colspan="${cols}">${contactsStrip(id, a)}</td></tr>` : "";
     if (S.seg === "outbound") {
       head = `<th>Company</th><th>Stage</th><th>Owner</th><th class="r">Contacts</th><th>Open tasks</th><th>Added</th>`;
       body = rows.map(([id, a]) => {
         const cs = Array.isArray(a.contacts) ? a.contacts : []; const li = cs.filter((c) => c.linkedin_sent).length;
-        return `<tr data-href="#account-${id}" tabindex="0">
-          <td><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc([a.sub_industry || a.industry, a.employee_count ? fmtInt(a.employee_count) + " employees" : ""].filter(Boolean).join(" · ") || a.domain || "")}</div></td>
+        return `<tr data-href="#account-${id}" tabindex="0" class="${S.expanded.has(id) ? "open" : ""}">
+          ${coCell(id, a, [a.sub_industry || a.industry, a.employee_count ? fmtInt(a.employee_count) + " employees" : ""].filter(Boolean).join(" · ") || a.domain || "")}
           <td>${stagePill(a)}</td>${ownerCell(a)}
           <td class="r num">${cs.length}${li ? ` <span class="small muted" title="LinkedIn connects sent">· LI ${li}</span>` : ""}</td>
-          ${taskCell(id)}<td class="num small">${esc(fmtDate(localDay(a.created_at)))}</td></tr>`;
+          ${taskCell(id)}<td class="num small">${esc(fmtDate(localDay(a.created_at)))}</td></tr>${xrow(id, a, 6)}`;
       }).join("");
     } else {
       head = `<th>Company</th><th>Stage</th><th>Owner</th><th>Open tasks</th><th class="r">Amount</th><th>Close date</th>`;
-      body = rows.map(([id, a]) => {
-        const isDeal = a.band === "deal";
-        return `<tr data-href="#account-${id}" tabindex="0">
-          <td><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc(isDeal && a.sf_opportunity_name ? a.sf_opportunity_name : a.sub_industry || a.domain || "")}</div></td>
+      body = rows.map(([id, a]) => `<tr data-href="#account-${id}" tabindex="0" class="${S.expanded.has(id) ? "open" : ""}">
+          ${coCell(id, a, a.sf_opportunity_name || a.domain || "")}
           <td>${stagePill(a)}</td>${ownerCell(a)}${taskCell(id)}
-          <td class="r num">${isDeal ? money(a.amount) : '<span class="muted">—</span>'}</td><td class="num">${isDeal ? esc(fmtDate(a.close_date)) : '<span class="muted">—</span>'}</td></tr>`;
-      }).join("");
+          <td class="r num">${money(a.amount)}</td><td class="num">${esc(fmtDate(a.close_date))}</td></tr>${xrow(id, a, 6)}`).join("");
     }
     const loading = S.db && !S.loaded.a;
-    const emptyMsg = loading ? `<div class="empty"><span class="spinner"></span><span>Loading accounts…</span></div>`
-      : !S.accounts.size ? `<div class="empty"><span class="bubble">No accounts yet.</span><span class="small">Sync Salesforce to bring in open deals, or <a href="#prospect">find outbound targets</a>.</span></div>`
-      : `<div class="empty"><span>No accounts match these filters.</span></div>`;
-    $("acc-sync").innerHTML = `${syncLine}
-          <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>
-          <button class="btn" type="button" data-act="add-account" ${!canWrite() ? "disabled" : ""}>${ic("plus")} Add target</button>`;
-    $("add-account-panel").hidden = !S.addAccount;
-    $("acc-tabs").innerHTML = `
-          <button type="button" data-seg="outbound" aria-pressed="${S.seg === "outbound"}">Outbound <span class="n num">${cnt.outbound}</span></button>
-          <button type="button" data-seg="deal" aria-pressed="${S.seg === "deal"}">Live deals <span class="n num">${cnt.deal}</span></button>
-          <button type="button" data-seg="all" aria-pressed="${S.seg === "all"}">All <span class="n num">${cnt.all}</span></button>`;
+    const emptyMsg = loading ? `<div class="empty"><span class="spinner"></span><span>Loading…</span></div>`
+      : !segTotal ? (S.seg === "deal" ? `<div class="empty"><span class="bubble">No active deals yet.</span><span class="small">Click Sync Salesforce to bring in open opportunities.</span></div>` : `<div class="empty"><span class="bubble">No target accounts yet.</span><span class="small">Use <a href="#prospect">Find targets</a> to pull companies and contacts from ZoomInfo.</span></div>`)
+      : `<div class="empty"><span>Nothing matches these filters.</span></div>`;
+    $("acc-sync").innerHTML = S.seg === "deal" ? `${syncLine}
+          <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>`
+      : `<a class="btn sec" href="#prospect">${ic("search")} Find targets</a>
+          <button class="btn" type="button" data-act="add-account" ${!canWrite() ? "disabled" : ""}>${ic("plus")} Add by hand</button>`;
+    $("add-account-panel").hidden = !(S.addAccount && S.seg === "outbound");
     renderAccFilters();
     const note = $("acc-note");
     if (note) {
-      let txt = rows.length === segTotal ? `${rows.length} accounts` : `${rows.length} of ${segTotal} accounts`;
+      const noun = (n) => S.seg === "deal" ? (n === 1 ? "deal" : "deals") : (n === 1 ? "target" : "targets");
+      let txt = rows.length === segTotal ? `${rows.length} ${noun(rows.length)}` : `${rows.length} of ${segTotal} ${noun(segTotal)}`;
       if (S.seg === "deal" && rows.length) { const sum = rows.reduce((s, [, a]) => s + (Number(a.amount) || 0), 0); txt += ` · ${money(sum)}`; }
       note.textContent = txt;
     }
-    $("acc-table").innerHTML = rows.length ? `<div class="table-wrap"><table class="book"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>` : emptyMsg;
+    $("acc-table").innerHTML = rows.length ? `<div class="table-wrap"><table class="book ${S.seg === "deal" ? "k-deal" : "k-tgt"}"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>` : emptyMsg;
+  }
+
+  function contactsStrip(accId, a) {
+    const cs = (Array.isArray(a.contacts) ? a.contacts : []).slice().sort((x, y) => (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
+    const ro = canWrite() ? "" : "disabled";
+    const phone = (v, dnc, k) => (v ? `<div class="cline"><span class="k">${k}</span><span class="v">${esc(v)}</span>${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
+    const cards = cs.map((c) => {
+      const st = cStatus(c.status);
+      const liSearch = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent([c.name, a.company_name].filter(Boolean).join(" "))}`;
+      return `<div class="contact ${c.is_primary ? "primary" : ""}">
+        <div class="contact-top"><div class="nm"><b>${esc(c.name || "Unnamed")}</b>${c.title ? `<span>${esc(c.title)}</span>` : ""}</div></div>
+        <div class="flags">${c.persona_tier ? `<span class="tier t${esc(c.persona_tier)}">${esc(TIER_LABEL[c.persona_tier] || "")}</span>` : ""}${c.is_primary ? '<span class="chip">Primary</span>' : ""}
+          ${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : `<a class="chip" href="${esc(liSearch)}" target="_blank" rel="noopener">Find on LinkedIn ↗</a>`}${confFlags(c.zi_accuracy, c.zi_updated)}</div>
+        ${c.email || c.phone || c.mobile ? `<div class="lines" style="gap:4px">${c.email ? `<div class="cline"><span class="k">Email</span><span class="v">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : ""}${phone(c.phone, c.phone_dnc, "Direct")}${phone(c.mobile, c.mobile_dnc, "Mobile")}</div>` : ""}
+        <div class="foot"><label class="sr" for="xs-${esc(accId)}-${esc(c.id)}">Status</label><select class="sel small" id="xs-${esc(accId)}-${esc(c.id)}" data-act-change="contact-status" data-acc="${esc(accId)}" data-id="${esc(c.id)}" style="padding:3px 8px" ${ro}>${CONTACT_STATUS.map((s) => `<option ${s === st ? "selected" : ""}>${s}</option>`).join("")}</select>
+          <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-acc="${esc(accId)}" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${ro}> LinkedIn sent</label></div></div>`;
+    }).join("");
+    return `${cs.length ? `<div class="xcontacts">${cards}</div>` : `<div class="small muted" style="padding-top:6px">No contacts yet.</div>`}
+      <div class="xmore"><a href="#account-${esc(accId)}">Open account: tasks, notes${a.band === "deal" ? ", Gong" : ""} →</a>${a.band !== "deal" && cs.length ? '<span>Sourced contacts: call only. Don\'t text until they opt in.</span>' : ""}</div>`;
   }
 
   // ---------- Account detail ----------
   function buildDetailShell() {
     $("view-account").innerHTML = `<div style="display:grid;gap:16px">
-      <a class="back" href="#accounts">${ic("back")} Accounts</a>
+      <a class="back" href="#deals" id="d-back">${ic("back")} Active Deals</a>
       <div class="panel" id="d-head"></div>
       <div class="detail-grid">
         <div class="col">
@@ -931,14 +996,16 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
     if (!$("d-head")) buildDetailShell();
     const id = S.route.id; const a = S.accounts.get(id);
     if (!a) {
-      $("d-head").innerHTML = S.loaded.a ? `<div class="empty"><span class="bubble">This account isn't on the board.</span><span class="small">It may have been deleted. <a href="#accounts">Back to accounts</a></span></div>` : `<div class="empty"><span class="spinner"></span><span>Loading account…</span></div>`;
+      $("d-head").innerHTML = S.loaded.a ? `<div class="empty"><span class="bubble">This account isn't on the board.</span><span class="small">It may have been deleted. <a href="#deals">Active Deals</a> · <a href="#targets">Target Accounts</a></span></div>` : `<div class="empty"><span class="spinner"></span><span>Loading account…</span></div>`;
       ["d-tasks", "d-sugg", "d-contacts", "d-gong", "d-danger"].forEach((k) => ($(k).innerHTML = ""));
       return;
     }
     const isDeal = a.band === "deal";
+    const back = $("d-back"); if (back) { back.href = listHash(a); back.innerHTML = `${ic("back")} ${isDeal ? "Active Deals" : "Target Accounts"}`; }
+    showView(S.route);
     const sfUrl = a.sf_opportunity_id ? `${SF_BASE}/lightning/r/Opportunity/${encodeURIComponent(a.sf_opportunity_id)}/view` : "";
     $("d-head").innerHTML = `<div class="acct-head">
-      <div class="acct-title"><h1>${esc(a.company_name || "Untitled")}</h1><span class="pill ${isDeal ? "deal" : "out"}">${isDeal ? "Live deal" : "Outbound"}</span>
+      <div class="acct-title"><h1>${esc(a.company_name || "Untitled")}</h1>${isDeal ? '<span class="kind deal">Active deal</span>' : '<span class="kind tgt">Target account</span>'}
         ${a.multi_site ? '<span class="chip">Multi-site</span>' : ""}${a.incomplete && !isDeal ? '<span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}
         ${a.domain ? `<a class="small" href="https://${esc(normDomain(a.domain))}" target="_blank" rel="noopener">${esc(normDomain(a.domain))}</a>` : ""}
         ${sfUrl ? `<a class="btn sec" style="margin-left:auto" href="${esc(sfUrl)}" target="_blank" rel="noopener">${ic("out")} Open in Salesforce</a>` : ""}</div>
@@ -1533,7 +1600,9 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
 
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
-    const tr = e.target.closest("tr[data-href]"); if (tr) { location.hash = tr.dataset.href; return; }
+    const tk = e.target.closest("[data-tkind]"); if (tk) { S.todayKind = tk.dataset.tkind; store.set("todayKind", S.todayKind); renderToday(); return; }
+    const tg = e.target.closest('[data-act="toggle-row"]'); if (tg) { const id = tg.dataset.id; S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); renderAccounts(); return; }
+    const tr = e.target.closest("tr[data-href]"); if (tr && !e.target.closest("a,button,input,select,label")) { location.hash = tr.dataset.href; return; }
     const cp = e.target.closest("[data-copy]");
     if (cp) {
       const v = cp.dataset.copy;
@@ -1541,7 +1610,6 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       catch { const span = cp.parentElement.querySelector(".v"); if (span) { const r = document.createRange(); r.selectNodeContents(span); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } toast("Copy isn't allowed here. The text is selected; press Ctrl+C or ⌘C."); }
       return;
     }
-    const sg = e.target.closest("[data-seg]"); if (sg) { S.seg = sg.dataset.seg; store.set("seg", S.seg); renderAccounts(); return; }
     const b = e.target.closest("[data-act]"); if (!b || b.tagName === "SELECT") return;
     const act = b.dataset.act, id = b.dataset.id, accId = S.route.id;
     const job = b.dataset.job ? S.jobs.find((j) => j.key === b.dataset.job) : null;
@@ -1576,7 +1644,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       case "delete-account-yes": {
         const tids = [...S.tasks.entries()].filter(([, t]) => t.account_id === accId).map(([k]) => k); const nids = [...S.notes.keys()];
         const ok = await w(async () => { await Promise.all([...tids.map((k) => taskRef(k).delete()), ...nids.map((k) => noteRef(k).delete())]); await acctRef(accId).delete(); });
-        if (ok) { toast("Account deleted"); location.hash = "#accounts"; }
+        if (ok) { toast("Account deleted"); location.hash = listHash(S.accounts.get(accId)); }
         break;
       }
       // Find targets
@@ -1595,7 +1663,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       case "od-clear": S.odSel.clear(); renderOndeck(); break;
     }
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Enter") { const tr = e.target.closest && e.target.closest("tr[data-href]"); if (tr) location.hash = tr.dataset.href; } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches && e.target.matches("tr[data-href]")) location.hash = e.target.dataset.href; });
   document.addEventListener("input", (e) => {
     if (e.target.id === "acct-q") { S.q = e.target.value; renderAccounts(); }
     if (e.target.id === "od-q") { S.odF.q = e.target.value; storeJ.set("odF", S.odF); renderOndeck(); }
@@ -1625,7 +1693,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
       renderJobs(); return;
     }
     const act = el.dataset && el.dataset.actChange; if (!act) return;
-    const accId = S.route.id; const a = S.accounts.get(accId); if (!a) return;
+    const accId = el.dataset.acc || S.route.id; const a = S.accounts.get(accId); if (!a) return;
     if (act === "stage") await w(() => acctRef(accId).update({ stage: el.value, updated_at: nowIso() }));
     if (act === "owner") await w(() => acctRef(accId).update({ owner: el.value, updated_at: nowIso() }));
     if (act === "contact-status") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, status: el.value } : c), updated_at: nowIso() }));
