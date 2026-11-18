@@ -327,6 +327,7 @@ table.od { border-collapse: collapse; width: 100%; min-width: 640px; }
 .nav .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .nav .dot.deal { background: var(--blue); }
 .nav .dot.tgt { background: var(--green); }
+.nav .dot.inb { background: var(--purple); }
 .book.k-deal thead th { background: var(--deal-soft); color: var(--deal-ink); }
 .book.k-tgt thead th { background: var(--tgt-soft); color: var(--tgt-ink); }
 .book .exp { width: 26px; height: 26px; padding: 0; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; display: inline-grid; place-items: center; flex: none; }
@@ -518,6 +519,27 @@ a.un-title:hover { text-decoration: underline; }
 .detail-grid > .col:first-child { order: 2; }
 .detail-grid > .col:last-child { order: 1; }
 @media (max-width: 900px) { .detail-grid { grid-template-columns: minmax(0, 1fr); } .detail-grid > .col:first-child { order: 1; } .detail-grid > .col:last-child { order: 2; } }
+
+/* MQLs + Signals */
+.kind.inb { background: var(--gong-soft); color: var(--gong); }
+.ds.inb b { color: var(--gong); }
+.chip.hotc { background: var(--deal-soft); color: var(--deal-ink); }
+.mlist { list-style: none; margin: 0; padding: 0; }
+.mrow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.25fr) minmax(0, .65fr) minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+.mrow:first-child { border-top: 0; }
+.mrow.late { background: color-mix(in srgb, var(--bad-soft) 45%, transparent); }
+.m-main, .m-what, .m-when, .m-touch { min-width: 0; display: grid; gap: 3px; }
+.m-name { font-family: var(--font-head); font-size: 15px; color: var(--heading); text-decoration: none; overflow-wrap: anywhere; }
+.m-name:hover { text-decoration: underline; }
+.m-who { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.m-who a { color: var(--link); }
+.m-what b, .m-when b { font-weight: 600; font-size: 13.5px; color: var(--ink); }
+.m-acts { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; align-items: center; }
+.sm-btn-solid { padding: 5px 11px; font-size: 12.5px; }
+@media (max-width: 1000px) { .mrow { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); } .m-acts { grid-column: 1 / -1; justify-content: flex-start; } .m-when { display: none; } }
+@media (max-width: 600px) { .mrow { grid-template-columns: minmax(0, 1fr); } }
+.nav a { padding: 7px 9px; font-size: 13.5px; }
+@media (max-width: 1440px) and (min-width: 641px) { .brand span { display: none; } }
 </style>
 
 <header class="bar">
@@ -527,6 +549,8 @@ a.un-title:hover { text-decoration: underline; }
       <a href="#today" id="nav-today">Today <span class="count" id="nav-count" hidden></span></a>
       <a href="#deals" id="nav-deals"><span class="dot deal" aria-hidden="true"></span>Active Deals</a>
       <a href="#targets" id="nav-targets"><span class="dot tgt" aria-hidden="true"></span>Target Accounts</a>
+      <a href="#mqls" id="nav-mqls"><span class="dot inb" aria-hidden="true"></span>MQLs</a>
+      <a href="#signals" id="nav-signals">Signals</a>
       <a href="#prospect" id="nav-prospect">Find targets</a>
     </nav>
     <div class="bar-right">
@@ -550,6 +574,8 @@ a.un-title:hover { text-decoration: underline; }
   <section id="view-account" hidden></section>
   <section id="view-prospect" hidden></section>
   <section id="view-email" hidden></section>
+  <section id="view-mqls" hidden></section>
+  <section id="view-signals" hidden></section>
 </main>
 <input type="file" id="od-file" accept=".csv,text/csv" hidden>
 <div class="modal" id="compose" hidden></div>
@@ -1001,7 +1027,7 @@ a.un-title:hover { text-decoration: underline; }
           created++;
         } else {
           const a = S.accounts.get(id) || {}; const patch = { ...sfFields, updated_at: nowIso() };
-          if (mode === "convert") { patch.owner = ownerFor(r.OwnerId); patch.outbound_stage = a.stage || ""; patch.origin = "outbound"; patch.converted_at = nowIso(); converted++; const oppName = r.Name || ""; const cid0 = id; jobs.push(() => logActivity(cid0, { type: "system", summary: `Became an active deal: ${oppName} (Salesforce sync)` })); } else updated++;
+          if (mode === "convert") { patch.owner = ownerFor(r.OwnerId); patch.outbound_stage = a.stage || ""; patch.origin = a.source === "inbound" ? "inbound" : "outbound"; patch.converted_at = nowIso(); converted++; const oppName = r.Name || ""; const cid0 = id; jobs.push(() => logActivity(cid0, { type: "system", summary: `Became an active deal: ${oppName} (Salesforce sync)` })); } else updated++;
           if (!a.domain && dom) patch.domain = dom;
           if (pc) {
             const cs = Array.isArray(a.contacts) ? a.contacts.slice() : [];
@@ -1086,7 +1112,7 @@ a.un-title:hover { text-decoration: underline; }
   }
 
   // ---------- routing ----------
-  const VIEWS = ["today", "accounts", "account", "prospect", "email"];
+  const VIEWS = ["today", "accounts", "account", "prospect", "email", "mqls", "signals"];
   const kindOf = (a) => (a && a.band === "deal" ? "deal" : "outbound");
   const listHash = (a) => (kindOf(a) === "deal" ? "#deals" : "#targets");
   function parseHash() {
@@ -1095,6 +1121,8 @@ a.un-title:hover { text-decoration: underline; }
     if (h === "targets") return { view: "targets", id: null };
     if (h === "prospect") return { view: "prospect", id: null };
     if (h === "email") return { view: "email", id: null };
+    if (h === "mqls") return { view: "mqls", id: null };
+    if (h === "signals") return { view: "signals", id: null };
     const m = h.match(/^account-([A-Za-z0-9-]+)$/); if (m) return { view: "account", id: m[1] };
     return { view: "today", id: null };
   }
@@ -1105,7 +1133,7 @@ a.un-title:hover { text-decoration: underline; }
   }
   function showView(r) {
     for (const v of VIEWS) $("view-" + v).hidden = (isList(r.view) ? "accounts" : r.view) !== v;
-    for (const n of ["today", "deals", "targets", "prospect"]) $("nav-" + n).removeAttribute("aria-current");
+    for (const n of ["today", "deals", "targets", "mqls", "signals", "prospect"]) $("nav-" + n).removeAttribute("aria-current");
     const n = navFor(r); if (n && $("nav-" + n)) $("nav-" + n).setAttribute("aria-current", "page");
   }
   function route() {
@@ -1315,7 +1343,7 @@ a.un-title:hover { text-decoration: underline; }
       el.innerHTML = `<label class="lbl" for="af-close">Close date<select class="sel" id="af-close">
           ${[["any", "Any time"], ["past", "Past due"], ["this-month", "This month"], ["next-month", "Next month"], ["this-quarter", "This quarter"], ["next-quarter", "Next quarter"], ["next-90", "Next 90 days"], ["this-year", "This year"], ["custom", "Custom range"]].map(([v, l]) => `<option value="${v}" ${f.close === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
         ${f.close === "custom" ? `<label class="lbl" for="af-from">From<input class="field" type="date" id="af-from" value="${esc(f.cfrom)}"></label><label class="lbl" for="af-to">To<input class="field" type="date" id="af-to" value="${esc(f.cto)}"></label>` : ""}
-        <label class="lbl" for="af-src">Source<select class="sel" id="af-src"><option value="all">All deals</option><option value="outbound" ${f.src === "outbound" ? "selected" : ""}>Outbound-sourced</option></select></label>
+        <label class="lbl" for="af-src">Source<select class="sel" id="af-src"><option value="all">All deals</option><option value="outbound" ${f.src === "outbound" ? "selected" : ""}>Outbound-sourced</option><option value="inbound" ${f.src === "inbound" ? "selected" : ""}>Inbound-sourced</option></select></label>
         ${f.close !== "any" || f.src !== "all" ? `<button class="btn ghost clear" type="button" data-act="af-clear">Clear</button>` : ""}
         <span class="result-note" id="acc-note"></span>`;
     } else if (S.seg === "outbound") {
@@ -1337,7 +1365,7 @@ a.un-title:hover { text-decoration: underline; }
     const segTotal = rows.length;
     if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""} ${a.sub_industry || ""} ${(a.contacts || []).map((c) => c.name + " " + (c.title || "")).join(" ")}`.toLowerCase().includes(q));
     if (S.seg === "deal") {
-      if (S.af.src === "outbound") rows = rows.filter(([, a]) => a.origin === "outbound");
+      if (S.af.src !== "all") rows = rows.filter(([, a]) => a.origin === S.af.src);
       const r = closeRange();
       if (r) rows = rows.filter(([, a]) => a.close_date && (!r[0] || a.close_date >= r[0]) && (!r[1] || a.close_date <= r[1]));
     } else if (S.seg === "outbound") {
@@ -1368,7 +1396,7 @@ a.un-title:hover { text-decoration: underline; }
       body = rows.map(([id, a]) => {
         const cs = Array.isArray(a.contacts) ? a.contacts : []; const li = cs.filter((c) => c.linkedin_sent).length;
         return `<tr data-href="#account-${id}" tabindex="0" class="${S.expanded.has(id) ? "open" : ""}">
-          ${coCell(id, a, [a.sub_industry || a.industry, a.employee_count ? fmtInt(a.employee_count) + " employees" : ""].filter(Boolean).join(" · ") || a.domain || "")}
+          ${coCell(id, a, [a.sub_industry || a.industry, a.employee_count ? fmtInt(a.employee_count) + " employees" : ""].filter(Boolean).join(" · ") || a.domain || "").replace('<div class="dom">', '<div class="dom">' + (a.source === "inbound" ? '<span class="kind inb" style="font-size:10px;padding:0 6px;margin-right:6px">Inbound</span>' : "") + (a.intent ? '<span class="kind deal" style="font-size:10px;padding:0 6px;margin-right:6px" title="Intent signal">Intent</span>' : ""))}
           <td>${stagePill(a)}</td>${ownerCell(a)}
           <td class="r num">${cs.length}${li ? ` <span class="small muted" title="LinkedIn connects sent">· LI ${li}</span>` : ""}</td>
           ${taskCell(id)}<td>${a.last_touch_at ? `<span class="touch ${daysBetween(localDay(a.last_touch_at), t) > 14 ? "stale" : ""}" title="${esc(fmtWhen(a.last_touch_at))}">${esc(agoLabel(a.last_touch_at))} · ${esc(TOUCH_LABEL[a.last_touch_type] || "Touch")}</span>` : '<span class="touch none">No touches</span>'}</td>
@@ -1377,7 +1405,7 @@ a.un-title:hover { text-decoration: underline; }
     } else {
       head = `<th>Company</th><th>Stage</th><th>Owner</th><th>Open tasks</th><th class="r">Amount</th><th>Close date</th>`;
       body = rows.map(([id, a]) => `<tr data-href="#account-${id}" tabindex="0" class="${S.expanded.has(id) ? "open" : ""}">
-          ${coCell(id, a, a.sf_opportunity_name || a.domain || "").replace('<div class="dom">', a.origin === "outbound" ? '<div class="dom"><span class="kind tgt" style="font-size:10px;padding:0 6px;margin-right:6px">Outbound</span>' : '<div class="dom">')}
+          ${coCell(id, a, a.sf_opportunity_name || a.domain || "").replace('<div class="dom">', a.origin === "outbound" ? '<div class="dom"><span class="kind tgt" style="font-size:10px;padding:0 6px;margin-right:6px">Outbound</span>' : a.origin === "inbound" ? '<div class="dom"><span class="kind inb" style="font-size:10px;padding:0 6px;margin-right:6px">Inbound</span>' : '<div class="dom">')}
           <td>${stagePill(a)}</td>${ownerCell(a)}${taskCell(id)}
           <td class="r num">${money(a.amount)}</td><td class="num">${esc(fmtDate(a.close_date))}</td></tr>${xrow(id, a, 6)}`).join("");
     }
@@ -1484,7 +1512,7 @@ a.un-title:hover { text-decoration: underline; }
       : [["Industry", a.sub_industry || a.industry || "—"], ["Employees", a.employee_count ? fmtInt(a.employee_count) : "—"], ["Contacts", String((a.contacts || []).length)], ["Added", fmtDate(localDay(a.created_at))], ["Last touch", lastTouch], ["Open tasks", String(openN)]];
     const ro = canWrite() ? "" : "disabled";
     $("d-head").innerHTML = `<div class="upnext acct-hero"><div class="un-main">
-        <div class="un-lab" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${isDeal ? '<span class="kind deal">Active deal</span>' : '<span class="kind tgt">Target account</span>'}${isDeal && a.origin === "outbound" ? '<span class="kind tgt" title="Started as an outbound target">Outbound-sourced</span>' : ""}${a.multi_site ? '<span class="chip">Multi-site</span>' : ""}${a.incomplete && !isDeal ? '<span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}</div>
+        <div class="un-lab" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${isDeal ? '<span class="kind deal">Active deal</span>' : '<span class="kind tgt">Target account</span>'}${isDeal && a.origin === "outbound" ? '<span class="kind tgt" title="Started as an outbound target">Outbound-sourced</span>' : ""}${a.source === "inbound" ? '<span class="kind inb" title="Came in as a HubSpot MQL">Inbound</span>' : ""}${a.intent ? `<span class="chip" title="ZoomInfo intent signal">Intent · ${esc((a.intent.topics || []).join(", "))} · ${esc(fmtDate((a.intent.last || "").slice(0, 10)))}</span>` : ""}${a.multi_site ? '<span class="chip">Multi-site</span>' : ""}${a.incomplete && !isDeal ? '<span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}</div>
         <h1>${esc(a.company_name || "Untitled")}</h1>
         <div class="un-sub">${isDeal && a.sf_opportunity_name ? esc(a.sf_opportunity_name) + (a.domain ? " · " : "") : ""}${a.domain ? `<a href="https://${esc(normDomain(a.domain))}" target="_blank" rel="noopener">${esc(normDomain(a.domain))}</a>` : ""}</div>
         <div class="hero-fields">
@@ -1793,6 +1821,11 @@ a.un-title:hover { text-decoration: underline; }
       await addTask(accId, existing ? `Reach out to ${qualified.length} new contact${qualified.length === 1 ? "" : "s"}` : `Start outreach at ${co.name}`, today(), first.id, "manual");
     }
     job.accountId = accId;
+    if (job.signal) {
+      acctRef(accId).update({ intent: { topics: job.signal.topics, last: job.signal.last, count: job.signal.count } }).catch(() => {});
+      setTriage("sig", job.signal.zid, { status: "worked", account_id: accId });
+      logActivity(accId, { type: "system", summary: `Intent signal: ${job.signal.topics.join(", ")} (${job.signal.last.slice(0, 10)})` });
+    }
     logActivity(accId, { type: "system", summary: existing ? `Added ${qualified.length} contact${qualified.length === 1 ? "" : "s"} from ZoomInfo` : `Added from ZoomInfo with ${qualified.length} contact${qualified.length === 1 ? "" : "s"}` });
     linkOndeck(job, accId);
     job.state = "saved";
@@ -2410,6 +2443,363 @@ a.un-title:hover { text-decoration: underline; }
     el.innerHTML = sg.mode === "gmail" ? `<div class="small muted">Gmail adds the signature you've set up in Gmail settings.</div>` : `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#17191B">Hi Samantha,<br><br>…</div>${sigHtml(sg, false)}`;
   }
 
+  // ---------- MQLs (HubSpot, read only) and Signals (#intent-signals, read only) ----------
+  const HSP = "HubSpot", SLACK = "Slack";
+  const HS_PORTAL = "517572";
+  const HS_OWNER = { Jeremy: "92239065", David: "96822192" };
+  const HS_OWNER_NAME = { "92239065": "Jeremy", "96822192": "David", "1852954077": "Nick", "47262796": "SFDC System", "1730662410": "Andrew" };
+  const HS_INSIGHTS = { userIntent: "Read-only review of marketing qualified leads and intent signals for follow-up", satisfaction: "NEUTRAL" };
+  const SIGNAL_CHANNEL = "C09TLF1MJD9";
+  const hsContactUrl = (id) => `https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-1/${encodeURIComponent(id)}`;
+  const hsCompanyUrl = (id) => `https://app.hubspot.com/contacts/${HS_PORTAL}/record/0-2/${encodeURIComponent(id)}`;
+  const decodeEnt = (s) => String(s || "").replace(/&amp;/g, "&").replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const daysAgo = (iso) => (iso ? Math.max(0, daysBetween(localDay(iso), today())) : null);
+  const agoShort = (iso) => { const d = daysAgo(iso); return d == null ? "—" : d === 0 ? "Today" : d === 1 ? "1 day" : `${d} days`; };
+  S.mql = { key: "", rows: [], loading: false, err: "", at: 0, total: 0 };
+  S.mqlF = Object.assign({ show: "triage", days: "90", junk: "hide", sort: "hot" }, storeJ.get("mqlF") || {});
+  S.triage = new Map(); S.sig = { key: "", rows: [], loading: false, err: "", at: 0, hs: new Map(), hsErr: "" };
+  S.sigF = Object.assign({ show: "new", days: "3", size: "50", topic: "all" }, storeJ.get("sigF") || {});
+  S.notfit = null;
+
+  // ---- MQL classification ----
+  const PERSONAL = /^(gmail|yahoo|outlook|hotmail|icloud|aol|live|msn|me|comcast|proton|protonmail|ymail|mail)\.(com|net)$/;
+  function mqlEvent(e) {
+    const s = String(e || "");
+    if (/demo request/i.test(s)) return { label: "Demo request", hot: true };
+    if (/contact us/i.test(s)) return { label: "Contact us", hot: true };
+    if (/get started|plg_|pricing/i.test(s)) return { label: "Trial / pricing", hot: true };
+    if (!s) return { label: "No form on file", hot: false };
+    const part = s.split(":").pop().trim() || s;
+    return { label: part.length > 48 ? part.slice(0, 46) + "…" : part, hot: false };
+  }
+  function mqlFlags(r) {
+    const d = (r.domain || "").toLowerCase(); const name = `${r.first || ""} ${r.last || ""}`.trim();
+    const junk = [];
+    if (PERSONAL.test(d)) junk.push("Personal email");
+    if (/^(student|s|u|my)\./.test(d) || /\.edu$/.test(d) && /student|^s\.|^u\./.test(d)) junk.push("Student email");
+    if (d === "textus.com") junk.push("Internal");
+    if (/^\d+\.com$/.test(d) || /\.(xyz|top|click)$/.test(d)) junk.push("Fake domain");
+    if (/(.)\1{3,}|^[^aeiou\s]{5,}$/i.test(name) || /sdf|asdf|qwer/i.test(name)) junk.push("Fake name");
+    if (/seo|backlink|link building|search engine optimization/i.test(`${r.title} ${r.company}`)) junk.push("Vendor pitch");
+    const school = /k12|isd\.|schools?\.(org|net|us)|\.k12\.|sd\.org|school district|\.gov$|\.mil$|city of|county/i.test(`${d} ${r.company || ""}`);
+    return { junk, school };
+  }
+  function mqlParse(rec) {
+    const p = rec.properties || {};
+    const r = { id: String(rec.id), first: p.firstname || "", last: p.lastname || "", email: p.email || "", phone: p.phone || "", title: p.jobtitle || "", company: p.company || "", domain: (p.hs_email_domain || "").toLowerCase(),
+      event: p.recent_conversion_event_name || "", source: p.hs_analytics_source || "", sourceDetail: p.hs_analytics_source_data_1 || "", mqlAt: p.hs_v2_date_entered_marketingqualifiedlead || "",
+      lastContacted: p.notes_last_contacted || "", owner: p.hubspot_owner_id || "", leadStatus: p.hs_lead_status || "", seqAt: p.hs_latest_sequence_enrolled_date || "" };
+    if (!r.first && !r.last) r.first = (p.hs_full_name_or_email || r.email || "Unknown").split(" ")[0];
+    r.ev = mqlEvent(r.event); r.flags = mqlFlags(r);
+    return r;
+  }
+  const mqlName = (r) => `${r.first} ${r.last}`.trim() || r.email || "Unknown";
+  function mqlOwnerIds() {
+    if (S.owner === "all" || !S.myOwner) return null;
+    return [HS_OWNER[S.owner === "mine" ? S.myOwner : otherOwner()]];
+  }
+  async function loadMqls(force) {
+    const own = mqlOwnerIds(); const key = (own ? own.join(",") : "all") + "|" + S.mqlF.days;
+    if (!S.mcp) return;
+    if (S.mql.loading && S.mql.key === key) return;
+    if (!force && S.mql.key === key && Date.now() - S.mql.at < 5 * 60e3) return;
+    S.mql = { ...S.mql, key, loading: true, err: "" }; renderMqls();
+    try {
+      const since = addDays(today(), -Number(S.mqlF.days || 90));
+      const filters = [{ propertyName: "lifecyclestage", operator: "EQ", value: "marketingqualifiedlead" }, { propertyName: "hs_v2_date_entered_marketingqualifiedlead", operator: "GTE", value: since }];
+      if (own) filters.push({ propertyName: "hubspot_owner_id", operator: "IN", values: own });
+      const props = ["firstname", "lastname", "email", "phone", "jobtitle", "company", "hs_email_domain", "recent_conversion_event_name", "hs_analytics_source", "hs_analytics_source_data_1", "hs_v2_date_entered_marketingqualifiedlead", "notes_last_contacted", "hubspot_owner_id", "hs_lead_status", "hs_latest_sequence_enrolled_date", "hs_full_name_or_email"];
+      let rows = [], offset, total = 0, guard = 0;
+      do {
+        const input = { objectType: "CONTACT", filterGroups: [{ filters }], properties: props, sorts: [{ propertyName: "hs_v2_date_entered_marketingqualifiedlead", direction: "DESCENDING" }], limit: 200, chatInsights: HS_INSIGHTS };
+        if (offset) input.offset = offset;
+        const p = await callTool(HSP, "search_crm_objects", input);
+        rows = rows.concat(((p && p.results) || []).map(mqlParse)); total = (p && p.total) || rows.length;
+        offset = p && p.offset && rows.length < total ? p.offset : null; guard++;
+      } while (offset && guard < 3);
+      if (S.mql.key !== key) return;
+      S.mql = { key, rows, loading: false, err: "", at: Date.now(), total };
+    } catch (e) { console.error(e); if (S.mql.key === key) S.mql = { ...S.mql, loading: false, err: errText(e, HSP) }; }
+    renderMqls();
+  }
+  const triageOf = (id) => S.triage.get("mql-" + id);
+  function mqlVisible() {
+    const f = S.mqlF;
+    let rows = S.mql.rows.map((r) => ({ r, t: triageOf(r.id) }));
+    if (f.show === "triage") rows = rows.filter(({ t }) => !t);
+    else if (f.show !== "all") rows = rows.filter(({ t }) => t && t.status === f.show);
+    if (f.junk === "hide" && f.show === "triage") rows = rows.filter(({ r }) => !r.flags.junk.length);
+    if (f.junk === "school") rows = rows.filter(({ r }) => !r.flags.school);
+    const score = ({ r }) => (r.ev.hot ? 100 : 0) + (r.lastContacted ? 0 : 50) + Math.min(40, daysAgo(r.mqlAt) || 0);
+    rows.sort((a, b) => f.sort === "new" ? String(b.r.mqlAt).localeCompare(String(a.r.mqlAt)) : score(b) - score(a) || String(b.r.mqlAt).localeCompare(String(a.r.mqlAt)));
+    return rows;
+  }
+  function mqlShell() {
+    $("view-mqls").innerHTML = `<div class="page">
+      <div class="day-head"><div><div class="eyebrow"><span class="kind inb">Inbound</span></div><h1>MQLs</h1><div class="sub">Marketing-qualified leads from HubSpot that haven't booked a meeting. Respond to hand-raisers first.</div></div>
+        <div class="head-r"><div class="day-strip" id="mql-strip"></div><span class="conn-pill" id="mql-conn"></span></div></div>
+      <div id="mql-hero"></div>
+      <div class="panel">
+        <div class="panel-head list-tools">
+          <div class="filters">
+            <label class="lbl" for="mf-show">Show<select class="sel" id="mf-show">${[["triage", "To triage"], ["worked", "Worked"], ["nurture", "Nurture"], ["notfit", "Not a fit"], ["all", "All"]].map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></label>
+            <label class="lbl" for="mf-days">MQL since<select class="sel" id="mf-days">${[["30", "Last 30 days"], ["90", "Last 90 days"], ["180", "Last 6 months"]].map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></label>
+            <label class="lbl" for="mf-junk">Screening<select class="sel" id="mf-junk"><option value="hide">Hide likely junk</option><option value="show">Show everything</option><option value="school">Hide schools & gov</option></select></label>
+            <label class="lbl" for="mf-sort">Sort<select class="sel" id="mf-sort"><option value="hot">Respond first</option><option value="new">Newest</option></select></label>
+            <span class="result-note" id="mql-note"></span>
+          </div>
+          <div class="tools-r"><button class="icon-btn" type="button" data-act="mql-refresh" title="Refresh from HubSpot" aria-label="Refresh from HubSpot">${ic("sync")}</button></div>
+        </div>
+        <div id="mql-list"></div>
+      </div></div>`;
+    for (const [k, id] of [["show", "mf-show"], ["days", "mf-days"], ["junk", "mf-junk"], ["sort", "mf-sort"]]) $(id).value = S.mqlF[k];
+  }
+  function mqlRowHtml({ r, t }, compact) {
+    const d = daysAgo(r.mqlAt); const never = !r.lastContacted;
+    const late = r.ev.hot && never && d >= 1;
+    const nameLine = `<a class="m-name" href="${esc(hsContactUrl(r.id))}" target="_blank" rel="noopener">${esc(mqlName(r))}</a>`;
+    const who = [r.title, r.company || r.domain].filter(Boolean).join(" · ");
+    const chips = `${r.ev.hot ? '<span class="chip hotc">Hot</span>' : '<span class="chip">Warm</span>'}${r.flags.junk.map((j) => `<span class="chip bad">${esc(j)}</span>`).join("")}${r.flags.school ? '<span class="chip warn">School / gov</span>' : ""}${t ? `<span class="chip ok">${esc(t.status === "worked" ? "Worked" : t.status === "nurture" ? "Nurture" : "Not a fit" + (t.reason ? " · " + t.reason : ""))}</span>` : ""}`;
+    const contacted = never ? `<span class="${late ? "touch stale" : "touch"}">${late ? "Never contacted" : "Not contacted"}</span>` : `<span class="touch">Last ${esc(agoShort(r.lastContacted))} ago${r.seqAt ? " · sequence" : ""}</span>`;
+    const acts = !canWrite() ? "" : t ? `<button class="btn ghost sm-btn" type="button" data-act="mql-reopen" data-id="${esc(r.id)}">Reopen</button>${t.account_id && S.accounts.get(t.account_id) ? `<a class="btn ghost sm-btn" href="#account-${esc(t.account_id)}">Open account</a>` : ""}`
+      : S.notfit === r.id ? `<label class="sr" for="nf-${esc(r.id)}">Reason</label><select class="sel" id="nf-${esc(r.id)}" style="padding:4px 8px">${["Spam / fake", "Student", "Personal / no company", "Not our market", "Competitor", "Duplicate", "Other"].map((x) => `<option>${x}</option>`).join("")}</select><button class="btn sm-btn danger" type="button" data-act="mql-notfit-yes" data-id="${esc(r.id)}">Not a fit</button><button class="btn ghost sm-btn" type="button" data-act="mql-notfit-no">Cancel</button>`
+      : `<button class="btn sm-btn-solid" type="button" data-act="mql-work" data-id="${esc(r.id)}">${ic("check")} Work it</button><button class="btn ghost sm-btn" type="button" data-act="mql-nurture" data-id="${esc(r.id)}">Nurture</button><button class="btn ghost sm-btn" type="button" data-act="mql-notfit" data-id="${esc(r.id)}">Not a fit</button>`;
+    return `<li class="mrow ${late ? "late" : ""}">
+      <div class="m-main">${nameLine}<div class="m-who">${esc(who || "No title or company")}</div><div class="flags">${chips}</div></div>
+      <div class="m-what"><b>${esc(r.ev.label)}</b><span class="small muted" title="${esc(r.event)}">${esc([r.source && r.source.replace(/_/g, " ").toLowerCase(), r.sourceDetail].filter(Boolean).join(" · ").slice(0, 60))}</span></div>
+      <div class="m-when"><b class="num">${esc(agoShort(r.mqlAt))}</b><span class="small muted">${esc(fmtDate(localDay(r.mqlAt)))}</span></div>
+      <div class="m-touch">${contacted}<span class="small muted">${esc(HS_OWNER_NAME[r.owner] || (r.owner ? "Other owner" : "Unassigned"))}${r.leadStatus ? " · " + esc(r.leadStatus) : ""}</span></div>
+      <div class="m-acts">${acts}</div></li>`;
+  }
+  function renderMqls() {
+    if (S.route.view !== "mqls") return;
+    if (!$("mql-list")) mqlShell();
+    const own = mqlOwnerIds(); const key = (own ? own.join(",") : "all") + "|" + S.mqlF.days;
+    if (S.mql.key !== key && !S.mql.loading) setTimeout(() => loadMqls(false), 0);
+    const conn = $("mql-conn"); conn.className = "conn-pill " + (S.mql.err ? "bad" : S.mql.at ? "ok" : ""); conn.textContent = S.mql.err ? "HubSpot unavailable" : S.mql.at ? `HubSpot · updated ${fmtTime(new Date(S.mql.at).toISOString())}` : "Reading HubSpot…";
+    const list = $("mql-list");
+    if (!S.mcp) { list.innerHTML = `<div class="empty">Open the cockpit in claude.ai to read MQLs from HubSpot.</div>`; return; }
+    if (S.mql.err) { list.innerHTML = `<div class="empty"><span class="err">${esc(S.mql.err)}</span></div>`; $("mql-hero").innerHTML = ""; return; }
+    if (S.mql.loading || S.mql.key !== key) { list.innerHTML = `<div class="empty"><span class="spinner"></span><span>Reading MQLs from HubSpot…</span></div>`; return; }
+    const all = S.mql.rows; const open = all.filter((r) => !triageOf(r.id));
+    const hot = open.filter((r) => r.ev.hot && !r.flags.junk.length); const never = open.filter((r) => !r.lastContacted && !r.flags.junk.length);
+    const junk = open.filter((r) => r.flags.junk.length);
+    const m0 = today().slice(0, 8) + "01"; const workedMonth = [...S.triage.values()].filter((t) => t.kind === "mql" && t.status === "worked" && localDay(t.at) >= m0).length;
+    const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v}</b><span>${l}</span></div>`;
+    $("mql-strip").innerHTML = cell(open.length - junk.length, "to triage", "inb") + cell(hot.length, "hand-raisers", hot.length ? "bad" : "") + cell(never.length, "never contacted", never.length ? "bad" : "") + cell(junk.length, "likely junk") + cell(workedMonth, "worked this month", "good");
+    const first = hot.filter((r) => !r.lastContacted).sort((a, b) => String(a.mqlAt).localeCompare(String(b.mqlAt)));
+    $("mql-hero").innerHTML = first.length ? `<div class="upnext"><div class="un-main"><div class="un-lab">Respond first</div>
+        <div class="un-title">${first.length} hand-raiser${first.length === 1 ? "" : "s"} never got a reply</div>
+        <div class="un-when">Demo and contact requests with nothing logged. The oldest waited ${esc(agoShort(first[0].mqlAt))}.</div></div>
+      <div class="un-prep"><ul class="attn">${first.slice(0, 4).map((r) => `<li><div style="min-width:0"><a class="a-name" href="${esc(hsContactUrl(r.id))}" target="_blank" rel="noopener">${esc(mqlName(r))}</a><div class="a-why"><span>${esc([r.title, r.company || r.domain].filter(Boolean).join(" · ") || r.email)}</span><span>·</span><span class="hot">${esc(r.ev.label)} ${esc(agoShort(r.mqlAt))} ago</span></div></div>
+        <div class="a-side">${canWrite() ? `<button class="btn hero-btn" type="button" data-act="mql-work" data-id="${esc(r.id)}">${ic("check")} Work it</button>` : ""}</div></li>`).join("")}</ul></div></div>`
+      : `<div class="upnext quiet"><div class="un-main"><div class="un-lab">Respond first</div><div class="un-title">Every hand-raiser has been contacted</div><div class="un-when">Work the rest by fit, or mark junk so the queue stays honest.</div></div></div>`;
+    const rows = mqlVisible();
+    $("mql-note").textContent = `${rows.length} shown${S.mql.total > all.length ? ` · first ${all.length} of ${S.mql.total}` : ""}`;
+    list.innerHTML = rows.length ? `<ul class="mlist">${rows.map((x) => mqlRowHtml(x)).join("")}</ul>` : `<div class="empty"><span class="bubble">${S.mqlF.show === "triage" ? "Nothing left to triage." : "Nothing here yet."}</span>${S.mqlF.show === "triage" && junk.length && S.mqlF.junk === "hide" ? `<span class="small">${junk.length} likely junk hidden. Switch Screening to Show everything to review them.</span>` : ""}</div>`;
+  }
+  async function setTriage(kind, id, data) {
+    const key = `${kind}-${id}`;
+    return w(() => S.db.collection("triage").doc(key).set({ kind, ref: String(id), by: S.myOwner || S.meName || "", by_id: S.meId || null, at: nowIso(), ...data }));
+  }
+  async function workMql(id) {
+    const r = S.mql.rows.find((x) => x.id === id); if (!r || !canWrite()) return;
+    const ts = nowIso(); const name = mqlName(r); const owner = HS_OWNER_NAME[r.owner] === "David" ? "David" : HS_OWNER_NAME[r.owner] === "Jeremy" ? "Jeremy" : (S.myOwner || "Jeremy");
+    const contact = { id: "ch" + r.id, source: "hubspot", hubspot_id: r.id, name, title: r.title, email: r.email, phone: r.phone, status: r.lastContacted ? "Contacted" : "Not started", linkedin_sent: false, is_primary: true, added_at: ts };
+    const hit = findAccount({ domain: PERSONAL.test(r.domain) ? "" : r.domain, name: r.company });
+    let accId;
+    if (hit) {
+      accId = hit[0]; const a = hit[1];
+      const cs = (a.contacts || []).slice();
+      const dup = cs.find((c) => (c.email && r.email && c.email.toLowerCase() === r.email.toLowerCase()) || c.hubspot_id === r.id);
+      if (!dup) cs.push({ ...contact, is_primary: !cs.some((c) => c.is_primary) });
+      const cid = dup ? dup.id : contact.id;
+      const ok = await w(() => acctRef(accId).update({ contacts: cs, champion_id: a.champion_id || cid, inbound_at: ts, updated_at: ts })); if (!ok) return;
+      contact.id = cid;
+    } else {
+      accId = "ahs" + r.id;
+      const ok = await w(() => acctRef(accId).set({ owner, band: "outbound", stage: "Engaged", company_name: r.company || r.domain || name, domain: PERSONAL.test(r.domain) ? "" : r.domain, source: "inbound", inbound_at: ts, contacts: [contact], champion_id: contact.id,
+        sf_opportunity_id: null, amount: null, close_date: null, sf_owner: "", last_activity_date: null, created_at: ts, updated_at: ts, created_by: S.meId || null, created_by_name: S.myOwner || "" }));
+      if (!ok) return;
+    }
+    logActivity(accId, { type: "system", contact_id: contact.id, contact_name: name, summary: `MQL from HubSpot: ${r.ev.label}${r.event && r.ev.label !== r.event ? ` (${r.event.slice(0, 80)})` : ""}` });
+    await addTask(accId, r.ev.hot ? `Call ${r.first || name} about their ${r.ev.label.toLowerCase()}` : `Follow up with ${r.first || name}: ${r.ev.label}`, today(), contact.id, "manual");
+    await setTriage("mql", r.id, { status: "worked", account_id: accId });
+    toast(`${name} is on the board with a call task for today.`);
+  }
+
+  // ---- Signals ----
+  const HS_STAGE = { customer: "customer", "1031488013": "customer", "1031492181": "customer", "1031437579": "customer", "1089140038": "customer", "1095594672": "customer",
+    "1031315053": "opp", "1031492167": "opp", salesqualifiedlead: "opp", opportunity: "opp", "1031492166": "churned" };
+  const HS_STAGE_LABEL = { customer: "Customer", "1031488013": "New customer", "1031492181": "Renewal customer", "1031437579": "Potential churn", "1089140038": "Transferred to OEM", "1095594672": "Partner",
+    "1031315053": "IC scheduled", "1031492167": "IC completed", salesqualifiedlead: "SQL", opportunity: "Open opportunity", "1031492166": "Churned", lead: "Prospect", marketingqualifiedlead: "MQL", subscriber: "Subscriber", other: "Other", evangelist: "Evangelist" };
+  const STAGE_RANK = { customer: 4, opp: 3, churned: 2 };
+  function parseSignals(text) {
+    const out = [];
+    for (const chunk of String(text || "").split("ICP Intent Alert").slice(1)) {
+      const c = chunk.replace(/\\\//g, "/");
+      const m = /Intent Topic - (.*?) <[\s\S]*?profile\/company\/(-?\d+)\|([^>]*)>, has (.*?) employees, (.*?) revenue[\s\S]*?website of <https?:\/\/(?:www\.)?([^|>\s]+)[\s\S]*?primary industry of (.*?) and a sub-industry of (.*?)\.\s+\[(\d{4}-\d\d-\d\d)[ T](\d\d:\d\d)/.exec(c);
+      if (!m) continue;
+      out.push({ topic: decodeEnt(m[1]).trim(), zid: m[2], name: decodeEnt(m[3]).trim(), size: m[4].trim(), revenue: m[5].trim(), domain: normDomain(m[6]), industry: decodeEnt(m[7]).trim(), sub: decodeEnt(m[8]).trim(), date: m[9], time: m[10] });
+    }
+    return out;
+  }
+  const sizeLow = (s) => { const n = String(s).replace(/,/g, "").match(/\d+/); return n ? Number(n[0]) : 0; };
+  async function loadSignals(force) {
+    const key = S.sigF.days;
+    if (!S.mcp) return;
+    if (S.sig.loading && S.sig.key === key) return;
+    if (!force && S.sig.key === key && Date.now() - S.sig.at < 10 * 60e3) return;
+    S.sig = { ...S.sig, key, loading: true, err: "" }; renderSignals();
+    try {
+      const oldest = String(Math.floor(new Date(addDays(today(), -(Number(S.sigF.days) - 1)) + "T00:00:00").getTime() / 1000));
+      let alerts = [], cursor = null, guard = 0;
+      do {
+        const input = { channel_id: SIGNAL_CHANNEL, limit: 100, oldest, response_format: "concise" };
+        if (cursor) input.cursor = cursor;
+        const p = await callTool(SLACK, "slack_read_channel", input);
+        const text = typeof p === "string" ? p : p && (typeof p.messages === "string" ? p.messages : Array.isArray(p.messages) ? p.messages.map((m) => m.text || "").join("\n\nICP Intent Alert") : JSON.stringify(p));
+        alerts = alerts.concat(parseSignals(text));
+        const pi = (p && (p.pagination_info || p.next_cursor)) || ""; const cm = /cursor:\s*`([^`]+)`/.exec(String(pi));
+        cursor = p && p.next_cursor ? p.next_cursor : cm ? cm[1] : null; guard++;
+      } while (cursor && guard < 8);
+      const by = new Map();
+      for (const a of alerts) {
+        const g = by.get(a.zid) || { ...a, count: 0, topics: new Set(), first: a.date + " " + a.time, last: a.date + " " + a.time };
+        g.count++; g.topics.add(a.topic);
+        const ts = a.date + " " + a.time; if (ts > g.last) { g.last = ts; Object.assign(g, { size: a.size, revenue: a.revenue, domain: a.domain || g.domain }); } if (ts < g.first) g.first = ts;
+        by.set(a.zid, g);
+      }
+      const rows = [...by.values()].map((g) => ({ ...g, topics: [...g.topics] }));
+      S.sig = { ...S.sig, key, rows, loading: false, err: "", at: Date.now(), alerts: alerts.length };
+      renderSignals();
+      await checkSignalsInHubspot(rows);
+    } catch (e) { console.error(e); S.sig = { ...S.sig, loading: false, err: errText(e, SLACK) }; }
+    renderSignals();
+  }
+  async function checkSignalsInHubspot(rows) {
+    const doms = [...new Set(rows.map((r) => r.domain).filter((d) => d && !S.sig.hs.has(d)))];
+    try {
+      for (let i = 0; i < doms.length; i += 100) {
+        const chunk = doms.slice(i, i + 100);
+        const p = await callTool(HSP, "search_crm_objects", { objectType: "COMPANY", filterGroups: [{ filters: [{ propertyName: "domain", operator: "IN", values: chunk }] }], properties: ["name", "domain", "lifecyclestage", "hubspot_owner_id", "num_associated_deals"], limit: 200, chatInsights: HS_INSIGHTS });
+        for (const d of chunk) S.sig.hs.set(d, null);
+        for (const rec of (p && p.results) || []) {
+          const pr = rec.properties || {}; const d = normDomain(pr.domain); const cls = HS_STAGE[pr.lifecyclestage] || "known";
+          const cur = S.sig.hs.get(d);
+          if (!cur || (STAGE_RANK[cls] || 1) > (STAGE_RANK[cur.cls] || 1)) S.sig.hs.set(d, { cls, stage: HS_STAGE_LABEL[pr.lifecyclestage] || "In HubSpot", id: String(rec.id), name: pr.name || "", owner: pr.hubspot_owner_id || "" });
+        }
+      }
+      S.sig.hsErr = "";
+    } catch (e) { S.sig.hsErr = "Couldn't check HubSpot, so existing customers may appear as net new. " + errText(e, HSP); }
+  }
+  function sigStatus(g) {
+    const st = S.triage.get("sig-" + g.zid);
+    if (st) return { key: st.status, st };
+    const acc = findAccount({ zid: g.zid, domain: g.domain, name: g.name });
+    if (acc) return { key: "board", acc };
+    const hs = S.sig.hs.get(g.domain);
+    if (hs && hs.cls === "customer") return { key: "customer", hs };
+    if (hs && hs.cls === "opp") return { key: "opp", hs };
+    if (hs && hs.cls === "churned") return { key: "churned", hs };
+    return { key: "new", hs };
+  }
+  function sigScore(g, s) {
+    const n = sizeLow(g.size); let sc = 0;
+    sc += n >= 50 && n < 5000 ? 3 : n >= 20 ? 1 : n >= 5000 ? 1 : -2;
+    if (g.topics.some((t) => /^SMS/i.test(t))) sc += 2;
+    sc += Math.min(3, g.count - 1) * 2;
+    if (s.key === "churned") sc += 2;
+    if (s.hs && s.hs.cls === "known") sc += 0;
+    sc += g.last.slice(0, 10) === today() ? 1 : 0;
+    return sc;
+  }
+  function sigVisible() {
+    const f = S.sigF; const min = Number(f.size || 0);
+    return S.sig.rows.map((g) => { const s = sigStatus(g); return { g, s, score: sigScore(g, s) }; })
+      .filter(({ g, s }) => (f.show === "all" || (f.show === "known" ? ["customer", "opp", "board"].includes(s.key) : s.key === f.show)) && sizeLow(g.size) >= min && (f.topic === "all" || g.topics.some((t) => (f.topic === "sms" ? /^SMS/i : /Marketing/i).test(t))))
+      .sort((a, b) => b.score - a.score || b.g.last.localeCompare(a.g.last));
+  }
+  const SIG_LABEL = { new: "Net new", churned: "Former customer", customer: "Customer", opp: "Open opportunity", board: "On the board", worked: "Worked", ondeck: "On-Deck", dismissed: "Dismissed" };
+  function sigShell() {
+    $("view-signals").innerHTML = `<div class="page">
+      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outbound</span></div><h1>Signals</h1><div class="sub">Staffing and HR companies researching business texting, from ZoomInfo intent alerts in #intent-signals.</div></div>
+        <div class="head-r"><div class="day-strip" id="sig-strip"></div><span class="conn-pill" id="sig-conn"></span></div></div>
+      <div id="sig-hero"></div>
+      <div class="panel">
+        <div class="panel-head list-tools">
+          <div class="filters">
+            <label class="lbl" for="sf-show">Show<select class="sel" id="sf-show">${[["new", "Net new"], ["churned", "Former customers"], ["known", "Customers, opps & on the board"], ["ondeck", "Sent to On-Deck"], ["worked", "Worked"], ["dismissed", "Dismissed"], ["all", "All"]].map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></label>
+            <label class="lbl" for="sf-days">Window<select class="sel" id="sf-days">${[["1", "Today"], ["3", "Last 3 days"], ["7", "Last 7 days"]].map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></label>
+            <label class="lbl" for="sf-size">Size<select class="sel" id="sf-size">${[["0", "Any size"], ["20", "20+ employees"], ["50", "50+ employees"], ["100", "100+ employees"]].map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></label>
+            <label class="lbl" for="sf-topic">Topic<select class="sel" id="sf-topic"><option value="all">All topics</option><option value="sms">SMS</option><option value="mkt">Marketing SMS</option></select></label>
+            <span class="result-note" id="sig-note"></span>
+          </div>
+          <div class="tools-r"><button class="icon-btn" type="button" data-act="sig-refresh" title="Refresh from Slack" aria-label="Refresh from Slack">${ic("sync")}</button></div>
+        </div>
+        <div id="sig-list"></div>
+      </div></div>`;
+    for (const [k, id] of [["show", "sf-show"], ["days", "sf-days"], ["size", "sf-size"], ["topic", "sf-topic"]]) $(id).value = S.sigF[k];
+  }
+  function sigRowHtml({ g, s }) {
+    const zi = `https://app.zoominfo.com/#/apps/profile/company/${encodeURIComponent(g.zid)}`;
+    const small = sizeLow(g.size) < 50;
+    const status = s.key === "board" ? `<a class="chip ok" href="#account-${esc(s.acc[0])}">On the board ↗</a>`
+      : s.hs && ["customer", "opp", "churned"].includes(s.hs.cls) ? `<a class="chip ${s.hs.cls === "churned" ? "warn" : "ok"}" href="${esc(hsCompanyUrl(s.hs.id))}" target="_blank" rel="noopener" title="${esc(s.hs.name)}">${esc(s.hs.stage)} ↗</a>`
+      : s.hs && s.hs.cls === "known" ? `<a class="chip" href="${esc(hsCompanyUrl(s.hs.id))}" target="_blank" rel="noopener">In HubSpot · ${esc(s.hs.stage)} ↗</a>` : `<span class="chip">Not in HubSpot</span>`;
+    const done = ["worked", "ondeck", "dismissed"].includes(s.key);
+    const acts = !canWrite() ? "" : done ? `<span class="chip ok">${esc(SIG_LABEL[s.key])}${s.st && s.st.reason ? " · " + esc(s.st.reason) : ""}</span><button class="btn ghost sm-btn" type="button" data-act="sig-reopen" data-id="${esc(g.zid)}">Reopen</button>`
+      : S.notfit === "sig" + g.zid ? `<label class="sr" for="sd-${esc(g.zid)}">Reason</label><select class="sel" id="sd-${esc(g.zid)}" style="padding:4px 8px">${["Too small", "Not our market", "Already a customer", "Not now", "Other"].map((x) => `<option>${x}</option>`).join("")}</select><button class="btn sm-btn danger" type="button" data-act="sig-dismiss-yes" data-id="${esc(g.zid)}">Dismiss</button><button class="btn ghost sm-btn" type="button" data-act="mql-notfit-no">Cancel</button>`
+      : s.key === "board" ? `<a class="btn ghost sm-btn" href="#account-${esc(s.acc[0])}">Open account</a>`
+      : `<button class="btn sm-btn-solid" type="button" data-act="sig-find" data-id="${esc(g.zid)}" ${ziReady() ? "" : "disabled"}>${ic("search")} Find contacts</button><button class="btn ghost sm-btn" type="button" data-act="sig-ondeck" data-id="${esc(g.zid)}">On-Deck</button><button class="btn ghost sm-btn" type="button" data-act="sig-dismiss" data-id="${esc(g.zid)}">Dismiss</button>`;
+    return `<li class="mrow">
+      <div class="m-main"><a class="m-name" href="${esc(zi)}" target="_blank" rel="noopener">${esc(g.name)}</a><div class="m-who">${esc(g.sub)} · <a href="https://${esc(g.domain)}" target="_blank" rel="noopener">${esc(g.domain)}</a></div>
+        <div class="flags">${g.topics.map((t) => `<span class="chip ${/^SMS/i.test(t) ? "hotc" : ""}">${esc(t)}</span>`).join("")}${g.count > 1 ? `<span class="chip hotc">${g.count} signals</span>` : ""}${small ? '<span class="chip warn">Small</span>' : ""}</div></div>
+      <div class="m-what"><b class="num">${esc(g.size)}</b><span class="small muted">employees · ${esc(g.revenue)}</span></div>
+      <div class="m-when"><b>${esc(g.last.slice(0, 10) === today() ? "Today" : fmtDate(g.last.slice(0, 10)))}</b><span class="small muted num">${esc(g.last.slice(11))}</span></div>
+      <div class="m-touch">${status}</div>
+      <div class="m-acts">${acts}</div></li>`;
+  }
+  function renderSignals() {
+    if (S.route.view !== "signals") return;
+    if (!$("sig-list")) sigShell();
+    if (S.sig.key !== S.sigF.days && !S.sig.loading) setTimeout(() => loadSignals(false), 0);
+    const conn = $("sig-conn"); conn.className = "conn-pill " + (S.sig.err ? "bad" : S.sig.at ? "ok" : ""); conn.textContent = S.sig.err ? "Slack unavailable" : S.sig.at ? `#intent-signals · updated ${fmtTime(new Date(S.sig.at).toISOString())}` : "Reading Slack…";
+    const list = $("sig-list");
+    if (!S.mcp) { list.innerHTML = `<div class="empty">Open the cockpit in claude.ai to read #intent-signals.</div>`; return; }
+    if (S.sig.err) { list.innerHTML = `<div class="empty"><span class="err">${esc(S.sig.err)}</span></div>`; $("sig-hero").innerHTML = ""; return; }
+    if (S.sig.loading && !S.sig.rows.length || S.sig.key !== S.sigF.days) { list.innerHTML = `<div class="empty"><span class="spinner"></span><span>Reading #intent-signals…</span></div>`; return; }
+    const all = S.sig.rows.map((g) => ({ g, s: sigStatus(g) }));
+    const cnt = (k) => all.filter((x) => x.s.key === k).length;
+    const fit = all.filter(({ g, s }) => s.key === "new" && sizeLow(g.size) >= 50).length;
+    const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v}</b><span>${l}</span></div>`;
+    $("sig-strip").innerHTML = cell(S.sig.rows.length, "companies", "") + cell(fit, "net new, 50+", "good") + cell(cnt("churned"), "former customers", cnt("churned") ? "deal" : "") + cell(cnt("customer") + cnt("opp"), "customers & opps") + cell(cnt("worked") + cnt("ondeck"), "worked");
+    const best = all.filter(({ s }) => s.key === "new" || s.key === "churned").map((x) => ({ ...x, score: sigScore(x.g, x.s) })).filter((x) => sizeLow(x.g.size) >= 50).sort((a, b) => b.score - a.score || b.g.last.localeCompare(a.g.last)).slice(0, 5);
+    $("sig-hero").innerHTML = best.length ? `<div class="upnext"><div class="un-main"><div class="un-lab">Today's best signals</div>
+        <div class="un-title">Start with these ${best.length}</div>
+        <div class="un-when">Net new or former customers, 50+ employees, ranked by repeat signals and the SMS topic. Aim for 1–2 a day each.</div>${S.sig.hsErr ? `<div class="err" style="margin-top:8px">${esc(S.sig.hsErr)}</div>` : ""}</div>
+      <div class="un-prep"><ul class="attn">${best.map(({ g, s }) => `<li><div style="min-width:0"><a class="a-name" href="https://app.zoominfo.com/#/apps/profile/company/${esc(g.zid)}" target="_blank" rel="noopener">${esc(g.name)}</a><div class="a-why"><span>${esc(g.size)} emp</span><span>·</span><span>${esc(g.topics.join(", "))}</span>${g.count > 1 ? `<span>·</span><span class="hot">${g.count} signals</span>` : ""}${s.key === "churned" ? '<span>·</span><span class="hot">Former customer</span>' : ""}</div></div>
+        <div class="a-side">${canWrite() ? `<button class="btn hero-btn" type="button" data-act="sig-find" data-id="${esc(g.zid)}" ${ziReady() ? "" : "disabled"}>${ic("search")} Find contacts</button>` : ""}</div></li>`).join("")}</ul></div></div>`
+      : `<div class="upnext quiet"><div class="un-main"><div class="un-lab">Today's best signals</div><div class="un-title">No new fits in this window</div><div class="un-when">Widen the window or the size filter, or check back after the next alerts.</div></div></div>`;
+    const rows = sigVisible();
+    $("sig-note").textContent = `${rows.length} of ${S.sig.rows.length} companies · ${S.sig.alerts || 0} alerts`;
+    list.innerHTML = rows.length ? `<ul class="mlist">${rows.map(sigRowHtml).join("")}</ul>` : `<div class="empty"><span class="bubble">Nothing matches these filters.</span></div>`;
+  }
+  function sigFind(zid) {
+    const g = S.sig.rows.find((x) => x.zid === zid); if (!g || !ziReady()) return;
+    const owner = S.myOwner || "Jeremy";
+    const job = Object.assign(newJob(g.domain || g.name, owner), { signal: { zid: g.zid, topics: g.topics, count: g.count, last: g.last }, listInfo: { sub: g.sub, emp: sizeLow(g.size) } });
+    S.jobs.unshift(job);
+    location.hash = "#prospect";
+    setTimeout(() => { chooseCompany(job, { id: g.zid, name: g.name, domain: g.domain, employees: sizeLow(g.size), city: "", state: "", country: "", managed: false }); renderJobs(); const j = $("jobs"); if (j) j.scrollIntoView({ behavior: "smooth", block: "start" }); }, 0);
+  }
+  async function sigOnDeck(zid) {
+    const g = S.sig.rows.find((x) => x.zid === zid); if (!g) return;
+    let id = "od-" + slug(g.name); if (S.ondeck.has(id)) id += "-" + zid;
+    const ok = await w(() => odRef(id).set({ id, name: g.name, domain: g.domain, sub_industry: g.sub, employee_count: sizeLow(g.size), rank: 0, list_name: "Intent signals", signal: { topics: g.topics, last: g.last, count: g.count }, zoominfo_company_id: g.zid, created_at: nowIso(), created_by: S.meId || null }));
+    if (ok) { await setTriage("sig", zid, { status: "ondeck" }); toast(`${g.name} added to On-Deck (list: Intent signals).`); }
+  }
+
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
     if (e.target.closest("#theme-btn")) { S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]; store.set("theme", S.theme); applyTheme(S.theme); return; }
@@ -2453,6 +2843,19 @@ a.un-title:hover { text-decoration: underline; }
       case "cl-close": closeCallLog(); break;
       case "tl-all": S.tlAll = true; renderTimeline(); break;
       case "cal-refresh": loadCalendar(true); break;
+      case "mql-refresh": loadMqls(true); break;
+      case "sig-refresh": S.sig.hs = new Map(); loadSignals(true); break;
+      case "mql-work": b.disabled = true; await workMql(id); renderMqls(); break;
+      case "mql-nurture": if (await setTriage("mql", id, { status: "nurture" })) toast("Moved to Nurture."); break;
+      case "mql-notfit": S.notfit = id; renderMqls(); break;
+      case "mql-notfit-no": S.notfit = null; renderMqls(); renderSignals(); break;
+      case "mql-notfit-yes": { const sel = $("nf-" + id); S.notfit = null; await setTriage("mql", id, { status: "notfit", reason: sel ? sel.value : "" }); break; }
+      case "mql-reopen": await w(() => S.db.collection("triage").doc("mql-" + id).delete()); break;
+      case "sig-find": sigFind(id); break;
+      case "sig-ondeck": b.disabled = true; await sigOnDeck(id); break;
+      case "sig-dismiss": S.notfit = "sig" + id; renderSignals(); break;
+      case "sig-dismiss-yes": { const sel = $("sd-" + id); S.notfit = null; await setTriage("sig", id, { status: "dismissed", reason: sel ? sel.value : "" }); break; }
+      case "sig-reopen": await w(() => S.db.collection("triage").doc("sig-" + id).delete()); break;
       case "compose-close": closeCompose(); break;
       case "compose-send": readCompose(); if (S.compose) { S.compose.confirming = true; S.compose.err = ""; renderCompose(); } break;
       case "compose-send-no": if (S.compose) { S.compose.confirming = false; renderCompose(); } break;
@@ -2527,6 +2930,10 @@ a.un-title:hover { text-decoration: underline; }
       $("cp-subject").value = cp.subject; $("cp-body").value = cp.body; renderCompose(); return;
     }
     if (el.id === "cp-follow" || el.id === "cp-days") { readCompose(); return; }
+    const mfMap = { "mf-show": "show", "mf-days": "days", "mf-junk": "junk", "mf-sort": "sort" };
+    if (mfMap[el.id]) { S.mqlF[mfMap[el.id]] = el.value; storeJ.set("mqlF", S.mqlF); renderMqls(); return; }
+    const sfMap = { "sf-show": "show", "sf-days": "days", "sf-size": "size", "sf-topic": "topic" };
+    if (sfMap[el.id]) { S.sigF[sfMap[el.id]] = el.value; storeJ.set("sigF", S.sigF); renderSignals(); return; }
     const odMap = { "od-status": "status", "od-sub": "sub", "od-list": "list" };
     if (odMap[el.id]) { S.odF[odMap[el.id]] = el.value; storeJ.set("odF", S.odF); renderOndeck(); return; }
     if (el.id === "od-all") { const byName = accountsByName(); for (const { id, st } of odVisible(byName)) if (st.key !== "added") el.checked ? S.odSel.add(id) : S.odSel.delete(id); renderOndeck(); return; }
@@ -2619,7 +3026,7 @@ a.un-title:hover { text-decoration: underline; }
     }
   });
 
-  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); renderProspect(); renderEmailSettings(); }
+  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); renderProspect(); renderEmailSettings(); renderMqls(); renderSignals(); }
 
   // ---------- boot ----------
   S.route = parseHash(); showView(S.route);
@@ -2644,6 +3051,7 @@ a.un-title:hover { text-decoration: underline; }
       const settle = () => { if (S.loaded.a && S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } };
       db.collection("accounts").limit(1000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; settle(); renderAll(); }, onErr);
       db.collection("tasks").limit(1000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; settle(); renderAll(); }, onErr);
+      db.collection("triage").limit(1000).onSnapshot((snap) => { S.triage = new Map(snap.docs.map((d) => [d.id, d.data()])); renderMqls(); renderSignals(); }, () => {});
       db.collection("templates").limit(200).onSnapshot((snap) => { S.templates = new Map(snap.docs.map((d) => [d.id, d.data()])); renderEmailSettings(); }, () => {});
       db.collection("signatures").limit(50).onSnapshot((snap) => { S.sigs = new Map(snap.docs.map((d) => [d.id, d.data()])); S._sigFor = null; renderEmailSettings(); }, () => {});
       db.collection("ondeck").limit(1000).onSnapshot((snap) => { S.ondeck = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.o = true; renderProspect(); }, () => { S.loaded.o = true; renderProspect(); });
