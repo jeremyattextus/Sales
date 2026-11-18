@@ -540,6 +540,12 @@ a.un-title:hover { text-decoration: underline; }
 @media (max-width: 600px) { .mrow { grid-template-columns: minmax(0, 1fr); } }
 .nav a { padding: 7px 9px; font-size: 13.5px; }
 @media (max-width: 1440px) and (min-width: 641px) { .brand span { display: none; } }
+
+.src-tag { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-head); font-size: 11px; padding: 1px 8px 1px 6px; border-radius: 999px; text-decoration: none; white-space: nowrap; }
+.src-tag svg.i { width: 11px; height: 11px; }
+.src-tag.in { background: var(--gong-soft); color: var(--gong); }
+.src-tag.out { background: var(--tgt-soft); color: var(--tgt-ink); }
+.src-tag:hover { filter: brightness(.95); text-decoration: underline; }
 </style>
 
 <header class="bar">
@@ -747,10 +753,11 @@ a.un-title:hover { text-decoration: underline; }
       if (me && me.responseStatus === "declined") continue;
       if (!(e.start && e.start.dateTime)) { if (e.start && e.start.date) allDay.push({ id: e.id, title: e.summary || "(busy)", owner, ooo: e.eventType === "OUT_OF_OFFICE" }); continue; }
       const others = att.filter((x) => { const em = (x.email || "").toLowerCase(); return em && em !== email && !x.resource && !em.includes("resource.calendar.google.com"); });
-      const extDomains = [...new Set(others.map((x) => (x.email || "").toLowerCase()).filter((em) => !em.endsWith("@textus.com")).map((em) => em.split("@")[1]).filter(Boolean))];
+      const extEmails = [...new Set(others.map((x) => (x.email || "").toLowerCase()).filter((em) => em.includes("@") && !em.endsWith("@textus.com")))];
+      const extDomains = [...new Set(extEmails.map((em) => em.split("@")[1]).filter(Boolean))];
       const cd = e.conferenceData || {};
       const join = (cd.videoEntryPoint && cd.videoEntryPoint.uri) || ((cd.entryPoints || []).find((x) => x.entryPointType === "video") || {}).uri || (/^https?:\/\//i.test(e.location || "") ? e.location : "") || e.hangoutLink || "";
-      timed.push({ id: e.id, s: e.start.dateTime, e: (e.end && e.end.dateTime) || e.start.dateTime, title: e.summary || "(busy)", link: e.htmlLink || "", join, owners: [owner], mtg: others.length > 0, extDomains, ooo: e.eventType === "OUT_OF_OFFICE", focus: e.eventType === "FOCUS_TIME" });
+      timed.push({ id: e.id, s: e.start.dateTime, e: (e.end && e.end.dateTime) || e.start.dateTime, title: e.summary || "(busy)", link: e.htmlLink || "", join, owners: [owner], mtg: others.length > 0, extDomains, extEmails, ooo: e.eventType === "OUT_OF_OFFICE", focus: e.eventType === "FOCUS_TIME" });
     }
     return { timed, allDay };
   }
@@ -782,6 +789,7 @@ a.un-title:hover { text-decoration: underline; }
     if (S.cal.key !== key) return; // filter changed mid-load
     S.cal = { ...S.cal, events: [...byId.values()].sort((a, b) => new Date(a.s) - new Date(b.s)), allDay, loading: false, errs, at: Date.now() };
     renderSchedule();
+    loadMeetingSources(S.cal.events);
   }
   const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(/\s/g, "").toLowerCase();
   // Day strip + Up next card, both driven by the calendar and the task counts.
@@ -830,9 +838,13 @@ a.un-title:hover { text-decoration: underline; }
         ["Open tasks", String(openN)],
         ["Last touch", a.last_touch_at ? `${agoLabel(a.last_touch_at)} · ${TOUCH_LABEL[a.last_touch_type] || ""}` : a.last_activity_date ? `SF ${fmtDate(a.last_activity_date)}` : "None yet"],
       ];
+      const ms = meetingSource(ev); if (ms) facts.unshift(["Lead source", ms.src.label + (ms.detail ? ` · ${ms.detail}` : "")]);
       prep = `<div class="un-prep"><div class="un-acct"><span class="kind ${a.band === "deal" ? "deal" : "tgt"}">${a.band === "deal" ? "Deal" : "Target"}</span><a href="#account-${esc(accId)}">${esc(a.company_name)}</a></div>
         <dl class="un-facts">${facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>`;
-    } else if (ev.extDomains.length) prep = `<div class="un-prep"><div class="small un-muted">External · ${esc(ev.extDomains.join(", "))} · not on the board</div></div>`;
+    } else if (ev.extDomains.length) {
+      const ms = meetingSource(ev);
+      prep = `<div class="un-prep">${ms ? `<dl class="un-facts"><div><dt>Lead source</dt><dd>${esc(ms.src.label)}${ms.detail ? ` · ${esc(ms.detail)}` : ""}</dd></div><div><dt>Guest</dt><dd><a href="${esc(hsContactUrl(ms.id))}" target="_blank" rel="noopener" style="color:#FFFFFF">${esc(ms.name)}</a>${ms.title ? ` · ${esc(ms.title)}` : ""}</dd></div>${ms.lastForm ? `<div><dt>Last form</dt><dd>${esc(mqlEvent(ms.lastForm).label)}</dd></div>` : ""}</dl>` : ""}<div class="small un-muted">External · ${esc(ev.extDomains.join(", "))} · not on the board</div></div>`;
+    }
     el.innerHTML = `<div class="upnext"><div class="un-main"><div class="un-lab">${cur ? "In progress" : isToday ? "Up next" : "First up tomorrow"}${S.cal.events.length && calOwners().length > 1 ? ` · ${ev.owners.join(" & ")}` : ""}</div>
         <a class="un-title" href="${esc(ev.link)}" target="_blank" rel="noopener">${esc(ev.title)}</a><div class="un-when num">${esc(when)}</div>
         <div class="un-actions">${ev.join ? `<a class="btn un-btn" href="${esc(ev.join)}" target="_blank" rel="noopener">Join meeting</a>` : ""}${a ? `<a class="btn un-btn ghosty" href="#account-${esc(accId)}">Open account</a>` : ""}</div></div>${prep}</div>`;
@@ -859,7 +871,7 @@ a.un-title:hover { text-decoration: underline; }
       return `<li class="ev ${state} ${e.mtg ? "mtg" : "solo"} ${e.extDomains.length ? "ext" : ""}">
         <span class="ev-t num">${esc(fmtTime(e.s))}</span>
         <div class="ev-main"><a class="ev-title" href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.title)}</a>
-          <div class="ev-meta"><span class="small muted num">${esc(fmtTime(e.s))}–${esc(fmtTime(e.e))}</span>${owners.length > 1 ? e.owners.map((o) => `<span class="owner-dot" title="${esc(o)}">${esc(initial(o))}</span>`).join("") : ""}${accs}${e.extDomains.length && !accs ? `<span class="chip">External</span>` : ""}${e.join && state !== "past" ? `<a class="join-link" href="${esc(e.join)}" target="_blank" rel="noopener">Join</a>` : ""}</div></div></li>`;
+          <div class="ev-meta"><span class="small muted num">${esc(fmtTime(e.s))}–${esc(fmtTime(e.e))}</span>${owners.length > 1 ? e.owners.map((o) => `<span class="owner-dot" title="${esc(o)}">${esc(initial(o))}</span>`).join("") : ""}${accs}${e.extDomains.length && !accs ? `<span class="chip">External</span>` : ""}${srcTag(e)}${e.join && state !== "past" ? `<a class="join-link" href="${esc(e.join)}" target="_blank" rel="noopener">Join</a>` : ""}</div></div></li>`;
     };
     // Weave in a Now line and open stretches (30+ min, 8am–6pm) so free call time is visible.
     const out = []; let nowPlaced = !isToday;
@@ -2800,6 +2812,52 @@ a.un-title:hover { text-decoration: underline; }
     if (ok) { await setTriage("sig", zid, { status: "ondeck" }); toast(`${g.name} added to On-Deck (list: Intent signals).`); }
   }
 
+
+  // ---------- Meeting lead source (HubSpot contact lookup by guest email) ----------
+  S.calSrc = new Map();
+  const SRC_OUT = /zoominfo|interseller|apollo|seamless|insideview|^sales$|sales-created|^list|purchased|outbound tool|website visitor id|list \/ import|salesforce-created/i;
+  const SRC_LABEL = { "Web-Organic Search": "Organic search", "Web-Organic": "Organic search", "Web-Advertising": "Paid ads", "Paid Advertising": "Paid ads", "Google AdWords": "Paid ads", "Advertisement": "Paid ads", "Web-Direct": "Direct / website", "Website": "Website", "Web": "Website", "Web-Referrals": "Web referral", "Web-Referral": "Web referral", "Web-AI Referral": "AI referral", "Web-Social": "Social", "Social-Paid": "Paid social", "Social-Organic": "Organic social", "Inbound Call/Email": "Inbound call / email", "Zoominfo": "ZoomInfo", "seamless.ai": "Seamless.ai", "Sales": "Sales-sourced", "Sales-Created": "Sales-sourced", "List": "List", "List / Import": "List / import", "Purchased List": "Purchased list", "Partner/Referral": "Partner / referral", "3rd Party Referral": "Partner / referral", "External Referral": "Referral", "Employee Referral": "Employee referral", "Trade Show": "Event", "In Person Event": "Event", "Virtual Event": "Webinar / virtual event", "Events": "Event", "TextUs Platform": "TextUs platform", "Self Service": "Self-service signup", "Salesforce AppExchange Lead": "AppExchange", "Email": "Email" };
+  const HS_ORIG = { ORGANIC_SEARCH: "Organic search", PAID_SEARCH: "Paid ads", DIRECT_TRAFFIC: "Direct / website", REFERRALS: "Web referral", SOCIAL_MEDIA: "Organic social", PAID_SOCIAL: "Paid social", EMAIL_MARKETING: "Email", OTHER_CAMPAIGNS: "Campaign", AI_REFERRALS: "AI referral" };
+  function srcFromContact(p) {
+    const ls = p.leadsource || "";
+    if (ls && ls !== "Other" && !/^MSFT_TEST|^SFDC-dup/i.test(ls)) {
+      const label = SRC_LABEL[ls] || ls.replace(/\|.*$/, "").replace(/^SFDC-(DM|IN)/, "Salesforce app");
+      return { label, raw: ls, how: "Lead Source", out: SRC_OUT.test(ls) };
+    }
+    const acq = p.acquisition_source || "";
+    if (acq && !/unmapped|other/i.test(acq)) return { label: SRC_LABEL[acq] || acq, raw: acq, how: "Acquisition Source", out: SRC_OUT.test(acq) };
+    const orig = p.hs_analytics_source || "";
+    if (orig && orig !== "OFFLINE") return { label: HS_ORIG[orig] || orig.replace(/_/g, " ").toLowerCase(), raw: orig, how: "Original Source", out: false };
+    if (orig === "OFFLINE") return { label: "Imported / sales-created", raw: p.hs_analytics_source_data_1 || "Offline", how: "Original Source", out: true };
+    return null;
+  }
+  async function loadMeetingSources(events) {
+    if (!S.mcp) return;
+    const need = [...new Set(events.flatMap((e) => e.extEmails || []))].filter((em) => !S.calSrc.has(em));
+    if (!need.length) return;
+    for (const em of need) S.calSrc.set(em, { pending: true });
+    try {
+      for (let i = 0; i < need.length; i += 100) {
+        const chunk = need.slice(i, i + 100);
+        const p = await callTool(HSP, "search_crm_objects", { objectType: "CONTACT", filterGroups: [{ filters: [{ propertyName: "email", operator: "IN", values: chunk }] }],
+          properties: ["email", "firstname", "lastname", "jobtitle", "leadsource", "lead_source_detail", "acquisition_source", "hs_analytics_source", "hs_analytics_source_data_1", "recent_conversion_event_name", "lifecyclestage"], limit: 200, chatInsights: HS_INSIGHTS });
+        for (const em of chunk) S.calSrc.set(em, null);
+        for (const rec of (p && p.results) || []) {
+          const pr = rec.properties || {}; const em = String(pr.email || "").toLowerCase(); if (!em) continue;
+          const src = srcFromContact(pr);
+          S.calSrc.set(em, { id: String(rec.id), name: `${pr.firstname || ""} ${pr.lastname || ""}`.trim() || em, title: pr.jobtitle || "", src, detail: pr.lead_source_detail || pr.hs_analytics_source_data_1 || "", lastForm: pr.recent_conversion_event_name || "" });
+        }
+      }
+    } catch (e) { console.error("meeting sources", e); for (const em of need) if (S.calSrc.get(em) && S.calSrc.get(em).pending) S.calSrc.delete(em); return; }
+    renderSchedule();
+  }
+  // The guest whose source we show: first external guest HubSpot knows with a source.
+  function meetingSource(e) {
+    for (const em of e.extEmails || []) { const r = S.calSrc.get(em); if (r && r.src) return { ...r, email: em }; }
+    return null;
+  }
+  function srcTip(r) { return [`${r.src.how}: ${r.src.raw}`, r.detail ? `Detail: ${r.detail}` : "", r.lastForm ? `Last form: ${r.lastForm}` : "", `Guest: ${r.name}${r.title ? ", " + r.title : ""}`].filter(Boolean).join("\n"); }
+  const srcTag = (e) => { const r = meetingSource(e); return r ? `<a class="src-tag ${r.src.out ? "out" : "in"}" href="${esc(hsContactUrl(r.id))}" target="_blank" rel="noopener" title="${esc(srcTip(r))}">${ic(r.src.out ? "out" : "spark")}${esc(r.src.label)}</a>` : ""; };
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
     if (e.target.closest("#theme-btn")) { S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]; store.set("theme", S.theme); applyTheme(S.theme); return; }
