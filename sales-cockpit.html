@@ -30,7 +30,7 @@
   --deal-soft: #E1F2FF; --deal-ink: #0A5E99;
   --tgt-soft: #DDF8EC; --tgt-ink: #0B7A4B;
   --c-call: #0A78C2; --c-li: #0E9A5F; --c-email: #B04FCC;
-  --k-int: #6250d6; --k-ext: #eb6834; --k-deal: #0A78C2; --k-inb: #c98500; --k-open: #0E9A5F;
+  --k-int: #6250d6; --k-ext: #eb6834; --k-deal: #0A78C2; --k-inb: #c98500; --k-adm: #9AA3AE; --k-open: #0E9A5F;
   --bar: #1D4277; --bar-ink: #FFFFFF; --bar-muted: #AFC3E2; --bar-seg: #16365F; --bar-seg-on: #FFFFFF; --bar-seg-on-ink: #1D4277;
   --font-head: 'Alexandria', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Raleway', 'Helvetica Neue', Arial, sans-serif;
@@ -42,7 +42,7 @@
     --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
     --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
     --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8; --k-int: #9085e9; --k-ext: #d95926; --k-deal: #2E9BE6; --k-inb: #c98500; --k-open: #1FAF72;
+    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8; --k-int: #9085e9; --k-ext: #d95926; --k-deal: #2E9BE6; --k-inb: #c98500; --k-adm: #5E6B80; --k-open: #1FAF72;
     --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
     color-scheme: dark;
   }
@@ -51,7 +51,7 @@
   --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
   --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
   --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8; --k-int: #9085e9; --k-ext: #d95926; --k-deal: #2E9BE6; --k-inb: #c98500; --k-open: #1FAF72;
+  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8; --k-int: #9085e9; --k-ext: #d95926; --k-deal: #2E9BE6; --k-inb: #c98500; --k-adm: #5E6B80; --k-open: #1FAF72;
   --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
   color-scheme: dark;
 }
@@ -626,6 +626,8 @@ table.reps { min-width: 420px; }
 .cap-facts dt { font-size: 11.5px; color: var(--muted); }
 .cap-facts dd { margin: 2px 0 0; font-weight: 600; color: var(--heading); font-size: 14px; }
 .cap-l { margin: 10px 0 2px; }
+.cap-away { margin-bottom: 12px; font-size: 13px; }
+.cap-words .field { width: 100%; }
 .cap-form { display: grid; gap: 12px; }
 a.ds { text-decoration: none; color: inherit; }
 a.ds:hover { border-color: var(--blue); }
@@ -894,7 +896,7 @@ a.ds:hover { border-color: var(--blue); }
     const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v == null ? "–" : v}</b><span>${l}</span></div>`;
     const solo = S.myOwner && S.owner !== "all" ? (S.owner === "mine" ? S.myOwner : otherOwner()) : null;
     const op = solo && isToday ? openToday(solo) : null;
-    const opCell = solo && isToday ? `<a class="ds ${op != null && op < 1 ? "bad" : ""}" href="#dash" title="Workday minus meetings, prep, and estimated deal and inbound work. Assumptions are in Settings."><b class="num">${op == null ? "–" : hrs(op)}</b><span>open for outbound</span></a>` : "";
+    const opCell = solo && isToday ? `<a class="ds ${op != null && op < 1 ? "bad" : ""}" href="#dash" title="Workday minus meetings, prep, lunch and personal blocks, admin, and estimated deal and inbound work. Assumptions are in Settings."><b class="num">${op == null ? "–" : hrs(op)}</b><span>open for outbound</span></a>` : "";
     el.innerHTML = (isToday ? cell(left, left === 1 ? "meeting left" : "meetings left") : cell(evs ? evs.length : null, "meetings tomorrow")) + cell(ext, "external") + opCell + cell(c.due, "tasks due") + cell(c.over, "overdue", c.over ? "bad" : "");
   }
   function accountForEvent(e) {
@@ -3336,10 +3338,14 @@ a.ds:hover { border-color: var(--blue); }
   // Measured: Google Calendar meetings, checked against Zoom (actual length, who joined). Estimated: deal work, quoting, inbound follow-up.
   const ZOOM = "Zoom for Claude";
   const OWNER_FULL = { Jeremy: ["jeremy", "o'hara"], David: ["david", "walker"] };
-  const CAP_DEF = { hours: { Jeremy: 40, David: 40 }, ext_prep_min: 10, noshow_min: 25, inbound_min: 20, sq_h: 0.5, proposal_h: 1, negotiating_h: 1.5, quote_h: 1 };
+  const CAP_DEF = { hours: { Jeremy: 40, David: 40 }, ext_prep_min: 10, noshow_min: 25, inbound_min: 20, sq_h: 0.5, proposal_h: 1, negotiating_h: 1.5, quote_h: 1, admin_h: 1,
+    away_words: "conference, summit, trade show, tradeshow, expo, SIA, offsite, off-site, PTO, vacation, holiday, out of office, OOO, sick",
+    personal_words: "lunch, pickup, pick up, drop off, dropoff, school, doctor, dentist, appointment, haircut, gym, personal, travel, commute, errand" };
+  const wordsRe = (txt) => { const w = String(txt || "").split(",").map((x) => x.trim()).filter(Boolean).map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*")); return w.length ? new RegExp("\\b(?:" + w.join("|") + ")\\b", "i") : /$^/; };
+  const awayRe = () => wordsRe(capCfg().away_words), personalRe = () => wordsRe(capCfg().personal_words);
   const capCfg = () => { const c = (S.settings && S.settings.capacity) || {}; return { ...CAP_DEF, ...c, hours: { ...CAP_DEF.hours, ...(c.hours || {}) } }; };
   const CAP_WEEKS = 8;
-  const CAP_SER = [["int", "Internal meetings", "var(--k-int)"], ["ext", "External meetings", "var(--k-ext)"], ["deal", "Deal work (est.)", "var(--k-deal)"], ["inb", "Inbound follow-up (est.)", "var(--k-inb)"], ["open", "Open for outbound", "var(--k-open)"]];
+  const CAP_SER = [["int", "Internal meetings", "var(--k-int)"], ["ext", "External meetings", "var(--k-ext)"], ["deal", "Deal work (est.)", "var(--k-deal)"], ["inb", "Inbound follow-up (est.)", "var(--k-inb)"], ["adm", "Admin & personal", "var(--k-adm)"], ["open", "Open for outbound", "var(--k-open)"]];
   S.cap = { cal: new Map(), calErr: {}, zoom: null, zoomErr: "", zoomAt: 0, sf: null, sfErr: "", hs: null, hsErr: "", loading: false, at: 0, week: "", rep: "" };
   S.capDocs = new Map(); S.capActs = []; S.capEmails = []; S.capActKey = "";
   const capWeeks = () => { const m0 = mondayOf(new Date()); const out = []; for (let i = CAP_WEEKS - 1; i >= 0; i--) { const s = new Date(m0); s.setDate(s.getDate() - 7 * i); const e = new Date(s); e.setDate(e.getDate() + 7); out.push({ k: ymd(s), s, e }); } return out; };
@@ -3349,14 +3355,16 @@ a.ds:hover { border-color: var(--blue); }
   const ownerIn = (rec, o) => (rec.attendee_list || rec.attendees || []).some((x) => { const n = String(x.user_name || x.display_name || "").toLowerCase(); return OWNER_FULL[o].every((p) => n.includes(p)); });
   const mins = (a, b) => Math.max(0, (new Date(b) - new Date(a)) / 6e4);
   function capParse(p, owner) {
-    const email = CAL_EMAIL[owner]; const out = [];
+    const email = CAL_EMAIL[owner]; const out = []; const AW = awayRe(), PE = personalRe();
     for (const e of (p && (p.events || p.items)) || []) {
       if (!e || e.status === "cancelled" || e.eventType === "WORKING_LOCATION") continue;
       const att = e.attendees || [];
       const me = att.find((x) => x.self || (x.email || "").toLowerCase() === email);
       if (me && me.responseStatus === "declined") continue;
+      const title = e.summary || "";
       if (!(e.start && e.start.dateTime)) {
-        if (e.eventType === "OUT_OF_OFFICE" && e.start && e.start.date) out.push({ id: e.id, allDayOoo: true, from: e.start.date, to: (e.end && e.end.date) || e.start.date, title: e.summary || "Out of office" });
+        // All-day: out of office, or a conference / trade show / PTO by name, takes the whole day.
+        if (e.start && e.start.date && (e.eventType === "OUT_OF_OFFICE" || AW.test(title))) out.push({ id: e.id, allDayAway: true, from: e.start.date, to: (e.end && e.end.date) || e.start.date, title: title || "Out of office" });
         continue;
       }
       const others = att.filter((x) => { const em = (x.email || "").toLowerCase(); return em && em !== email && !x.resource && !em.includes("resource.calendar.google.com"); });
@@ -3364,7 +3372,9 @@ a.ds:hover { border-color: var(--blue); }
       const cd = e.conferenceData || {};
       const nums = zoomNums([e.location, e.description, cd.conferenceId, ...(cd.entryPoints || []).map((x) => x.uri)].join(" "));
       if (cd.conferenceId && /^\d{9,11}$/.test(cd.conferenceId)) nums.add(cd.conferenceId);
-      out.push({ id: e.id, s: e.start.dateTime, e: (e.end && e.end.dateTime) || e.start.dateTime, title: e.summary || "(busy)", mtg: others.length > 0, ext: extEmails.length > 0, extDomains: [...new Set(extEmails.map((x) => x.split("@")[1]))], nums: [...nums], ooo: e.eventType === "OUT_OF_OFFICE" });
+      const solo = !others.length && e.eventType !== "OUT_OF_OFFICE";
+      out.push({ id: e.id, s: e.start.dateTime, e: (e.end && e.end.dateTime) || e.start.dateTime, title: title || "(busy)", mtg: others.length > 0, ext: extEmails.length > 0, extDomains: [...new Set(extEmails.map((x) => x.split("@")[1]))], nums: [...nums], ooo: e.eventType === "OUT_OF_OFFICE",
+        away: AW.test(title), personal: solo && !e.eventType?.startsWith("FOCUS") && PE.test(title) });
     }
     return out;
   }
@@ -3451,14 +3461,22 @@ a.ds:hover { border-color: var(--blue); }
   function capMeetings(owner, wk) {
     const cfg = capCfg(); const evs = S.cap.cal.get(owner + "|" + wk.k);
     if (!evs) return null;
-    const now = Date.now(); const ws = wk.s.getTime(), we = wk.e.getTime();
+    const now = Date.now(); const ws = wk.s.getTime(), we = wk.e.getTime(); const dayH = cfg.hours[owner] / 5;
     const zoomOk = owner === S.myOwner && Array.isArray(S.cap.zoom);
     const zrecs = zoomOk ? S.cap.zoom.filter((r) => { const t = new Date(r.meeting_start_time).getTime(); return t >= ws && t < we; }) : [];
-    const used = new Set(); const items = [];
-    let oooH = 0;
+    // Away days: weekdays covered by out-of-office or a conference/PTO event (all-day, or a timed block named that way).
+    const away = new Map();
     for (const e of evs) {
-      if (e.allDayOoo) { for (let d = new Date(Math.max(ws, new Date(e.from + "T00:00:00").getTime())); d.getTime() < Math.min(we, new Date(e.to + "T00:00:00").getTime()); d.setDate(d.getDate() + 1)) if (d.getDay() % 6) oooH += cfg.hours[owner] / 5; continue; }
+      if (e.allDayAway) { for (let d = new Date(e.from + "T00:00:00"); d < new Date(e.to + "T00:00:00"); d.setDate(d.getDate() + 1)) if (d.getTime() >= ws && d.getTime() < we && d.getDay() % 6) away.set(ymd(d), e.title); }
+      else if (e.away && !e.mtg) { const d = new Date(e.s); if (d.getDay() % 6) away.set(localDay(e.s), e.title); }
+    }
+    let oooH = away.size * dayH;
+    const used = new Set(); const items = []; let onAway = 0; const personal = [];
+    for (const e of evs) {
+      if (e.allDayAway) continue;
+      if (away.has(localDay(e.s))) { if (e.mtg) onAway++; continue; }
       if (e.ooo) { oooH += mins(e.s, e.e) / 60; continue; }
+      if (e.personal) { personal.push({ s: e.s, e: e.e, title: e.title }); continue; }
       if (!e.mtg) continue;
       const it = { title: e.title, s: e.s, e: e.e, ext: e.ext, sched: mins(e.s, e.e), status: "", min: 0, actual: null, domains: e.extDomains };
       const past = new Date(e.e).getTime() < now;
@@ -3482,25 +3500,27 @@ a.ds:hover { border-color: var(--blue); }
       if (e.ext && ["held", "upcoming", "unverified", "scheduled"].includes(it.status)) it.prep = cfg.ext_prep_min;
       items.push(it);
     }
-    // Zoom time with no calendar invite (instant calls, personal rooms)
     for (const r of zrecs) {
-      if (used.has(r.meeting_uuid) || !ownerIn(r, owner)) continue;
+      if (used.has(r.meeting_uuid) || !ownerIn(r, owner) || away.has(localDay(r.meeting_start_time))) continue;
       const act = mins(r.meeting_start_time, r.meeting_end_time); if (act < 5 || (r.attendee_count || 0) < 2) continue;
       items.push({ title: r.topic || "Zoom meeting", s: r.meeting_start_time, e: r.meeting_end_time, ext: !!r.has_external_user, sched: 0, status: "unscheduled", min: act, actual: act, as: r.meeting_start_time, ae: r.meeting_end_time });
     }
-    // Double-booked time counts once: clip each meeting against time already counted.
+    // Double-booked time counts once: meetings first, then personal blocks only where no meeting already took the time.
     items.sort((a, b) => new Date(a.as || a.s) - new Date(b.as || b.s));
-    let edge = 0; let intM = 0, extM = 0, prepM = 0, nsM = 0;
+    const spans = []; let intM = 0, extM = 0, prepM = 0, nsM = 0;
+    const clip = (a, b) => { let free = b - a; for (const [x, y] of spans) free -= Math.max(0, Math.min(b, y) - Math.max(a, x)); spans.push([a, b]); return Math.max(0, free) / 6e4; };
     for (const it of items) {
       if (it.status === "noshow") { nsM += it.min; continue; }
       if (!it.min) continue;
       const a = new Date(it.as || it.s).getTime(), b = it.as ? new Date(it.ae).getTime() : a + it.min * 6e4;
-      const counted = Math.max(0, (b - Math.max(a, edge)) / 6e4); edge = Math.max(edge, b);
-      it.counted = counted;
+      const counted = clip(a, b); it.counted = counted;
       if (it.ext) extM += counted; else intM += counted;
       prepM += it.prep || 0;
     }
-    return { zoom: zoomOk, items, oooH, intM, extM: extM + prepM + nsM, prepM, nsM,
+    // Personal blocks only count inside the workday (8am–5pm), so evening travel doesn't eat selling hours.
+    const inDay = (sIso, eIso) => { const d0 = new Date(sIso); const a = new Date(d0); a.setHours(8, 0, 0, 0); const b = new Date(d0); b.setHours(17, 0, 0, 0); return [Math.max(a.getTime(), d0.getTime()), Math.min(b.getTime(), new Date(eIso).getTime())]; };
+    let personalM = 0; for (const x of personal) { const [a, b] = inDay(x.s, x.e); if (b > a) personalM += clip(a, b); }
+    return { zoom: zoomOk, items, oooH, awayDays: away.size, awayTitles: [...new Set(away.values())], onAway, personalM, intM, extM: extM + prepM + nsM, prepM, nsM,
       schedM: items.filter((x) => x.sched).reduce((s, x) => s + x.sched, 0),
       actualM: items.filter((x) => x.status === "held" || x.status === "unscheduled").reduce((s, x) => s + x.actual, 0),
       heldSchedM: items.filter((x) => x.status === "held").reduce((s, x) => s + x.sched, 0),
@@ -3513,28 +3533,48 @@ a.ds:hover { border-color: var(--blue); }
     for (const wk of capWeeks()) {
       const m = capMeetings(S.myOwner, wk); if (!m) continue;
       const id = S.myOwner + "_" + wk.k; const prev = S.capDocs.get(id);
-      const doc = { owner: S.myOwner, week: wk.k, zoom: true, oooH: m.oooH, intM: Math.round(m.intM), extM: Math.round(m.extM), prepM: m.prepM, nsM: m.nsM, schedM: Math.round(m.schedM), actualM: Math.round(m.actualM), heldSchedM: Math.round(m.heldSchedM),
+      const doc = { owner: S.myOwner, week: wk.k, zoom: true, oooH: m.oooH, awayDays: m.awayDays, awayTitles: m.awayTitles, onAway: m.onAway, personalM: Math.round(m.personalM), extDomains: [...new Set(m.items.flatMap((x) => x.domains || []))], intM: Math.round(m.intM), extM: Math.round(m.extM), prepM: m.prepM, nsM: m.nsM, schedM: Math.round(m.schedM), actualM: Math.round(m.actualM), heldSchedM: Math.round(m.heldSchedM),
         noshows: m.noshows.map((x) => ({ title: x.title, s: x.s })), skipped: m.skipped.map((x) => ({ title: x.title, s: x.s, sched: x.sched })), unsched: m.unsched.map((x) => ({ title: x.title, s: x.s, actual: Math.round(x.actual), ext: x.ext })), long: m.long.map((x) => ({ title: x.title, s: x.s, sched: x.sched, actual: Math.round(x.actual) })), unverifiedN: m.unverified.length };
-      if (prev && prev.intM === doc.intM && prev.extM === doc.extM && prev.nsM === doc.nsM && prev.schedM === doc.schedM) continue;
+      if (prev && prev.intM === doc.intM && prev.extM === doc.extM && prev.nsM === doc.nsM && prev.schedM === doc.schedM && prev.awayDays === doc.awayDays && prev.personalM === doc.personalM) continue;
       S.db.collection("capacity").doc(id).set({ ...doc, computed_at: nowIso() }).catch(() => {});
     }
   }
   const SF_STAGE_H = (cfg) => ({ "Sales Qualified": cfg.sq_h, Proposal: cfg.proposal_h, Negotiating: cfg.negotiating_h });
-  function capDeals(owner, wk) {
+  // Which opportunities were worked in a week: a stage change, a meeting with the account, or cockpit activity / a completed task.
+  function capTouchedOpps(owner, wk, m) {
+    const S0 = wk.s.toISOString(), E0 = wk.e.toISOString(); const set = new Set();
+    const opp = (accId) => { const a = S.accounts.get(accId); return a && a.sf_opportunity_id ? a.sf_opportunity_id : null; };
+    for (const x of S.capActs) if (x.at >= S0 && x.at < E0) { const o = opp(x.account_id); if (o) set.add(o); }
+    for (const [, t] of S.tasks) if (t.status === "done" && t.completed_at >= S0 && t.completed_at < E0) { const o = opp(t.account_id); if (o) set.add(o); }
+    const doms = new Set(m ? (m.items ? m.items.flatMap((x) => (x.status === "skipped" || x.status === "noshow" ? [] : x.domains || [])) : m.extDomains || []) : []);
+    if (doms.size) for (const [, a] of S.accounts) {
+      if (!a.sf_opportunity_id) continue;
+      const ds = [a.domain, ...(a.contacts || []).map((c) => (c.email || "").split("@")[1])].map(normDomain).filter(Boolean);
+      if (ds.some((d) => doms.has(d))) set.add(a.sf_opportunity_id);
+    }
+    return set;
+  }
+  function capDeals(owner, wk, m) {
     if (!S.cap.sf) return null;
     const cfg = capCfg(); const H = SF_STAGE_H(cfg); const ws = wk.s.getTime(), we = wk.e.getTime();
-    let hours = 0, quotes = 0, open = 0; const byStage = { "Sales Qualified": 0, Proposal: 0, Negotiating: 0 };
+    const touched = capTouchedOpps(owner, wk, m);
+    let hours = 0, quotes = 0, open = 0, worked = 0; const byStage = { "Sales Qualified": 0, Proposal: 0, Negotiating: 0 };
     for (const o of S.cap.sf) {
       if (o.owner !== owner) continue;
       const h = o.hist.length ? o.hist : [{ st: o.stage, t: o.created }];
       const before = h.filter((x) => x.t < ws); const within = h.filter((x) => x.t >= ws && x.t < we);
       const stages = [...(before.length ? [before[before.length - 1].st] : []), ...within.map((x) => x.st)].filter((st) => H[st] != null);
       if (!stages.length) continue;
-      const top = stages.reduce((a, b) => (H[b] > H[a] ? b : a)); hours += H[top]; byStage[top]++; open++;
+      open++;
+      const id15 = String(o.id).slice(0, 15);
+      const moved = within.some((x, k) => x.st !== (k ? within[k - 1].st : before.length ? before[before.length - 1].st : ""));
+      const isWorked = moved || touched.has(o.id) || [...touched].some((t) => String(t).slice(0, 15) === id15);
       const firstQ = h.find((x) => x.st === "Proposal" || x.st === "Negotiating");
       if (firstQ && firstQ.t >= ws && firstQ.t < we) { quotes++; hours += cfg.quote_h; }
+      if (!isWorked) continue;
+      const top = stages.reduce((a, b) => (H[b] > H[a] ? b : a)); hours += H[top]; byStage[top]++; worked++;
     }
-    return { hours, quotes, open, byStage };
+    return { hours, quotes, open, worked, byStage };
   }
   function capInbound(owner, wk) {
     if (!S.cap.hs) return null;
@@ -3553,13 +3593,15 @@ a.ds:hover { border-color: var(--blue); }
   function capWeek(owner, wk) {
     const cfg = capCfg(); let m = capMeetings(owner, wk);
     const stored = S.capDocs.get(owner + "_" + wk.k);
-    if ((!m || !m.zoom) && stored && stored.zoom) m = { ...stored, zoom: true, stored: true, noshows: stored.noshows || [], skipped: stored.skipped || [], unsched: stored.unsched || [], long: stored.long || [], unverified: { length: stored.unverifiedN || 0 } };
-    const d = capDeals(owner, wk), i = capInbound(owner, wk);
+    if ((!m || !m.zoom) && stored && stored.zoom && stored.awayDays != null) m = { ...stored, zoom: true, stored: true, noshows: stored.noshows || [], skipped: stored.skipped || [], unsched: stored.unsched || [], long: stored.long || [], unverified: { length: stored.unverifiedN || 0 } };
+    const d = capDeals(owner, wk, m), i = capInbound(owner, wk);
     const avail = Math.max(0, cfg.hours[owner] - (m ? m.oooH : 0));
+    const officeDays = Math.max(0, 5 - (m ? m.awayDays || 0 : 0));
     const intH = m ? m.intM / 60 : 0, extH = m ? m.extM / 60 : 0, dealH = d ? d.hours : 0, inbH = i ? i.hours : 0;
-    const open = Math.max(0, avail - intH - extH - dealH - inbH);
+    const personalH = m ? (m.personalM || 0) / 60 : 0; const adminH = officeDays * cfg.admin_h; const admH = personalH + adminH;
+    const open = Math.max(0, avail - intH - extH - dealH - inbH - admH);
     const touches = capTouches(owner, wk);
-    return { wk, m, d, i, avail, intH, extH, dealH, inbH, open, over: Math.max(0, intH + extH + dealH + inbH - avail), touches, cur: wk.e > new Date() };
+    return { wk, m, d, i, avail, officeDays, intH, extH, dealH, inbH, admH, personalH, adminH, open, over: Math.max(0, intH + extH + dealH + inbH + admH - avail), touches, cur: wk.e > new Date() };
   }
   function groupLong(arr) {
     const g = new Map();
@@ -3596,15 +3638,16 @@ a.ds:hover { border-color: var(--blue); }
     const tile = (v, l, sub, cls) => `<div class="ds ${cls || ""}"><b class="num">${v}</b><span>${l}</span>${sub ? `<span class="dl">${sub}</span>` : ""}</div>`;
     const tph = (r) => (r.open >= 1 ? (r.touches / r.open).toFixed(1) : "–");
     $("cap-strip").innerHTML = (S.cap.loading ? `<div class="small muted cap-load"><span class="spinner"></span> Updating…</div>` : "") +
-      tile(hrs(sel.avail), "available", (sel.cur ? "This week" : "Week of " + wkLabel(sel.wk)) + (sel.m && sel.m.oooH ? ` · ${hrs(sel.m.oooH)} OOO` : "")) +
+      tile(hrs(sel.avail), "available", (sel.cur ? "This week" : "Week of " + wkLabel(sel.wk)) + (sel.m && sel.m.awayDays ? ` · ${sel.m.awayDays} day${sel.m.awayDays === 1 ? "" : "s"} away` : sel.m && sel.m.oooH ? ` · ${hrs(sel.m.oooH)} OOO` : "")) +
       tile(hrs(sel.intH + sel.extH), "in meetings", avg("intH") != null ? `avg ${hrs(avg("intH") + avg("extH"))}` : "") +
-      tile(hrs(sel.dealH), "deal work (est.)", sel.d ? `${sel.d.open} open deal${sel.d.open === 1 ? "" : "s"}${sel.d.quotes ? ` · ${sel.d.quotes} quote${sel.d.quotes === 1 ? "" : "s"}` : ""}` : "") +
+      tile(hrs(sel.dealH), "deal work (est.)", sel.d ? `${sel.d.worked} of ${sel.d.open} deals worked${sel.d.quotes ? ` · ${sel.d.quotes} quote${sel.d.quotes === 1 ? "" : "s"}` : ""}` : "") +
       tile(hrs(sel.inbH), "inbound (est.)", sel.i ? `${sel.i.n} MQL${sel.i.n === 1 ? "" : "s"}` : "") +
+      tile(hrs(sel.admH), "admin & personal", `${hrs(sel.adminH)} admin · ${hrs(sel.personalH)} blocks`) +
       tile(hrs(sel.open), "open for outbound", avg("open") != null ? `avg ${hrs(avg("open"))}` : "", sel.open < 5 ? "bad" : "good") +
       tile(sel.touches, "outbound touches", `${tph(sel)} per open hour`);
     // Stacked hours by week
     $("cap-legend").innerHTML = CAP_SER.map(([k, l, c]) => `<span class="lg"><i class="${k === "open" ? "hatch" : ""}" style="background-color:${c}"></i>${l}</span>`).join("");
-    const maxH = Math.max(...rows.map((r) => Math.max(r.avail, r.intH + r.extH + r.dealH + r.inbH)), 10);
+    const maxH = Math.max(...rows.map((r) => Math.max(r.avail, r.intH + r.extH + r.dealH + r.inbH + r.admH)), 10);
     const step = maxH <= 20 ? 5 : 10; const ymax = Math.ceil(maxH / step) * step;
     const W = 720, H = 250, L = 34, R = 8, T = 10, B = 44; const pw = W - L - R, ph = H - T - B; const gap = pw / rows.length; const bw = Math.min(46, gap * 0.6);
     const y = (v) => T + ph - (v / ymax) * ph;
@@ -3613,7 +3656,7 @@ a.ds:hover { border-color: var(--blue); }
     rows.forEach((r, i) => {
       const cx = L + gap * i + gap / 2; let acc = 0;
       if (r.wk.k === sel.wk.k) bars += `<rect x="${cx - gap / 2 + 2}" y="${T}" width="${gap - 4}" height="${ph}" rx="6" class="sel-week"/>`;
-      const vals = [["int", r.intH], ["ext", r.extH], ["deal", r.dealH], ["inb", r.inbH], ["open", r.open]].filter(([, v]) => v > 0.05);
+      const vals = [["int", r.intH], ["ext", r.extH], ["deal", r.dealH], ["inb", r.inbH], ["adm", r.admH], ["open", r.open]].filter(([, v]) => v > 0.05);
       vals.forEach(([k, v], j) => {
         const c = CAP_SER.find((s) => s[0] === k)[2]; const y1 = y(acc + v), y0 = y(acc); const h = Math.max(1, y0 - y1 - (j < vals.length - 1 ? 2 : 0));
         bars += `<rect x="${cx - bw / 2}" y="${y1}" width="${bw}" height="${h}" rx="${j === vals.length - 1 ? 3 : 1}" fill="${c}" ${k === "open" ? 'class="open-seg"' : ""}/>`;
@@ -3629,12 +3672,12 @@ a.ds:hover { border-color: var(--blue); }
     svg.addEventListener("mousemove", (evm) => {
       const h = evm.target.closest(".hit"); if (!h) { tip.hidden = true; return; }
       const r = rows[Number(h.dataset.i)];
-      tip.innerHTML = `<b>Week of ${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}</b>${CAP_SER.map(([k, l, c]) => `<div><i class="${k === "open" ? "hatch" : ""}" style="background-color:${c}"></i>${l}<span class="num">${hrs({ int: r.intH, ext: r.extH, deal: r.dealH, inb: r.inbH, open: r.open }[k])}</span></div>`).join("")}<div class="tt"><span>Touches</span><span class="num">${r.touches}</span></div>`;
+      tip.innerHTML = `<b>Week of ${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}${r.m && r.m.awayDays ? ` · ${r.m.awayDays}d away` : ""}</b>${CAP_SER.map(([k, l, c]) => `<div><i class="${k === "open" ? "hatch" : ""}" style="background-color:${c}"></i>${l}<span class="num">${hrs({ int: r.intH, ext: r.extH, deal: r.dealH, inb: r.inbH, adm: r.admH, open: r.open }[k])}</span></div>`).join("")}<div class="tt"><span>Touches</span><span class="num">${r.touches}</span></div>`;
       tip.hidden = false; const box = $("cap-chart").getBoundingClientRect();
       tip.style.left = Math.min(box.width - 190, Math.max(0, evm.clientX - box.left + 12)) + "px"; tip.style.top = Math.max(0, evm.clientY - box.top - 20) + "px";
     });
     svg.addEventListener("mouseleave", () => (tip.hidden = true));
-    $("cap-table").innerHTML = `<table class="book"><thead><tr><th>Week of</th><th class="r">Available</th><th class="r">Internal</th><th class="r">External</th><th class="r">Deal work</th><th class="r">Inbound</th><th class="r">Open</th><th class="r">Touches</th><th class="r">Per open hr</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}</td><td class="r num">${hrs(r.avail)}</td><td class="r num">${hrs(r.intH)}</td><td class="r num">${hrs(r.extH)}</td><td class="r num">${hrs(r.dealH)}</td><td class="r num">${hrs(r.inbH)}</td><td class="r num"><b>${hrs(r.open)}</b></td><td class="r num">${r.touches}</td><td class="r num">${tph(r)}</td></tr>`).join("")}</tbody></table>`;
+    $("cap-table").innerHTML = `<table class="book"><thead><tr><th>Week of</th><th class="r">Available</th><th class="r">Internal</th><th class="r">External</th><th class="r">Deal work</th><th class="r">Inbound</th><th class="r">Admin &amp; personal</th><th class="r">Open</th><th class="r">Touches</th><th class="r">Per open hr</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}</td><td class="r num">${hrs(r.avail)}</td><td class="r num">${hrs(r.intH)}</td><td class="r num">${hrs(r.extH)}</td><td class="r num">${hrs(r.dealH)}</td><td class="r num">${hrs(r.inbH)}</td><td class="r num">${hrs(r.admH)}</td><td class="r num"><b>${hrs(r.open)}</b></td><td class="r num">${r.touches}</td><td class="r num">${tph(r)}</td></tr>`).join("")}</tbody></table>`;
     // Calendar vs Zoom for the selected week
     $("cap-zh").textContent = `Calendar vs Zoom · ${sel.cur ? "this week" : "week of " + wkLabel(sel.wk)}`;
     const m = sel.m; const fm = (mm) => (mm < 60 ? Math.round(mm) + " min" : hrs(mm / 60));
@@ -3661,36 +3704,47 @@ a.ds:hover { border-color: var(--blue); }
         ${m.unverified.length ? `<div class="small muted">${m.unverified.length} past Zoom meeting${m.unverified.length === 1 ? "" : "s"} on the calendar didn't show up in Zoom, so ${m.unverified.length === 1 ? "it counts" : "they count"} as booked.</div>` : ""}
         ${m.stored ? `<div class="small muted">Checked against ${esc(rep)}'s Zoom.</div>` : ""}`;
     }
+    if (m && m.awayDays) $("cap-zoom").insertAdjacentHTML("afterbegin", `<div class="banner cap-away">${m.awayDays} day${m.awayDays === 1 ? "" : "s"} away (${esc((m.awayTitles || []).join(", "))}). Those days count as unavailable${m.onAway ? `, and the ${m.onAway} meeting${m.onAway === 1 ? "" : "s"} on them ${m.onAway === 1 ? "isn't" : "aren't"} counted` : ""}.</div>`);
     if (errs.length) $("cap-zoom").insertAdjacentHTML("beforeend", errs.map((x) => `<div class="err" style="margin-top:8px">${esc(x)}</div>`).join(""));
   }
   // Today: rough hours left for outbound, from today's calendar and this week's estimates.
   function openToday(owner) {
     if (!calReady() || S.cal.day !== "today") return null;
-    const cfg = capCfg(); const day = cfg.hours[owner] / 5;
-    if (S.cal.allDay.some((a) => a.ooo && a.owner === owner)) return 0;
-    let mm = 0, edge = 0;
-    for (const e of S.cal.events.filter((x) => x.owners.includes(owner) && !x.focus)) {
-      if (e.ooo) { mm += mins(e.s, e.e); continue; }
-      if (!e.mtg) continue;
-      const a = new Date(e.s).getTime(), b = new Date(e.e).getTime(); mm += Math.max(0, (b - Math.max(a, edge)) / 6e4); edge = Math.max(edge, b);
-      if (e.extDomains.length) mm += cfg.ext_prep_min;
+    const cfg = capCfg(); const day = cfg.hours[owner] / 5; const AW = awayRe(), PE = personalRe();
+    if (S.cal.allDay.some((a) => a.owner === owner && (a.ooo || AW.test(a.title)))) return 0;
+    const evs = S.cal.events.filter((x) => x.owners.includes(owner) && !x.focus);
+    if (evs.some((e) => !e.mtg && AW.test(e.title))) return 0;
+    const spans = []; let mm = 0;
+    const clip = (a, b) => { let free = b - a; for (const [x, y] of spans) free -= Math.max(0, Math.min(b, y) - Math.max(a, x)); spans.push([a, b]); return Math.max(0, free) / 6e4; };
+    for (const e of evs) if (e.mtg || e.ooo) { mm += clip(new Date(e.s).getTime(), new Date(e.e).getTime()); if (e.extDomains.length) mm += cfg.ext_prep_min; }
+    const d8 = new Date(); d8.setHours(8, 0, 0, 0); const d17 = new Date(); d17.setHours(17, 0, 0, 0);
+    for (const e of evs) if (!e.mtg && !e.ooo && PE.test(e.title)) { const a = Math.max(d8.getTime(), new Date(e.s).getTime()), b = Math.min(d17.getTime(), new Date(e.e).getTime()); if (b > a) mm += clip(a, b); }
+    // Deal work: only deals touched in the last 7 days, spread over the week.
+    const H = SF_STAGE_H(cfg); let dealH = 0; const since = addDays(today(), -7);
+    for (const [, a] of S.accounts) {
+      if (a.band !== "deal" || a.sf_excluded || a.sf_closed || a.owner !== owner) continue;
+      const last = [a.last_touch_at ? localDay(a.last_touch_at) : "", a.last_activity_date || ""].sort().pop();
+      if (last >= since) dealH += H[a.stage] || 0;
     }
-    const H = SF_STAGE_H(cfg); let dealH = 0;
-    for (const [, a] of S.accounts) if (a.band === "deal" && !a.sf_excluded && !a.sf_closed && a.owner === owner) dealH += H[a.stage] || 0;
     const wk = capWeeks().slice(-1)[0]; const inb = capInbound(owner, wk);
-    return Math.max(0, day - mm / 60 - dealH / 5 - (inb ? inb.hours / 5 : 0));
+    return Math.max(0, day - mm / 60 - dealH / 5 - (inb ? inb.hours / 5 : 0) - cfg.admin_h);
   }
   function renderCapSettings() {
     const el = $("cap-settings"); if (!el) return;
     if (el.contains(document.activeElement)) return;
     const c = capCfg();
     const num = (id, v, l, unit, stepv) => `<label class="lbl cap-in" for="${id}">${l}<span class="cap-num"><input class="field num" id="${id}" type="number" min="0" step="${stepv || 1}" value="${esc(v)}"><span class="small muted">${unit}</span></span></label>`;
+    const txt = (id, v, l, hint) => `<label class="lbl cap-in cap-words" for="${id}">${l}<input class="field" id="${id}" value="${esc(v)}"><span class="small muted">${hint}</span></label>`;
     el.innerHTML = `<form id="cap-form" class="cap-form">
       <div class="small muted">Starting estimates. Meetings are measured from the calendar and Zoom; these cover the work around them. Shared by Jeremy and David.</div>
-      <div class="cap-grid">${OWNERS.map((o) => num("cap-h-" + o, c.hours[o], `${o}'s selling week`, "hours")).join("")}</div>
+      <div class="cap-grid">${OWNERS.map((o) => num("cap-h-" + o, c.hours[o], `${o}'s selling week`, "hours")).join("")}${num("cap-adm", c.admin_h, "Admin, email and Slack", "hours a day", 0.25)}</div>
+      <div class="eyebrow">Calendar</div>
+      ${txt("cap-away", c.away_words, "Away all day", "Out-of-office plus any event with these words (all-day or a block with no guests) takes the whole day off: conferences, trade shows, PTO.")}
+      ${txt("cap-pers", c.personal_words, "Personal blocks", "Blocks with no guests and these words come off available time. Other solo blocks, like Call/Task Block, stay available.")}
       <div class="eyebrow">Meetings</div>
       <div class="cap-grid">${num("cap-prep", c.ext_prep_min, "Prep and wrap-up per external meeting", "min")}${num("cap-ns", c.noshow_min, "No-show cost (prep, waiting, email and call)", "min")}</div>
-      <div class="eyebrow">Deal work per open deal, per week</div>
+      <div class="eyebrow">Deal work, per deal worked that week</div>
+      <div class="small muted">A deal counts as worked when its stage changed, you met with the account, or it had cockpit activity or a completed task that week.</div>
       <div class="cap-grid">${num("cap-sq", c.sq_h, "Sales Qualified", "hours", 0.25)}${num("cap-pr", c.proposal_h, "Proposal", "hours", 0.25)}${num("cap-ng", c.negotiating_h, "Negotiating", "hours", 0.25)}${num("cap-q", c.quote_h, "Building a quote (once, on reaching Proposal)", "hours", 0.25)}</div>
       <div class="eyebrow">Inbound</div>
       <div class="cap-grid">${num("cap-inb", c.inbound_min, "Follow-up per new MQL", "min")}</div>
@@ -3698,8 +3752,8 @@ a.ds:hover { border-color: var(--blue); }
   }
   async function saveCapSettings(reset) {
     const v = (id) => { const x = Number(($(id) || {}).value); return Number.isFinite(x) && x >= 0 ? x : null; };
-    const c = reset ? { ...CAP_DEF } : { hours: Object.fromEntries(OWNERS.map((o) => [o, v("cap-h-" + o) ?? CAP_DEF.hours[o]])), ext_prep_min: v("cap-prep") ?? CAP_DEF.ext_prep_min, noshow_min: v("cap-ns") ?? CAP_DEF.noshow_min, sq_h: v("cap-sq") ?? CAP_DEF.sq_h, proposal_h: v("cap-pr") ?? CAP_DEF.proposal_h, negotiating_h: v("cap-ng") ?? CAP_DEF.negotiating_h, quote_h: v("cap-q") ?? CAP_DEF.quote_h, inbound_min: v("cap-inb") ?? CAP_DEF.inbound_min };
-    if (await w(() => S.db.collection("meta").doc("settings").set({ ...S.settings, capacity: { ...c, updated_by: S.myOwner || "", updated_at: nowIso() } }))) { if (reset && document.activeElement) document.activeElement.blur(); toast(reset ? "Assumptions reset." : "Assumptions saved."); }
+    const c = reset ? { ...CAP_DEF } : { hours: Object.fromEntries(OWNERS.map((o) => [o, v("cap-h-" + o) ?? CAP_DEF.hours[o]])), ext_prep_min: v("cap-prep") ?? CAP_DEF.ext_prep_min, noshow_min: v("cap-ns") ?? CAP_DEF.noshow_min, sq_h: v("cap-sq") ?? CAP_DEF.sq_h, proposal_h: v("cap-pr") ?? CAP_DEF.proposal_h, negotiating_h: v("cap-ng") ?? CAP_DEF.negotiating_h, quote_h: v("cap-q") ?? CAP_DEF.quote_h, inbound_min: v("cap-inb") ?? CAP_DEF.inbound_min, admin_h: v("cap-adm") ?? CAP_DEF.admin_h, away_words: (($("cap-away") || {}).value || "").trim() || CAP_DEF.away_words, personal_words: (($("cap-pers") || {}).value || "").trim() || CAP_DEF.personal_words };
+    if (await w(() => S.db.collection("meta").doc("settings").set({ ...S.settings, capacity: { ...c, updated_by: S.myOwner || "", updated_at: nowIso() } }))) { if (reset && document.activeElement) document.activeElement.blur(); toast(reset ? "Assumptions reset." : "Assumptions saved."); S.cap.cal.clear(); S.cap.at = 0; }
   }
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
