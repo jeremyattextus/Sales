@@ -3414,9 +3414,9 @@ a.ds:hover { border-color: var(--blue); }
     if (S.cap.sf && Date.now() - S.cap.sfAt < 30 * 60e3) return;
     try {
       const ids = Object.values(SF_USERS).map((x) => `'${x}'`).join(",");
-      const recs = await soql(`SELECT Id, OwnerId, StageName, IsClosed, CreatedDate, (SELECT StageName, CreatedDate FROM OpportunityHistories ORDER BY CreatedDate ASC) FROM Opportunity WHERE OwnerId IN (${ids}) AND RecordType.DeveloperName = 'New_Business' AND (IsClosed = false OR CloseDate = LAST_N_DAYS:90) LIMIT 1000`);
+      const recs = await soql(`SELECT Id, OwnerId, StageName, IsClosed, CreatedDate, (SELECT StageName, Amount, CreatedDate FROM OpportunityHistories ORDER BY CreatedDate ASC) FROM Opportunity WHERE OwnerId IN (${ids}) AND RecordType.DeveloperName = 'New_Business' AND (IsClosed = false OR CloseDate = LAST_N_DAYS:90) LIMIT 1000`);
       const byId = Object.fromEntries(Object.entries(SF_USERS).map(([k, v]) => [v, k]));
-      S.cap.sf = recs.map((r) => ({ id: r.Id, owner: byId[r.OwnerId] || "", hist: ((r.OpportunityHistories && r.OpportunityHistories.records) || []).map((h) => ({ st: h.StageName, t: new Date(h.CreatedDate).getTime() })), created: new Date(r.CreatedDate).getTime(), stage: r.StageName }));
+      S.cap.sf = recs.map((r) => ({ id: r.Id, owner: byId[r.OwnerId] || "", hist: ((r.OpportunityHistories && r.OpportunityHistories.records) || []).map((h) => ({ st: h.StageName, amt: h.Amount == null ? null : Number(h.Amount), t: new Date(h.CreatedDate).getTime() })), created: new Date(r.CreatedDate).getTime(), stage: r.StageName }));
       S.cap.sfAt = Date.now(); S.cap.sfErr = "";
     } catch (e) { S.cap.sfErr = errText(e, SF); }
   }
@@ -3567,7 +3567,8 @@ a.ds:hover { border-color: var(--blue); }
       if (!stages.length) continue;
       open++;
       const id15 = String(o.id).slice(0, 15);
-      const moved = within.some((x, k) => x.st !== (k ? within[k - 1].st : before.length ? before[before.length - 1].st : ""));
+      // Worked = a stage change or a new amount (new information). A close-date push on its own doesn't count.
+      const moved = within.some((x, k) => { const prev = k ? within[k - 1] : before.length ? before[before.length - 1] : null; return !prev || x.st !== prev.st || (x.amt != null && (prev.amt == null || Math.abs(x.amt - prev.amt) >= 1)); });
       const isWorked = moved || touched.has(o.id) || [...touched].some((t) => String(t).slice(0, 15) === id15);
       const firstQ = h.find((x) => x.st === "Proposal" || x.st === "Negotiating");
       if (firstQ && firstQ.t >= ws && firstQ.t < we) { quotes++; hours += cfg.quote_h; }
@@ -3744,7 +3745,7 @@ a.ds:hover { border-color: var(--blue); }
       <div class="eyebrow">Meetings</div>
       <div class="cap-grid">${num("cap-prep", c.ext_prep_min, "Prep and wrap-up per external meeting", "min")}${num("cap-ns", c.noshow_min, "No-show cost (prep, waiting, email and call)", "min")}</div>
       <div class="eyebrow">Deal work, per deal worked that week</div>
-      <div class="small muted">A deal counts as worked when its stage changed, you met with the account, or it had cockpit activity or a completed task that week.</div>
+      <div class="small muted">A deal counts as worked when its stage or amount changed, you met with the account, or it had cockpit activity or a completed task that week. Pushing only the close date doesn't count.</div>
       <div class="cap-grid">${num("cap-sq", c.sq_h, "Sales Qualified", "hours", 0.25)}${num("cap-pr", c.proposal_h, "Proposal", "hours", 0.25)}${num("cap-ng", c.negotiating_h, "Negotiating", "hours", 0.25)}${num("cap-q", c.quote_h, "Building a quote (once, on reaching Proposal)", "hours", 0.25)}</div>
       <div class="eyebrow">Inbound</div>
       <div class="cap-grid">${num("cap-inb", c.inbound_min, "Follow-up per new MQL", "min")}</div>
