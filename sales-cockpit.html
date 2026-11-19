@@ -546,6 +546,21 @@ a.un-title:hover { text-decoration: underline; }
 .src-tag.in { background: var(--gong-soft); color: var(--gong); }
 .src-tag.out { background: var(--tgt-soft); color: var(--tgt-ink); }
 .src-tag:hover { filter: brightness(.95); text-decoration: underline; }
+
+/* HubSpot updates */
+.hs-confirm { grid-column: 1 / -1; display: grid; gap: 8px; padding: 12px 14px; border-radius: 10px; background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+.hs-c-head { display: flex; align-items: center; gap: 6px; font-family: var(--font-head); color: var(--warn); font-size: 13.5px; }
+.hs-c-table { border-collapse: collapse; width: 100%; font-size: 13px; background: var(--surface); border-radius: 8px; overflow: hidden; }
+.hs-c-table th, .hs-c-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.hs-c-table th { font-family: var(--font-head); font-weight: 400; font-size: 11.5px; color: var(--muted); }
+.hs-c-table tr:last-child td { border-bottom: 0; }
+.hs-sw { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.hs-sw input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+.hs-sw > span { display: grid; gap: 2px; }
+.hs-log { list-style: none; margin: 0; padding: 0; display: grid; }
+.hs-log li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.hs-log li:first-child { border-top: 0; }
+.hs-call { display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 13.5px; }
 </style>
 
 <header class="bar">
@@ -1427,7 +1442,7 @@ a.un-title:hover { text-decoration: underline; }
       : `<div class="empty"><span>Nothing matches these filters.</span></div>`;
     $("acc-sync").innerHTML = S.seg === "deal" ? `${syncLine}
           <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>`
-      : `<a class="btn ghost" href="#email">${ic("gear")} Email settings</a>`;
+      : `<a class="btn ghost" href="#email">${ic("gear")} Settings</a>`;
     $("add-account-panel").hidden = !(S.addAccount && S.seg === "outbound");
     renderAccHero(all, open, overdue);
     renderAccFilters();
@@ -2178,8 +2193,19 @@ a.un-title:hover { text-decoration: underline; }
     const a = S.accounts.get(accId); if (!a || !canWrite()) return;
     const cs = a.contacts || [];
     const c = contactOf(a, cid) || championOf(a) || cs.find((x) => x.is_primary) || cs[0] || null;
-    S.callLog = { mode: mode || "call", accId, cid: c ? c.id : "", number: number || bestNumber(c), outcome: mode === "meeting" ? "Connected" : "", note: "", meeting: mode === "meeting", mdate: addDays(today(), 2), follow: true, followDays: 2, markWrong: true, busy: false, err: "" };
+    S.callLog = { hsOn: true, mode: mode || "call", accId, cid: c ? c.id : "", number: number || bestNumber(c), outcome: mode === "meeting" ? "Connected" : "", note: "", meeting: mode === "meeting", mdate: addDays(today(), 2), follow: true, followDays: 2, markWrong: true, busy: false, err: "" };
     renderCallLog(true);
+    prepCallHs();
+  }
+  async function prepCallHs() {
+    const L = S.callLog; if (!L || L.mode !== "call" || !hsPrefs().calls || !S.mcp) return;
+    const a = S.accounts.get(L.accId); const c = contactOf(a, L.cid); const cid = L.cid;
+    if (!c) { L.hs = null; renderCallLog(); return; }
+    L.hs = { checking: true }; renderCallLog();
+    let found = null;
+    try { found = c.hubspot_id ? { id: String(c.hubspot_id), name: c.name } : await hsFindContactByEmail(c.email); } catch (e) { found = { err: errText(e, HSP) }; }
+    if (S.callLog !== L || L.cid !== cid) return;
+    L.hs = found || (c.email ? { none: true } : { noEmail: true }); renderCallLog();
   }
   function closeCallLog() { S.callLog = null; const el = $("calllog"); el.hidden = true; el.innerHTML = ""; document.body.style.overflow = ""; }
   function readCallLog() {
@@ -2194,6 +2220,7 @@ a.un-title:hover { text-decoration: underline; }
     if (ck("cl-follow") !== undefined) L.follow = ck("cl-follow");
     if (v("cl-days") !== undefined) L.followDays = Math.max(1, Math.min(30, Number(v("cl-days")) || 2));
     if (ck("cl-wrong") !== undefined) L.markWrong = ck("cl-wrong");
+    if (ck("cl-hs") !== undefined) L.hsOn = ck("cl-hs");
   }
   function renderCallLog(full) {
     const L = S.callLog; const el = $("calllog"); if (!L) { el.hidden = true; return; }
@@ -2213,6 +2240,7 @@ a.un-title:hover { text-decoration: underline; }
         ${!isMeet && L.outcome === "Wrong number" ? `<label class="switch"><input type="checkbox" id="cl-wrong" ${L.markWrong ? "checked" : ""}> Flag ${esc(L.number || "this number")} as wrong</label>` : ""}
         <label class="lbl" for="cl-note">Notes<textarea class="field" id="cl-note" rows="4" placeholder="${isMeet ? "Agenda, who's joining, what they want to see" : "What did you learn?"}">${esc(L.note)}</textarea></label>
         ${!L.meeting && !isMeet ? `<label class="switch small"><input type="checkbox" id="cl-follow" ${L.follow ? "checked" : ""}> Add a follow-up task in <input class="field" id="cl-days" type="number" min="1" max="30" value="${L.followDays}" style="width:64px;padding:3px 6px"> days</label>` : ""}
+        ${!isMeet && hsPrefs().calls ? `<div class="hs-call">${!L.hs ? "" : L.hs.checking ? '<span class="small muted"><span class="spinner"></span> Looking for this contact in HubSpot…</span>' : L.hs.id ? `<label class="switch"><input type="checkbox" id="cl-hs" ${L.hsOn !== false ? "checked" : ""}> Also log this call in HubSpot on <a href="${esc(hsContactUrl(L.hs.id))}" target="_blank" rel="noopener">${esc(L.hs.name)}</a></label><span class="small muted">Creates one call with the outcome${L.note ? ", your notes" : ""} and owner ${esc(S.myOwner || "")}. Nothing else on the contact changes.</span>` : `<span class="small muted">${L.hs.many ? "More than one HubSpot contact has this email, so" : L.hs.noEmail ? "This contact has no email to match, so" : L.hs.err ? esc(L.hs.err) + " So" : "Not in HubSpot, so"} this call is logged in the cockpit only.</span>`}</div>` : ""}
         ${L.err ? `<div class="err">${esc(L.err)}</div>` : ""}
         <div class="row-form"><button class="btn" type="submit" ${L.busy ? "disabled" : ""}>${L.busy ? '<span class="spinner"></span> Saving…' : isMeet ? "Save meeting" : "Save call"}</button><button class="btn ghost" type="button" data-act="cl-close">Cancel</button></div>
       </form></div>`;
@@ -2238,6 +2266,7 @@ a.un-title:hover { text-decoration: underline; }
       if (L.meeting) y.status = "Meeting booked";
       else if (L.outcome === "Connected" && ["Not started", "Contacted"].includes(st)) y.status = "Connected";
       else if (st === "Not started") y.status = "Contacted";
+      if (L.hs && L.hs.id && !x.hubspot_id) y.hubspot_id = L.hs.id;
       if (L.outcome === "Wrong number" && L.markWrong && L.number) y.bad_numbers = [...new Set([...(x.bad_numbers || []), digitsOf(L.number)])];
       return y;
     });
@@ -2258,7 +2287,13 @@ a.un-title:hover { text-decoration: underline; }
     } else if (L.follow) {
       await addTask(L.accId, `Follow up with ${name || a.company_name} (${L.outcome.toLowerCase()})`, addDays(today(), L.followDays), c ? c.id : null, "manual");
     }
+    let hsNote = "";
+    if (!isMeet && hsPrefs().calls && L.hs && L.hs.id && L.hsOn !== false) {
+      try { await hsCreateCall(L.hs.id, { name, note: L.note.trim(), outcome: L.outcome, meeting: L.meeting, number: L.number, accId: L.accId }); hsNote = " Also logged in HubSpot."; }
+      catch (e) { hsNote = " HubSpot wasn't updated: " + errText(e, HSP); }
+    }
     closeCallLog();
+    if (hsNote) { toast((L.meeting ? (isTarget ? "Meeting booked." : "Meeting logged.") : "Call logged.") + hsNote); return; }
     toast(L.meeting ? (isTarget ? "Meeting booked. Create the opportunity in Salesforce, then sync." : "Meeting logged.") : "Call logged.");
   }
 
@@ -2338,7 +2373,7 @@ a.un-title:hover { text-decoration: underline; }
           <label class="lbl" for="cp-body">Message<textarea class="field" id="cp-body" rows="11">${esc(cp.body)}</textarea></label>
           <div class="cp-sig"><div class="eyebrow">Signature · ${sg.mode === "gmail" ? "your Gmail signature" : "cockpit signature"}</div>
             ${sg.mode === "gmail" ? `<div class="small muted">Gmail adds the signature you set up in Gmail when this is ${"sent or drafted"}.</div>` : `<div class="sig-preview">${sigHtml(sg, false)}</div>`}
-            <a class="small" href="#email" data-act="compose-close">Edit signature and templates</a></div>
+            <a class="small" href="#email" data-act="compose-close">Edit signature and templates in Settings</a></div>
           <label class="switch small"><input type="checkbox" id="cp-follow" ${cp.follow ? "checked" : ""}> After sending, add a follow-up task in <input class="field" id="cp-days" type="number" min="1" max="30" value="${cp.followDays}" style="width:64px;padding:3px 6px"> days</label>
           <div id="cp-status"></div>
           <div class="row-form" id="cp-actions"></div>
@@ -2402,16 +2437,18 @@ a.un-title:hover { text-decoration: underline; }
   // ---------- Email settings view ----------
   function buildEmailShell() {
     $("view-email").innerHTML = `<div style="display:grid;gap:18px">
-      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outreach</span></div><h1>Email settings</h1><div class="sub">Your signature and the shared templates used when emailing contacts.</div></div><div class="head-r"><span class="conn-pill" id="gm-conn"></span><a class="btn ghost" href="#targets">${ic("back")} Target Accounts</a></div></div>
+      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outreach</span></div><h1>Settings</h1><div class="sub">Your email signature, shared templates, and what the cockpit may change in HubSpot.</div></div><div class="head-r"><span class="conn-pill" id="gm-conn"></span><a class="btn ghost" href="#targets">${ic("back")} Target Accounts</a></div></div>
       <div class="detail-grid">
         <div class="panel"><div class="panel-head"><h2 id="sig-h">Your signature</h2></div><div class="panel-body" id="sig-body"></div></div>
         <div class="panel"><div class="panel-head"><h2>Templates</h2><button class="btn ghost" type="button" data-act="tpl-new">${ic("plus")} New</button></div><div class="panel-body" id="tpl-body"></div></div>
-      </div></div>`;
+      </div>
+      <div class="panel"><div class="panel-head"><h2>HubSpot updates</h2></div><div class="panel-body" id="hs-settings"></div></div></div>`;
     S._sigFor = null;
   }
   function renderEmailSettings() {
     if (S.route.view !== "email") return;
     if (!$("sig-body")) buildEmailShell();
+    renderHubspotSettings();
     const gc = $("gm-conn"); gc.className = "conn-pill " + (S.gm.state === "ok" ? "ok" : S.gm.state === "bad" ? "bad" : ""); gc.textContent = S.gm.state === "ok" ? "Gmail connected" : S.gm.state === "bad" ? "Gmail unavailable" : "Checking Gmail…";
     const sb = $("sig-body");
     if (!S.myOwner) sb.innerHTML = `<div class="small muted">Pick who you are in the top bar to set up your signature.</div>`;
@@ -2576,12 +2613,14 @@ a.un-title:hover { text-decoration: underline; }
     const acts = !canWrite() ? "" : t ? `<button class="btn ghost sm-btn" type="button" data-act="mql-reopen" data-id="${esc(r.id)}">Reopen</button>${t.account_id && S.accounts.get(t.account_id) ? `<a class="btn ghost sm-btn" href="#account-${esc(t.account_id)}">Open account</a>` : ""}`
       : S.notfit === r.id ? `<label class="sr" for="nf-${esc(r.id)}">Reason</label><select class="sel" id="nf-${esc(r.id)}" style="padding:4px 8px">${["Spam / fake", "Student", "Personal / no company", "Not our market", "Competitor", "Duplicate", "Other"].map((x) => `<option>${x}</option>`).join("")}</select><button class="btn sm-btn danger" type="button" data-act="mql-notfit-yes" data-id="${esc(r.id)}">Not a fit</button><button class="btn ghost sm-btn" type="button" data-act="mql-notfit-no">Cancel</button>`
       : `<button class="btn sm-btn-solid" type="button" data-act="mql-work" data-id="${esc(r.id)}">${ic("check")} Work it</button><button class="btn ghost sm-btn" type="button" data-act="mql-nurture" data-id="${esc(r.id)}">Nurture</button><button class="btn ghost sm-btn" type="button" data-act="mql-notfit" data-id="${esc(r.id)}">Not a fit</button>`;
-    return `<li class="mrow ${late ? "late" : ""}">
+    const pending = S.hsPending && S.hsPending.id === r.id;
+    const orphan = !t && hsPrefs().assign && canWrite() && (!r.owner || r.owner === "47262796");
+    return `<li class="mrow ${late ? "late" : ""}" data-row="${esc(r.id)}">
       <div class="m-main">${nameLine}<div class="m-who">${esc(who || "No title or company")}</div><div class="flags">${chips}</div></div>
       <div class="m-what"><b>${esc(r.ev.label)}</b><span class="small muted" title="${esc(r.event)}">${esc([r.source && r.source.replace(/_/g, " ").toLowerCase(), r.sourceDetail].filter(Boolean).join(" · ").slice(0, 60))}</span></div>
       <div class="m-when"><b class="num">${esc(agoShort(r.mqlAt))}</b><span class="small muted">${esc(fmtDate(localDay(r.mqlAt)))}</span></div>
       <div class="m-touch">${contacted}<span class="small muted">${esc(HS_OWNER_NAME[r.owner] || (r.owner ? "Other owner" : "Unassigned"))}${r.leadStatus ? " · " + esc(r.leadStatus) : ""}</span></div>
-      <div class="m-acts">${acts}</div></li>`;
+      <div class="m-acts">${pending ? "" : acts}${orphan && !pending ? `<button class="btn ghost sm-btn" type="button" data-act="hs-assign" data-id="${esc(r.id)}" title="Change the HubSpot contact owner">${ic("user")} Reassign</button>` : ""}</div>${pending ? hsPendingHtml(r) : ""}</li>`;
   }
   function renderMqls() {
     if (S.route.view !== "mqls") return;
@@ -2813,6 +2852,134 @@ a.un-title:hover { text-decoration: underline; }
   }
 
 
+  // ---------- HubSpot updates: opt-in per person, previewed, re-checked, audited ----------
+  // The cockpit may only: set Lead Status or Contact owner on a contact, or create a call on a contact.
+  const HS_WRITABLE = { contacts: new Set(["hs_lead_status", "hubspot_owner_id"]) };
+  const LEAD_STATUS_LABEL = { "": "(blank)", Open: "Open", Working: "Attempting Contact", Connected: "Connected", "Meeting Scheduled": "Meeting Scheduled", "Sales Qualified Lead": "Sales Qualified Lead", UNQUALIFIED: "Unqualified", Opportunity: "Opportunity", Nurturing: "Nurturing", Customer: "Customer", Trash: "Trash" };
+  const LS_MOVABLE = new Set(["", "Open", "Working", "Nurturing", "UNQUALIFIED"]); // never move a lead off Connected, Meeting Scheduled, SQL, Opportunity, Customer or Trash
+  const MQL_TO_STATUS = { work: "Working", nurture: "Nurturing", notfit: "UNQUALIFIED" };
+  const CALL_DISPO = { "Connected": "f240bbac-87c9-4f6e-bf70-924b57d47db7", "Left voicemail": "b2cf5968-551e-4856-9783-52b3da59a7d0", "No answer": "73a0d17f-1163-4015-bdd5-ec830791da20", "Wrong number": "17b47fee-58de-441e-a44c-c6300d46f273", "Demo booked": "e957a07a-1c06-410b-b9c6-56b808c93aa3" };
+  const HS_PREF_DEFAULT = { lead: false, calls: false, assign: false };
+  S.prefs = new Map(); S.hsAudit = new Map(); S.hsPending = null;
+  const hsPrefs = () => Object.assign({}, HS_PREF_DEFAULT, ((S.myOwner && S.prefs.get(S.myOwner)) || {}).hubspot || {});
+  const lsLabel = (v) => LEAD_STATUS_LABEL[v || ""] || v;
+  const ownerLabel = (id) => HS_OWNER_NAME[id || ""] || (id ? `Owner ${id}` : "Unassigned");
+  function firstId(p) {
+    let found = "";
+    const walk = (v, d) => { if (found || !v || typeof v !== "object" || d > 6) return; if (Array.isArray(v)) { v.forEach((x) => walk(x, d + 1)); return; } const id = v.id ?? v.objectId ?? v.hs_object_id; if (id != null && /^\d+$/.test(String(id))) { found = String(id); return; } for (const k of Object.keys(v)) walk(v[k], d + 1); };
+    walk(p, 0); return found;
+  }
+  async function hsReadContact(id) {
+    const p = await callTool(HSP, "get_crm_objects", { objectType: "contacts", objectIds: [Number(id)], properties: ["hs_lead_status", "hubspot_owner_id", "firstname", "lastname", "email"] });
+    const rec = ((p && (p.objects || p.results)) || [])[0];
+    if (!rec) throw { code: "not_found", message: "That contact wasn't found in HubSpot." };
+    return rec.properties || {};
+  }
+  function audit(entry) { return S.db.collection("hs_audit").doc(rid("hs")).set({ at: nowIso(), by: S.myOwner || S.meName || "", by_id: S.meId || null, ...entry }).catch(() => {}); }
+  // Re-reads the contact first; writes only if the field still holds the value the person saw in the preview.
+  async function hsUpdateContact(id, prop, expectFrom, to, meta) {
+    if (!HS_WRITABLE.contacts.has(prop)) throw { code: "blocked", message: "The cockpit doesn't change that HubSpot field." };
+    const cur = await hsReadContact(id); const now = cur[prop] || "";
+    if (now !== (expectFrom || "")) {
+      audit({ object: "contact", record_id: String(id), name: meta.name || "", field: prop, from: expectFrom || "", to, result: "skipped_changed", found: now });
+      throw { code: "changed", message: `Nothing was written: ${prop === "hs_lead_status" ? "Lead Status" : "owner"} changed in HubSpot since this page loaded (it's now ${prop === "hs_lead_status" ? lsLabel(now) : ownerLabel(now)}).` };
+    }
+    if (now === to) return { unchanged: true };
+    await spendTool(HSP, "manage_crm_objects", { confirmationStatus: "CONFIRMED", updateRequest: { objects: [{ objectType: "contacts", objectId: Number(id), properties: { [prop]: to } }] } });
+    await audit({ object: "contact", record_id: String(id), name: meta.name || "", field: prop, from: now, to, result: "written", reason: meta.reason || "", account_id: meta.accId || null, undo_of: meta.undoOf || null });
+    if (meta.accId) logActivity(meta.accId, { type: "change", summary: `HubSpot: ${meta.name} ${prop === "hs_lead_status" ? "Lead Status" : "owner"} ${prop === "hs_lead_status" ? lsLabel(now) : ownerLabel(now)} → ${prop === "hs_lead_status" ? lsLabel(to) : ownerLabel(to)}` });
+    return { written: true, from: now };
+  }
+  async function hsCreateCall(contactId, c) {
+    const props = { hs_timestamp: String(Date.now()), hs_call_title: `Call with ${c.name}`, hs_call_body: c.note || "", hs_call_direction: "OUTBOUND", hs_call_status: c.outcome === "No answer" ? "NO_ANSWER" : "COMPLETED", hs_call_disposition: CALL_DISPO[c.meeting ? "Demo booked" : c.outcome] || "", hubspot_owner_id: HS_OWNER[S.myOwner] || "" };
+    if (c.number) props.hs_call_to_number = c.number;
+    const p = await spendTool(HSP, "manage_crm_objects", { confirmationStatus: "CONFIRMED", createRequest: { objects: [{ objectType: "calls", properties: props, associations: [{ targetObjectId: Number(contactId), targetObjectType: "CONTACT" }] }] } });
+    const callId = firstId(p);
+    await audit({ object: "call", record_id: callId, contact_id: String(contactId), name: c.name, field: "call", from: "", to: c.meeting ? "Demo booked" : c.outcome, result: "written", account_id: c.accId || null });
+    return callId;
+  }
+  async function hsFindContactByEmail(email) {
+    if (!email) return null;
+    const p = await callTool(HSP, "search_crm_objects", { objectType: "CONTACT", filterGroups: [{ filters: [{ propertyName: "email", operator: "EQ", value: email.toLowerCase() }] }], properties: ["firstname", "lastname", "email"], limit: 2, chatInsights: HS_INSIGHTS });
+    const rs = (p && p.results) || [];
+    return rs.length === 1 ? { id: String(rs[0].id), name: `${(rs[0].properties || {}).firstname || ""} ${(rs[0].properties || {}).lastname || ""}`.trim() || email } : rs.length > 1 ? { many: true } : null;
+  }
+
+  // MQL triage with an optional Lead Status update
+  function mqlAction(action, id) {
+    const r = S.mql.rows.find((x) => x.id === id); if (!r) return;
+    const reasonSel = $("nf-" + id); const reason = reasonSel ? reasonSel.value : "";
+    const to = MQL_TO_STATUS[action]; const from = r.leadStatus || "";
+    if (hsPrefs().lead && S.mcp && to && from !== to && LS_MOVABLE.has(from)) { S.hsPending = { kind: "lead", id, action, reason, from, to }; S.notfit = null; renderMqls(); return; }
+    runMqlAction(action, id, reason, null);
+  }
+  async function runMqlAction(action, id, reason, hs) {
+    const r = S.mql.rows.find((x) => x.id === id); if (!r) return;
+    S.hsPending = null; S.notfit = null;
+    if (action === "work") await workMql(id);
+    else if (action === "nurture") { if (await setTriage("mql", id, { status: "nurture" })) toast("Moved to Nurture."); }
+    else await setTriage("mql", id, { status: "notfit", reason });
+    if (!hs) { renderMqls(); return; }
+    try {
+      const t = triageOf(id) || {};
+      const res = await hsUpdateContact(id, "hs_lead_status", hs.from, hs.to, { name: mqlName(r), reason: action, accId: t.account_id || null });
+      r.leadStatus = hs.to;
+      toast(res.unchanged ? "HubSpot already had that Lead Status." : `HubSpot updated: ${mqlName(r)} is now ${lsLabel(hs.to)}.`);
+    } catch (e) { toast(e && e.code === "changed" ? e.message : "HubSpot wasn't updated. " + errText(e, HSP)); }
+    renderMqls();
+  }
+  async function runAssign(id, to) {
+    const r = S.mql.rows.find((x) => x.id === id); if (!r) return;
+    S.hsPending = null;
+    try {
+      await hsUpdateContact(id, "hubspot_owner_id", r.owner || "", to, { name: mqlName(r), reason: "assign" });
+      r.owner = to; toast(`HubSpot updated: ${mqlName(r)} is now owned by ${ownerLabel(to)}.`);
+    } catch (e) { toast(e && e.code === "changed" ? e.message : "HubSpot wasn't updated. " + errText(e, HSP)); }
+    renderMqls();
+  }
+  function hsPendingHtml(r) {
+    const p = S.hsPending; if (!p || p.id !== r.id) return "";
+    if (p.kind === "lead") {
+      const what = p.action === "work" ? "Work it" : p.action === "nurture" ? "Nurture" : `Not a fit${p.reason ? " · " + p.reason : ""}`;
+      return `<div class="hs-confirm" role="group" aria-label="Confirm HubSpot update"><div class="hs-c-head">${ic("sync")} Also update HubSpot?</div>
+        <table class="hs-c-table"><thead><tr><th>Contact</th><th>Field</th><th>Now</th><th>Will be</th></tr></thead><tbody><tr><td>${esc(mqlName(r))}</td><td>Lead Status</td><td>${esc(lsLabel(p.from))}</td><td><b>${esc(lsLabel(p.to))}</b></td></tr></tbody></table>
+        <div class="row-form"><button class="btn sm-btn-solid" type="button" data-act="hs-lead-yes" data-id="${esc(r.id)}">${esc(what)} + update HubSpot</button><button class="btn ghost sm-btn" type="button" data-act="hs-lead-no" data-id="${esc(r.id)}">${esc(what)}, cockpit only</button><button class="btn ghost sm-btn" type="button" data-act="hs-cancel">Cancel</button></div></div>`;
+    }
+    if (p.kind === "assign") {
+      return `<div class="hs-confirm" role="group" aria-label="Confirm HubSpot owner change"><div class="hs-c-head">${ic("user")} Reassign in HubSpot</div>
+        <table class="hs-c-table"><thead><tr><th>Contact</th><th>Field</th><th>Now</th><th>Will be</th></tr></thead><tbody><tr><td>${esc(mqlName(r))}</td><td>Contact owner</td><td>${esc(ownerLabel(r.owner))}</td><td><label class="sr" for="as-${esc(r.id)}">New owner</label><select class="sel" id="as-${esc(r.id)}" style="padding:3px 8px">${OWNERS.map((o) => `<option value="${HS_OWNER[o]}" ${o === (S.myOwner || "Jeremy") ? "selected" : ""}>${o}</option>`).join("")}</select></td></tr></tbody></table>
+        <div class="row-form"><button class="btn sm-btn-solid" type="button" data-act="hs-assign-yes" data-id="${esc(r.id)}">Update owner in HubSpot</button><button class="btn ghost sm-btn" type="button" data-act="hs-cancel">Cancel</button></div></div>`;
+    }
+    return "";
+  }
+
+  // Settings: switches + change log
+  function renderHubspotSettings() {
+    const el = $("hs-settings"); if (!el) return;
+    if (!S.myOwner) { el.innerHTML = `<div class="small muted">Pick who you are in the top bar to set your HubSpot preferences.</div>`; return; }
+    const pr = hsPrefs(); const ro = canWrite() ? "" : "disabled";
+    const sw = (k, title, desc) => `<label class="hs-sw"><input type="checkbox" data-hs-pref="${k}" ${pr[k] ? "checked" : ""} ${ro}><span><b>${title}</b><span class="small muted">${desc}</span></span></label>`;
+    const log = [...S.hsAudit.entries()].sort((a, b) => String(b[1].at).localeCompare(String(a[1].at))).slice(0, 30);
+    const undone = new Set(log.map(([, x]) => x.undo_of).filter(Boolean));
+    el.innerHTML = `<div class="small muted">Off by default. Each switch is just for you (${esc(S.myOwner)}), and every change is shown to you before it's made. The cockpit can only change Lead Status and owner on contacts and log calls. It never creates contacts, changes lifecycle stages or deletes anything.</div>
+      ${sw("lead", "Update Lead Status when you triage MQLs", "Work it → Attempting Contact, Nurture → Nurturing, Not a fit → Unqualified. Leads already Connected, Meeting Scheduled or further along are left alone.")}
+      ${sw("calls", "Log calls to HubSpot", "Calls you log in the cockpit can also be created on the matching HubSpot contact, with outcome and notes. Only when the email matches exactly one contact.")}
+      ${sw("assign", "Reassign unowned MQLs", "Adds a Reassign button on MQLs owned by the SFDC System user or nobody.")}
+      <div class="eyebrow" style="margin-top:6px">HubSpot change log</div>
+      ${log.length ? `<ul class="hs-log">${log.map(([lid, x]) => {
+        const what = x.field === "call" ? `Logged call · ${esc(x.to)}` : `${x.field === "hs_lead_status" ? "Lead Status" : "Owner"}: ${esc(x.field === "hs_lead_status" ? lsLabel(x.from) : ownerLabel(x.from))} → ${esc(x.field === "hs_lead_status" ? lsLabel(x.to) : ownerLabel(x.to))}`;
+        const url = x.object === "call" ? (x.contact_id ? hsContactUrl(x.contact_id) : "") : hsContactUrl(x.record_id);
+        const canUndo = x.result === "written" && x.object === "contact" && !x.undo_of && !undone.has(lid) && canWrite();
+        return `<li><div><b>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(x.name || x.record_id)}</a>` : esc(x.name || "")}</b> · ${what}${x.result === "skipped_changed" ? ' <span class="chip warn">Skipped: changed in HubSpot</span>' : ""}${x.undo_of ? ' <span class="chip">Undo</span>' : ""}${undone.has(lid) ? ' <span class="chip">Undone</span>' : ""}<div class="small muted">${esc(x.by || "")} · ${esc(fmtWhen(x.at))}</div></div>
+          ${canUndo ? `<button class="btn ghost sm-btn" type="button" data-act="hs-undo" data-id="${esc(lid)}">Undo</button>` : ""}</li>`;
+      }).join("")}</ul>` : `<div class="small muted">No HubSpot changes yet.</div>`}`;
+  }
+  async function hsUndo(lid) {
+    const x = S.hsAudit.get(lid); if (!x || x.object !== "contact") return;
+    try { await hsUpdateContact(x.record_id, x.field, x.to, x.from, { name: x.name, reason: "undo", undoOf: lid }); toast("Undone in HubSpot."); }
+    catch (e) { toast(e && e.code === "changed" ? e.message : "Couldn't undo. " + errText(e, HSP)); }
+  }
+
   // ---------- Meeting lead source (HubSpot contact lookup by guest email) ----------
   S.calSrc = new Map();
   const SRC_OUT = /zoominfo|interseller|apollo|seamless|insideview|^sales$|sales-created|^list|purchased|outbound tool|website visitor id|list \/ import|salesforce-created/i;
@@ -2903,11 +3070,17 @@ a.un-title:hover { text-decoration: underline; }
       case "cal-refresh": loadCalendar(true); break;
       case "mql-refresh": loadMqls(true); break;
       case "sig-refresh": S.sig.hs = new Map(); loadSignals(true); break;
-      case "mql-work": b.disabled = true; await workMql(id); renderMqls(); break;
-      case "mql-nurture": if (await setTriage("mql", id, { status: "nurture" })) toast("Moved to Nurture."); break;
+      case "mql-work": if (S.mqlF.show !== "triage") { S.mqlF.show = "triage"; const sel = $("mf-show"); if (sel) sel.value = "triage"; } mqlAction("work", id); { const row = document.querySelector(`[data-row="${CSS.escape(id)}"]`); if (row && S.hsPending) row.scrollIntoView({ behavior: "smooth", block: "center" }); } break;
+      case "mql-nurture": mqlAction("nurture", id); break;
+      case "hs-lead-yes": { const pd = S.hsPending; if (pd && pd.id === id) { b.disabled = true; await runMqlAction(pd.action, id, pd.reason, { from: pd.from, to: pd.to }); } break; }
+      case "hs-lead-no": { const pd = S.hsPending; if (pd && pd.id === id) await runMqlAction(pd.action, id, pd.reason, null); break; }
+      case "hs-cancel": S.hsPending = null; renderMqls(); break;
+      case "hs-assign": S.hsPending = { kind: "assign", id }; renderMqls(); break;
+      case "hs-assign-yes": { const sel = $("as-" + id); if (sel) { b.disabled = true; await runAssign(id, sel.value); } break; }
+      case "hs-undo": b.disabled = true; await hsUndo(id); break;
       case "mql-notfit": S.notfit = id; renderMqls(); break;
       case "mql-notfit-no": S.notfit = null; renderMqls(); renderSignals(); break;
-      case "mql-notfit-yes": { const sel = $("nf-" + id); S.notfit = null; await setTriage("mql", id, { status: "notfit", reason: sel ? sel.value : "" }); break; }
+      case "mql-notfit-yes": mqlAction("notfit", id); break;
       case "mql-reopen": await w(() => S.db.collection("triage").doc("mql-" + id).delete()); break;
       case "sig-find": sigFind(id); break;
       case "sig-ondeck": b.disabled = true; await sigOnDeck(id); break;
@@ -2975,10 +3148,16 @@ a.un-title:hover { text-decoration: underline; }
     if (el.closest && el.closest("#cl-form")) {
       readCallLog();
       if (S.callLog && (el.name === "cl-outcome" || el.id === "cl-meeting" || el.id === "cl-contact")) {
-        if (el.id === "cl-contact") { const a2 = S.accounts.get(S.callLog.accId); const c2 = contactOf(a2, el.value); S.callLog.number = bestNumber(c2); }
+        if (el.id === "cl-contact") { const a2 = S.accounts.get(S.callLog.accId); const c2 = contactOf(a2, el.value); S.callLog.number = bestNumber(c2); S.callLog.hs = null; setTimeout(prepCallHs, 0); }
         if (el.name === "cl-outcome") { S.callLog.followDays = el.value === "Connected" ? 3 : 2; if (el.value !== "Connected") S.callLog.meeting = false; }
         renderCallLog();
       }
+      return;
+    }
+    if (el.dataset && el.dataset.hsPref) {
+      if (!S.myOwner) return;
+      const next = { ...hsPrefs(), [el.dataset.hsPref]: el.checked };
+      if (await w(() => S.db.collection("prefs").doc(S.myOwner).set({ hubspot: next, updated_at: nowIso() }))) toast(el.checked ? "Turned on. You'll confirm each HubSpot change." : "Turned off.");
       return;
     }
     if (el.closest && el.closest("#sig-form")) { renderSigPreview(); return; }
@@ -3109,6 +3288,8 @@ a.un-title:hover { text-decoration: underline; }
       const settle = () => { if (S.loaded.a && S.loaded.t) { clearTimeout(loadT); if (S.dbErr.startsWith("The board is taking")) S.dbErr = ""; } };
       db.collection("accounts").limit(1000).onSnapshot((snap) => { S.accounts = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.a = true; settle(); renderAll(); }, onErr);
       db.collection("tasks").limit(1000).onSnapshot((snap) => { S.tasks = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.t = true; settle(); renderAll(); }, onErr);
+      db.collection("prefs").limit(20).onSnapshot((snap) => { S.prefs = new Map(snap.docs.map((d) => [d.id, d.data()])); renderHubspotSettings(); renderMqls(); }, () => {});
+      db.collection("hs_audit").limit(500).onSnapshot((snap) => { S.hsAudit = new Map(snap.docs.map((d) => [d.id, d.data()])); renderHubspotSettings(); }, () => {});
       db.collection("triage").limit(1000).onSnapshot((snap) => { S.triage = new Map(snap.docs.map((d) => [d.id, d.data()])); renderMqls(); renderSignals(); }, () => {});
       db.collection("templates").limit(200).onSnapshot((snap) => { S.templates = new Map(snap.docs.map((d) => [d.id, d.data()])); renderEmailSettings(); }, () => {});
       db.collection("signatures").limit(50).onSnapshot((snap) => { S.sigs = new Map(snap.docs.map((d) => [d.id, d.data()])); S._sigFor = null; renderEmailSettings(); }, () => {});
