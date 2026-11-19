@@ -644,6 +644,20 @@ a.ds:hover { border-color: var(--blue); }
 .d-step { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .d-step [aria-disabled] { opacity: .45; pointer-events: none; }
 .d-step .flip svg { transform: scaleX(-1); }
+
+/* Task queue */
+.q-start { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 0 0 12px; }
+.queue-bar { position: sticky; top: 64px; z-index: 6; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 14px; background: var(--navy, #1D4277); color: #fff; box-shadow: 0 6px 20px rgba(12,21,36,.18); }
+.queue-bar .q-info { display: grid; gap: 3px; min-width: 0; flex: 1 1 320px; }
+.queue-bar .q-lab { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+.queue-bar .q-title { font-family: var(--font-head); font-size: 16px; overflow-wrap: anywhere; }
+.queue-bar .q-title a, .queue-bar .q-meta a { color: #fff; }
+.queue-bar .q-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; opacity: .92; }
+.queue-bar .q-meta .via { color: rgba(255,255,255,.75); }
+.queue-bar .q-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.queue-bar .btn.ghost { color: #fff; border-color: rgba(255,255,255,.35); background: transparent; }
+.queue-bar .q-done { background: var(--green, #02E584); color: #0B2A1C; border-color: transparent; }
+.tasklist li.q-cur { background: color-mix(in srgb, var(--blue) 9%, transparent); box-shadow: inset 3px 0 0 var(--blue); border-radius: 8px; }
 </style>
 
 <header class="bar">
@@ -732,6 +746,7 @@ a.ds:hover { border-color: var(--blue); }
     star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
     check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    play: '<path d="M8 5.5v13l10.5-6.5z"/>',
     x: '<path d="M6 6l12 12M18 6L6 18"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
@@ -1055,6 +1070,7 @@ a.ds:hover { border-color: var(--blue); }
     const t = S.tasks.get(id); if (!t) return;
     const ok = await w(() => taskRef(id).update({ status: done ? "done" : "open", completed_at: done ? nowIso() : null, completed_by: done ? (S.myOwner || S.meName || "") : null }));
     if (ok && done) toast(`Done: ${t.title.slice(0, 48)}`, () => setTaskDone(id, false));
+    if (ok && done && S.queue && qCur() === id) qAdvance("done");
   }
   async function addTask(accountId, title, due, contactId, source) {
     title = String(title || "").trim(); if (!title) return false;
@@ -1327,7 +1343,7 @@ a.ds:hover { border-color: var(--blue); }
       const a = S.accounts.get(x.account_id) || {}; const tc = taskContact(a, x); const dl = dueLabel(x.due_date);
       return `<li><input type="checkbox" class="chk" data-act="done" data-id="${id}" aria-label="Mark done: ${esc(x.title)}">
         <div class="t-main"><span class="t-title">${esc(x.title)}</span>
-          <span class="t-meta">${kindOf(a) === "deal" ? '<span class="kind deal" title="Deal management">Deal</span>' : '<span class="kind tgt" title="Outbound target">Target</span>'}<a href="#account-${esc(x.account_id)}">${esc(a.company_name || "Unknown account")}</a>${contactTag(tc)}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}</span></div>
+          <span class="t-meta">${kindOf(a) === "deal" ? '<span class="kind deal" title="Deal management">Deal</span>' : '<span class="kind tgt" title="Outbound target">Target</span>'}<a href="#account-${esc(x.account_id)}" data-qstart="${esc(id)}" title="Open and work tasks from here">${esc(a.company_name || "Unknown account")}</a>${contactTag(tc)}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}</span></div>
         <div class="t-side">${S.owner === "all" ? `<span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span>` : ""}<span class="pill ${dl.cls}">${esc(dl.txt)}</span></div></li>`;
     };
     let body;
@@ -1349,6 +1365,7 @@ a.ds:hover { border-color: var(--blue); }
               <button type="button" data-tkind="deal" aria-pressed="${S.todayKind === "deal"}"><span class="dotk deal" aria-hidden="true"></span>Deals <span class="n num">${kindCount.deal}</span></button>
               <button type="button" data-tkind="outbound" aria-pressed="${S.todayKind === "outbound"}"><span class="dotk tgt" aria-hidden="true"></span>Targets <span class="n num">${kindCount.outbound}</span></button>
             </div></div>
+          ${items.length || S.queue ? `<div class="q-start">${S.queue ? `<button class="btn" type="button" data-act="q-resume">${ic("play")} Resume tasks · ${S.queue.i + 1} of ${S.queue.ids.length}</button><button class="btn ghost" type="button" data-act="q-end">End queue</button>` : `<button class="btn" type="button" data-act="q-start">${ic("play")} Start ${S.todayKind === "deal" ? "deal " : S.todayKind === "outbound" ? "target " : ""}tasks · ${items.length}</button><span class="small muted">Opens each account in turn. Complete a task and the next one opens.</span>`}</div>` : ""}
           ${body}
         </section>
       </div></div>`;
@@ -1583,6 +1600,51 @@ a.ds:hover { border-color: var(--blue); }
       <div class="xmore"><a href="#account-${esc(accId)}">Open account: tasks, notes${a.band === "deal" ? ", Gong" : ""} →</a>${a.band !== "deal" && cs.length ? '<span>Sourced contacts: call only. Don\'t text until they opt in.</span>' : ""}</div>`;
   }
 
+  // ---------- Task queue: work Today's tasks one account at a time ----------
+  S.queue = storeJ.get("queue") || null;
+  const todayQueueIds = () => focusTasks().filter(([, x]) => S.todayKind === "all" || kindOf(S.accounts.get(x.account_id)) === S.todayKind).map(([id]) => id);
+  const qOpen = (id) => { const t = S.tasks.get(id); return t && t.status !== "done"; };
+  const qCur = () => (S.queue && S.queue.ids[S.queue.i]) || null;
+  function qSave() { storeJ.set("queue", S.queue); }
+  function qStart(fromId) {
+    const ids = todayQueueIds(); if (!ids.length) { toast("No tasks due in this view."); return; }
+    const i = fromId ? Math.max(0, ids.indexOf(fromId)) : 0;
+    S.queue = { ids, i, kind: S.todayKind, done: 0, skipped: 0, started: nowIso() }; qSave(); qGo();
+  }
+  function qGo() {
+    const id = qCur(); const t = id && S.tasks.get(id);
+    if (!t) { qFinish(); return; }
+    const h = "#account-" + t.account_id;
+    if (location.hash !== h) location.hash = h; else { renderQueue(); renderDetail(); }
+  }
+  function qAdvance(how) {
+    if (!S.queue) return;
+    if (how === "done") S.queue.done++; else if (how === "skip") S.queue.skipped++;
+    let i = S.queue.i + 1; while (i < S.queue.ids.length && !qOpen(S.queue.ids[i])) i++;
+    S.queue.i = i; qSave();
+    if (i >= S.queue.ids.length) qFinish(); else qGo();
+  }
+  function qFinish(ended) {
+    const q = S.queue; S.queue = null; qSave();
+    if (q && !ended) toast(`Queue finished: ${q.done} done${q.skipped ? `, ${q.skipped} skipped` : ""}.`);
+    if (S.route.view === "account") location.hash = "#today"; else renderToday();
+  }
+  function renderQueue() {
+    const el = $("d-queue"); if (!el) return;
+    const id = qCur(); const t = id && S.tasks.get(id);
+    if (!S.queue || !t) { el.innerHTML = ""; return; }
+    const a = S.accounts.get(t.account_id) || {}; const here = S.route.id === t.account_id;
+    const n = S.queue.ids.length; const left = S.queue.ids.slice(S.queue.i + 1).filter(qOpen).length;
+    const kindLbl = S.queue.kind === "deal" ? "Deal tasks" : S.queue.kind === "outbound" ? "Target tasks" : "All tasks";
+    const tc = taskContact(a, t); const dl = dueLabel(t.due_date);
+    el.innerHTML = `<div class="queue-bar" role="region" aria-label="Task queue">
+      <div class="q-info"><div class="q-lab">${esc(kindLbl)} · task ${S.queue.i + 1} of ${n}${left ? ` · ${left} to go` : " · last one"}</div>
+        <div class="q-title">${here ? "" : `<a href="#account-${esc(t.account_id)}">${esc(a.company_name || "Account")}</a>: `}${esc(t.title)}</div>
+        <div class="q-meta">${tc.c ? `${contactTag(tc)}${tc.c.phone || tc.c.mobile ? " " + callLink(tc.c.mobile || tc.c.phone, false, t.account_id, tc.c) : ""}` : ""}<span class="pill ${dl.cls}">${esc(dl.txt)}</span></div></div>
+      <div class="q-acts">${here ? `<button class="btn q-done" type="button" data-act="q-done">${ic("check")} Complete &amp; next</button>` : `<a class="btn" href="#account-${esc(t.account_id)}">Back to this task</a>`}
+        <button class="btn ghost" type="button" data-act="q-skip" title="Leave it open and move on">Skip</button>
+        <button class="btn ghost" type="button" data-act="q-end">End</button></div></div>`;
+  }
   // ---------- Account detail ----------
   function stepTargets(id, a) {
     const ids = accListRows(kindOf(a)).rows.map(([k]) => k); const i = ids.indexOf(id);
@@ -1601,6 +1663,7 @@ a.ds:hover { border-color: var(--blue); }
   }
   function buildDetailShell() {
     $("view-account").innerHTML = `<div style="display:grid;gap:16px">
+      <div id="d-queue"></div>
       <div class="d-topnav"><a class="back" href="#deals" id="d-back">${ic("back")} Active Deals</a><div class="d-step" id="d-step"></div></div>
       <div id="d-head"></div>
       <div class="detail-grid">
@@ -1652,7 +1715,7 @@ a.ds:hover { border-color: var(--blue); }
     }
     const isDeal = a.band === "deal";
     const back = $("d-back"); if (back) { back.href = listHash(a); back.innerHTML = `${ic("back")} ${isDeal ? "Active Deals" : "Target Accounts"}`; }
-    renderStep(id, a);
+    renderStep(id, a); renderQueue();
     showView(S.route);
     const sfUrl = a.sf_opportunity_id ? `${SF_BASE}/lightning/r/Opportunity/${encodeURIComponent(a.sf_opportunity_id)}/view` : "";
     const openN = openTasks().filter(([, x]) => x.account_id === id).length;
@@ -1703,7 +1766,7 @@ a.ds:hover { border-color: var(--blue); }
           <input class="field" name="due" type="date" value="${esc(x.due_date || "")}" style="flex:0 1 150px" aria-label="Due date">
           <select class="sel" name="contact" aria-label="Contact">${contactOptions(a, x.contact_id)}</select>
           <button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cancel-edit-task">Cancel</button></form></li>`;
-      return `<li class="${isDone ? "done" : ""}"><input type="checkbox" class="chk" data-act="${isDone ? "undone" : "done"}" data-id="${tid}" ${isDone ? "checked" : ""} aria-label="${isDone ? "Reopen" : "Mark done"}: ${esc(x.title)}">
+      return `<li class="${isDone ? "done" : ""}${!isDone && tid === qCur() ? " q-cur" : ""}"><input type="checkbox" class="chk" data-act="${isDone ? "undone" : "done"}" data-id="${tid}" ${isDone ? "checked" : ""} aria-label="${isDone ? "Reopen" : "Mark done"}: ${esc(x.title)}">
         <div class="t-main"><span class="t-title">${esc(x.title)}</span>
           <span class="t-meta">${contactTag(tc)}${x.source === "gong-suggested" ? '<span class="pill gong">Gong</span>' : ""}${isDone && x.completed_at ? `<span>Done ${esc(fmtWhen(x.completed_at))}</span>` : ""}</span></div>
         <div class="t-side">${isDone ? "" : `<span class="pill ${dl.cls}">${esc(dl.txt)}</span>`}
@@ -3826,6 +3889,7 @@ a.ds:hover { border-color: var(--blue); }
     const tlb = e.target.closest("[data-tl]"); if (tlb) { S.tlFilter = tlb.dataset.tl; S.tlAll = false; renderTimeline(); return; }
     const call = e.target.closest("a.call");
     if (call) { const acc = call.dataset.acc, cid = call.dataset.cid, num = call.textContent.trim(); if (acc && canWrite()) setTimeout(() => openCallLog(acc, cid, num, "call"), 400); return; }
+    const qs = e.target.closest("[data-qstart]"); if (qs && !e.metaKey && !e.ctrlKey) { e.preventDefault(); qStart(qs.dataset.qstart); return; }
     const tk = e.target.closest("[data-tkind]"); if (tk) { S.todayKind = tk.dataset.tkind; store.set("todayKind", S.todayKind); renderToday(); return; }
     const tg = e.target.closest('[data-act="toggle-row"]'); if (tg) { const id = tg.dataset.id; S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); renderAccounts(); return; }
     const tr = e.target.closest("tr[data-href]"); if (tr && !e.target.closest("a,button,input,select,label")) { location.hash = tr.dataset.href; return; }
@@ -3841,6 +3905,11 @@ a.ds:hover { border-color: var(--blue); }
     const job = b.dataset.job ? S.jobs.find((j) => j.key === b.dataset.job) : null;
     switch (act) {
       case "done": setTaskDone(id, true); break;
+      case "q-start": qStart(); break;
+      case "q-resume": qGo(); break;
+      case "q-done": { const cur = qCur(); if (cur) { b.disabled = true; await setTaskDone(cur, true); } break; }
+      case "q-skip": qAdvance("skip"); break;
+      case "q-end": qFinish(true); toast("Queue ended."); break;
       case "undone": e.preventDefault(); setTaskDone(id, false); break;
       case "sync": syncSalesforce(); break;
       case "add-account": S.addAccount = true; $("na-owner").value = S.myOwner || "Jeremy"; renderAccounts(); $("na-name").focus(); break;
