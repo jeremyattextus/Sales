@@ -919,13 +919,13 @@ a.ds:hover { border-color: var(--blue); }
     const ext = evs ? evs.filter((e) => e.extDomains.length).length : null;
     const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v == null ? "–" : v}</b><span>${l}</span></div>`;
     const solo = S.myOwner && S.owner !== "all" ? (S.owner === "mine" ? S.myOwner : otherOwner()) : null;
-    const op = solo && isToday ? openToday(solo) : null;
+
     let opCell = "";
     if (solo && isToday) {
       capSubscribe();
       const t0 = new Date(); t0.setHours(0, 0, 0, 0); const done = capTouches(solo, { s: t0, e: new Date(t0.getTime() + 864e5) });
-      const rate = capCfg().touches_per_h; const tgt = op == null ? null : Math.round(op * rate);
-      const tip = op == null ? "" : `About ${hrs(op)} open after meetings, prep, lunch and personal blocks, admin, inbound, and deal work (${S._dealWhy || ""}), at ${rate} touches an hour. Calls, emails and LinkedIn connects or messages logged today count. Assumptions are in Settings.`;
+      const g = dailyGoal(solo); const tgt = g ? g.target : null; const pr = (g && g.parts) || {};
+      const tip = !g ? "Working out today's goal…" : `Today's goal, set at ${fmtTime(g.set_at)} and fixed for the day: ${hrs(pr.day)} workday − ${hrs(pr.mtgH)} meetings, prep and personal blocks − ${hrs(pr.dealH)} deal work (${pr.dealWhy || ""}) − ${hrs(pr.inbH)} inbound${g.inbound_ok ? "" : " (HubSpot unavailable)"} − ${hrs(pr.admH)} admin = ${hrs(g.hours)} open, at ${g.rate} touches an hour. Calls, emails and LinkedIn connects or messages logged today count toward it. Reset it from Capacity on the Activity tab.`;
       opCell = `<a class="ds ${tgt != null && tgt > 0 && done >= tgt ? "good" : ""}" href="#dash" title="${esc(tip)}"><b class="num">${tgt == null ? "–" : `${done}<span class="of">/${tgt}</span>`}</b><span>${tgt === 0 ? "outbound · booked solid" : "outbound touches"}</span></a>`;
     }
     el.innerHTML = (isToday ? cell(left, left === 1 ? "meeting left" : "meetings left") : cell(evs ? evs.length : null, "meetings tomorrow")) + cell(ext, "external") + opCell + cell(c.due, "tasks due") + cell(c.over, "overdue", c.over ? "bad" : "");
@@ -3717,7 +3717,7 @@ a.ds:hover { border-color: var(--blue); }
   function capShell() {
     return `<section class="cap" id="cap">
       <div class="cap-head"><div><h2 class="cap-h">Capacity</h2><div class="sub" id="cap-sub"></div></div>
-        <div class="head-r"><span id="cap-rep"></span><button class="btn ghost" type="button" data-act="cap-refresh">${ic("sync")} Refresh</button><a class="btn ghost" href="#email">${ic("gear")} Assumptions</a></div></div>
+        <div class="head-r"><span id="cap-rep"></span><button class="btn ghost" type="button" data-act="goal-reset" title="Recalculate today's outbound goal from the calendar and tasks as they are now">Reset today's goal</button><button class="btn ghost" type="button" data-act="cap-refresh">${ic("sync")} Refresh</button><a class="btn ghost" href="#email">${ic("gear")} Assumptions</a></div></div>
       <div class="day-strip dash-strip" id="cap-strip"></div>
       <div class="dash-grid">
         <section class="panel"><div class="panel-head"><h2>Hours by week</h2><div class="legend" id="cap-legend"></div></div><div class="panel-body"><div class="chart-wrap" id="cap-chart"></div><div class="small muted cap-note">Click a week to check it against Zoom. Touches = calls, emails, LinkedIn connects and messages logged in the cockpit.</div><details class="chart-table"><summary>Show as a table</summary><div class="table-wrap" id="cap-table"></div></details></div></section>
@@ -3849,7 +3849,30 @@ a.ds:hover { border-color: var(--blue); }
       S._dealWhy = `no deal tasks due, so deal work is estimated from deals touched this week: ${hrs(dealH)}`;
     }
     const wk = capWeeks().slice(-1)[0]; const inb = capInbound(owner, wk);
-    return Math.max(0, day - mm / 60 - dealH - (inb ? inb.hours / 5 : 0) - cfg.admin_h);
+    const inbH = inb ? inb.hours / 5 : 0;
+    S._openParts = { day, mtgH: mm / 60, dealH, inbH, admH: cfg.admin_h, dealWhy: S._dealWhy || "" };
+    return Math.max(0, day - mm / 60 - dealH - inbH - cfg.admin_h);
+  }
+  // ---------- Daily outbound goal: set once per rep per day, then fixed ----------
+  S.goals = new Map(); S.goalsLoaded = false;
+  function dailyGoal(owner) {
+    const k = owner + "_" + today(); const g = S.goals.get(k);
+    if (g) return g;
+    if (!S.db || !S.goalsLoaded || !S.loaded.a || !S.loaded.t || !calReady() || S.cal.day !== "today" || !calOwners().includes(owner)) return null;
+    // Inbound needs this week's MQLs from HubSpot; wait for them (or for HubSpot to fail) so a reload can't change the goal.
+    if (!S.cap.hs && !S.cap.hsErr) { if (!S._hsKick) { S._hsKick = true; capLoadHs(capWeeks()).then(() => renderDayStrip()); } return null; }
+    const op = openToday(owner); if (op == null) return null;
+    const rate = capCfg().touches_per_h; const pr = S._openParts || {};
+    const goal = { owner, date: today(), hours: Math.round(op * 100) / 100, target: Math.round(op * rate), rate, parts: pr, inbound_ok: !!S.cap.hs, set_at: nowIso(), set_by: S.myOwner || "" };
+    S.goals.set(k, goal);
+    if (canWrite()) S.db.collection("goals").doc(k).set(goal).catch(() => {});
+    return goal;
+  }
+  async function resetGoal(owner) {
+    const k = owner + "_" + today();
+    if (!(await w(() => S.db.collection("goals").doc(k).delete()))) return;
+    S.goals.delete(k); S.cal.at = 0; await loadCalendar(true); renderDayStrip(); renderCapacity();
+    const g = S.goals.get(k); toast(g ? `Today's goal reset to ${g.target} touches.` : "Today's goal will be recalculated.");
   }
   function renderCapSettings() {
     const el = $("cap-settings"); if (!el) return;
@@ -3948,6 +3971,7 @@ a.ds:hover { border-color: var(--blue); }
       case "hs-assign-yes": { const sel = $("as-" + id); if (sel) { b.disabled = true; await runAssign(id, sel.value); } break; }
       case "hs-undo": b.disabled = true; await hsUndo(id); break;
       case "cap-refresh": loadCapacity(true); break;
+      case "goal-reset": { b.disabled = true; await resetGoal(capRep()); break; }
       case "cap-reset": await saveCapSettings(true); renderCapSettings(); break;
       case "mql-notfit": S.notfit = id; renderMqls(); break;
       case "mql-notfit-no": S.notfit = null; renderMqls(); renderSignals(); break;
@@ -4177,6 +4201,7 @@ a.ds:hover { border-color: var(--blue); }
       db.collection("templates").limit(200).onSnapshot((snap) => { S.templates = new Map(snap.docs.map((d) => [d.id, d.data()])); renderEmailSettings(); }, () => {});
       db.collection("signatures").limit(50).onSnapshot((snap) => { S.sigs = new Map(snap.docs.map((d) => [d.id, d.data()])); S._sigFor = null; renderEmailSettings(); }, () => {});
       db.collection("ondeck").limit(1000).onSnapshot((snap) => { S.ondeck = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.o = true; renderProspect(); }, () => { S.loaded.o = true; renderProspect(); });
+      db.collection("goals").where("date", "==", today()).limit(20).onSnapshot((snap) => { for (const d of snap.docs) S.goals.set(d.id, d.data()); S.goalsLoaded = true; renderDayStrip(); }, () => { S.goalsLoaded = true; renderDayStrip(); });
       db.doc("meta/settings").onSnapshot((snap) => { S.settings = (snap.exists && snap.data()) || {}; renderAccounts(); renderCapSettings(); renderCapacity(); renderDayStrip(); }, () => {});
       if (S.route.view === "account") { S.notesFor = null; subscribeNotes(S.route.id); }
     }
