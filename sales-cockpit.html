@@ -561,6 +561,14 @@ a.un-title:hover { text-decoration: underline; }
 .hs-log li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
 .hs-log li:first-child { border-top: 0; }
 .hs-call { display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 13.5px; }
+
+/* LinkedIn: a daily check, no tasks */
+.li-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.li-state { font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.li-state.ok { color: var(--tgt-ink); }
+.li-state svg.i { width: 13px; height: 13px; }
+.ds.btnlike { cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.ds.btnlike:hover { border-color: var(--blue); }
 </style>
 
 <header class="bar">
@@ -710,7 +718,7 @@ a.un-title:hover { text-decoration: underline; }
     accounts: new Map(), tasks: new Map(), notes: new Map(), ondeck: new Map(), settings: {},
     loaded: { a: false, t: false, o: false }, dbErr: "", dbAbsent: false,
     owner: store.get("owner") || "mine", todayKind: store.get("todayKind") || "all", q: "", expanded: new Set(),
-    af: Object.assign({ close: "any", cfrom: "", cto: "", stage: "all", added: "any", src: "all", sort: "added" }, storeJ.get("af") || {}),
+    af: Object.assign({ close: "any", cfrom: "", cto: "", stage: "all", added: "any", src: "all", sort: "added", li: "any" }, storeJ.get("af") || {}),
     route: { view: "today", id: null },
     zi: { state: "checking", msg: "" }, gm: { state: "checking", msg: "" },
     templates: new Map(), sigs: new Map(), compose: null, tplEdit: null,
@@ -1348,7 +1356,7 @@ a.un-title:hover { text-decoration: underline; }
       const stale = active.filter(([, a]) => a.stage !== "Meeting booked" && (!a.last_touch_at || daysBetween(localDay(a.last_touch_at), t) > 14));
       const engaged = tg.filter(([, a]) => a.stage === "Engaged").length, booked = tg.filter(([, a]) => a.stage === "Meeting booked").length;
       const week = tg.filter(([, a]) => localDay(a.created_at) >= addDays(t, -6)).length;
-      strip.innerHTML = cell(tg.length, "targets", "good") + cell(stale.length, "need a touch", stale.length ? "bad" : "") + cell(engaged, "engaged") + cell(booked, "meetings booked", booked ? "good" : "") + cell(week, "added this week");
+      strip.innerHTML = cell(tg.length, "targets", "good") + cell(stale.length, "need a touch", stale.length ? "bad" : "") + cell(engaged, "engaged") + cell(booked, "meetings booked", booked ? "good" : "") + (() => { const n = tg.reduce((k, [, a]) => k + (a.contacts || []).filter((c) => liMatch(c, "awaiting")).length, 0); return `<button type="button" class="ds btnlike" data-act="li-filter" title="Show contacts awaiting LinkedIn acceptance"><b class="num">${n}</b><span>LinkedIn awaiting</span></button>`; })();
       if (loading) { hero.innerHTML = ""; return; }
       const pick = stale.slice().sort((x, y) => String(x[1].last_touch_at || "").localeCompare(String(y[1].last_touch_at || "")) || String(x[1].created_at || "").localeCompare(String(y[1].created_at || ""))).slice(0, 4);
       if (!pick.length) { hero.innerHTML = tg.length ? `<div class="upnext quiet"><div class="un-main"><div class="un-lab">Work next</div><div class="un-title">Every target was touched in the last two weeks</div><div class="un-when">Time to find a few new ones.</div></div><a class="btn un-btn" href="#prospect">${ic("search")} Find targets</a></div>` : `<div class="upnext quiet"><div class="un-main"><div class="un-lab">Get started</div><div class="un-title">No target accounts yet</div><div class="un-when">Pull companies and contacts from ZoomInfo.</div></div><a class="btn un-btn" href="#prospect">${ic("search")} Find targets</a></div>`; return; }
@@ -1376,8 +1384,9 @@ a.un-title:hover { text-decoration: underline; }
     } else if (S.seg === "outbound") {
       el.innerHTML = `<label class="lbl" for="af-stage">Stage<select class="sel" id="af-stage"><option value="all">All stages</option>${OUT_STAGES.map((s) => `<option ${f.stage === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
         <label class="lbl" for="af-sort">Sort<select class="sel" id="af-sort"><option value="added" ${f.sort !== "stale" ? "selected" : ""}>Newest added</option><option value="stale" ${f.sort === "stale" ? "selected" : ""}>Longest since touched</option></select></label>
+        <label class="lbl" for="af-li">LinkedIn<select class="sel" id="af-li">${[["any", "Any"], ["awaiting", "Awaiting acceptance"], ["accepted", "Accepted, not messaged"]].map(([v, l]) => `<option value="${v}" ${f.li === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
         <label class="lbl" for="af-added">Added<select class="sel" id="af-added">${[["any", "Any time"], ["today", "Today"], ["7", "Last 7 days"], ["30", "Last 30 days"]].map(([v, l]) => `<option value="${v}" ${f.added === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
-        ${f.stage !== "all" || f.added !== "any" ? `<button class="btn ghost clear" type="button" data-act="af-clear">Clear</button>` : ""}
+        ${f.stage !== "all" || f.added !== "any" || f.li !== "any" ? `<button class="btn ghost clear" type="button" data-act="af-clear">Clear</button>` : ""}
         <span class="result-note" id="acc-note"></span>`;
     }
   }
@@ -1398,6 +1407,7 @@ a.un-title:hover { text-decoration: underline; }
     } else if (S.seg === "outbound") {
       if (S.af.stage !== "all") rows = rows.filter(([, a]) => a.stage === S.af.stage);
       const since = addedSince(); if (since) rows = rows.filter(([, a]) => localDay(a.created_at) >= since);
+      if (S.af.li !== "any") rows = rows.filter(([, a]) => (a.contacts || []).some((c) => liMatch(c, S.af.li)));
     }
     const open = new Map(); const overdue = new Set();
     for (const [, x] of openTasks()) { open.set(x.account_id, (open.get(x.account_id) || 0) + 1); if (x.due_date && x.due_date < t) overdue.add(x.account_id); }
@@ -1414,15 +1424,16 @@ a.un-title:hover { text-decoration: underline; }
     const taskCell = (id) => { const n = open.get(id) || 0; return `<td><span class="taskcount num">${overdue.has(id) ? '<span class="od" title="Has overdue tasks"></span>' : ""}${n || '<span class="muted">0</span>'}</span></td>`; };
     const stagePill = (a) => { const isDeal = a.band === "deal"; return `<span class="pill ${isDeal ? (a.sf_closed ? "warn" : "deal") : "tgt"}">${esc(a.stage || (isDeal ? "Deal" : "Target"))}</span>${a.incomplete && !isDeal ? ' <span class="chip warn" title="Fewer than 3 contacts with an email and a callable number">Incomplete</span>' : ""}`; };
     let head, body;
-    const coCell = (id, a, sub) => { const open = S.expanded.has(id); const n = (a.contacts || []).length;
+    const liOn = S.seg === "outbound" && S.af.li !== "any";
+    const coCell = (id, a, sub) => { const open = S.expanded.has(id) || liOn; const n = (a.contacts || []).length;
       return `<td><div class="co-cell"><button class="exp" type="button" data-act="toggle-row" data-id="${esc(id)}" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} contacts for ${esc(a.company_name)}" title="${n} contact${n === 1 ? "" : "s"}">${ic("chev")}</button>
         <div style="min-width:0"><div class="co">${esc(a.company_name || "Untitled")}</div><div class="dom">${esc(sub)}</div></div></div></td>`; };
-    const xrow = (id, a, cols) => S.expanded.has(id) ? `<tr class="xrow"><td colspan="${cols}">${contactsStrip(id, a)}</td></tr>` : "";
+    const xrow = (id, a, cols) => S.expanded.has(id) || liOn ? `<tr class="xrow"><td colspan="${cols}">${contactsStrip(id, a, liOn ? (c) => liMatch(c, S.af.li) : null)}</td></tr>` : "";
     if (S.seg === "outbound") {
       head = `<th>Company</th><th>Stage</th><th>Owner</th><th class="r">Contacts</th><th>Open tasks</th><th>Last touch</th><th>Added</th>`;
       body = rows.map(([id, a]) => {
         const cs = Array.isArray(a.contacts) ? a.contacts : []; const li = cs.filter((c) => c.linkedin_sent).length;
-        return `<tr data-href="#account-${id}" tabindex="0" class="${S.expanded.has(id) ? "open" : ""}">
+        return `<tr data-href="#account-${id}" tabindex="0" class="${S.expanded.has(id) || liOn ? "open" : ""}">
           ${coCell(id, a, [a.sub_industry || a.industry, a.employee_count ? fmtInt(a.employee_count) + " employees" : ""].filter(Boolean).join(" · ") || a.domain || "").replace('<div class="dom">', '<div class="dom">' + (a.source === "inbound" ? '<span class="kind inb" style="font-size:10px;padding:0 6px;margin-right:6px">Inbound</span>' : "") + (a.intent ? '<span class="kind deal" style="font-size:10px;padding:0 6px;margin-right:6px" title="Intent signal">Intent</span>' : ""))}
           <td>${stagePill(a)}</td>${ownerCell(a)}
           <td class="r num">${cs.length}${li ? ` <span class="small muted" title="LinkedIn connects sent">· LI ${li}</span>` : ""}</td>
@@ -1456,8 +1467,8 @@ a.un-title:hover { text-decoration: underline; }
     $("acc-table").innerHTML = rows.length ? `<div class="table-wrap"><table class="book ${S.seg === "deal" ? "k-deal" : "k-tgt"}"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>` : emptyMsg;
   }
 
-  function contactsStrip(accId, a) {
-    const cs = (Array.isArray(a.contacts) ? a.contacts : []).slice().sort((x, y) => (y.id === a.champion_id ? 1 : 0) - (x.id === a.champion_id ? 1 : 0) || (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
+  function contactsStrip(accId, a, only) {
+    const cs = (Array.isArray(a.contacts) ? a.contacts : []).filter((c) => !only || only(c)).slice().sort((x, y) => (y.id === a.champion_id ? 1 : 0) - (x.id === a.champion_id ? 1 : 0) || (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
     const ro = canWrite() ? "" : "disabled";
     const phone = (v, dnc, k, c) => (v ? `<div class="cline"><span class="k">${k}</span>${callLink(v, dnc, accId, c)}${dnc ? '<span class="chip bad" title="ZoomInfo marks this number do-not-call">DNC</span>' : ""}${copyBtn(v, k + " phone")}</div>` : "");
     const cards = cs.map((c) => {
@@ -1469,7 +1480,7 @@ a.un-title:hover { text-decoration: underline; }
           ${c.linkedin_url ? `<a class="chip" href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : `<a class="chip" href="${esc(liSearch)}" target="_blank" rel="noopener">Find on LinkedIn ↗</a>`}${confFlags(c.zi_accuracy, c.zi_updated)}</div>
         ${c.email || c.phone || c.mobile ? `<div class="lines" style="gap:4px">${c.email ? `<div class="cline"><span class="k">Email</span><span class="v">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : ""}${phone(c.phone, c.phone_dnc, "Direct", c)}${phone(c.mobile, c.mobile_dnc, "Mobile", c)}</div>` : ""}
         <div class="foot"><label class="sr" for="xs-${esc(accId)}-${esc(c.id)}">Status</label><select class="sel small" id="xs-${esc(accId)}-${esc(c.id)}" data-act-change="contact-status" data-acc="${esc(accId)}" data-id="${esc(c.id)}" style="padding:3px 8px" ${ro}>${CONTACT_STATUS.map((s) => `<option ${s === st ? "selected" : ""}>${s}</option>`).join("")}</select>
-          <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-acc="${esc(accId)}" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${ro}> LinkedIn sent</label>${canWrite() ? emailBtn(accId, c) : ""}${logCallBtn(accId, c)}${lastEmailed(c)}</div></div>`;
+          ${liControls(accId, a, c)}${canWrite() ? emailBtn(accId, c) : ""}${logCallBtn(accId, c)}${lastEmailed(c)}</div></div>`;
     }).join("");
     return `${cs.length ? `<div class="xcontacts">${cards}</div>` : `<div class="small muted" style="padding-top:6px">No contacts yet.</div>`}
       <div class="xmore"><a href="#account-${esc(accId)}">Open account: tasks, notes${a.band === "deal" ? ", Gong" : ""} →</a>${a.band !== "deal" && cs.length ? '<span>Sourced contacts: call only. Don\'t text until they opt in.</span>' : ""}</div>`;
@@ -1633,7 +1644,7 @@ a.un-title:hover { text-decoration: underline; }
       ${c.email || c.phone || c.mobile ? `<div class="lines" style="gap:4px">${c.email ? `<div class="cline"><span class="k">Email</span><span class="v">${esc(c.email)}</span>${copyBtn(c.email, "email")}</div>` : ""}${phone(c.phone, c.phone_dnc, "Direct", c)}${phone(c.mobile, c.mobile_dnc, "Mobile", c)}</div>` : ""}
       ${sourced ? '<div class="calls-note">Sourced contact: call only. Don\'t text until they opt in.</div>' : ""}
       <div class="foot"><label class="sr" for="cs-${esc(c.id)}">Status</label><select class="sel small" id="cs-${esc(c.id)}" data-act-change="contact-status" data-id="${esc(c.id)}" style="padding:3px 8px" ${canWrite() ? "" : "disabled"}>${CONTACT_STATUS.map((s) => `<option ${s === st ? "selected" : ""}>${s}</option>`).join("")}</select>
-        <label class="li-check"><input type="checkbox" data-act-change="linkedin-sent" data-id="${esc(c.id)}" ${c.linkedin_sent ? "checked" : ""} ${canWrite() ? "" : "disabled"}> LinkedIn sent</label>${canWrite() ? emailBtn(S.route.id, c) : ""}${logCallBtn(S.route.id, c)}${lastEmailed(c)}
+        ${liControls(S.route.id, a, c)}${canWrite() ? emailBtn(S.route.id, c) : ""}${logCallBtn(S.route.id, c)}${lastEmailed(c)}
         ${c.is_primary ? '<span class="pill deal">Primary</span>' : ""}</div></div>`;
     };
     const sorted = cs.slice().sort((x, y) => (y.id === a.champion_id ? 1 : 0) - (x.id === a.champion_id ? 1 : 0) || (y.is_primary ? 1 : 0) - (x.is_primary ? 1 : 0) || (x.persona_tier || 9) - (y.persona_tier || 9));
@@ -2349,7 +2360,7 @@ a.un-title:hover { text-decoration: underline; }
   function openCompose(accId, cid) {
     const a = S.accounts.get(accId); const c = contactOf(a, cid); if (!a || !c) return;
     if (!S.myOwner) { toast("Pick who you are in the top bar first, so the email uses your signature."); return; }
-    const tpls = [...S.templates.entries()].sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
+    const tpls = [...S.templates.entries()].filter(([, t]) => (t.channel || "email") === "email").sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
     const stored = store.get("lastTpl");
     const first = tpls.find(([id]) => id === stored) || tpls[0];
     S.compose = { accId, cid, tplId: first ? first[0] : "", subject: first ? mergeFields(first[1].subject, a, c) : "", body: first ? mergeFields(first[1].body, a, c) : "", follow: true, followDays: 3, confirming: false, busy: "", err: "", done: null };
@@ -2362,7 +2373,7 @@ a.un-title:hover { text-decoration: underline; }
     const a = S.accounts.get(cp.accId) || {}; const c = contactOf(a, cp.cid) || {};
     const sg = mySig(); const gmailOk = S.gm.state === "ok";
     if (full) {
-      const tpls = [...S.templates.entries()].sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
+      const tpls = [...S.templates.entries()].filter(([, t]) => (t.channel || "email") === "email").sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
       el.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cp-h">
         <div class="sheet-head"><div><div class="eyebrow">${a.band === "deal" ? '<span class="kind deal">Deal</span>' : '<span class="kind tgt">Target</span>'} ${esc(a.company_name || "")}</div><h2 id="cp-h" style="font-size:20px">Email ${esc(c.name || "")}</h2></div>
           <button class="icon-btn" type="button" data-act="compose-close" aria-label="Close">${ic("x")}</button></div>
@@ -2475,12 +2486,13 @@ a.un-title:hover { text-decoration: underline; }
     const tpls = [...S.templates.entries()].sort((x, y) => String(x[1].name).localeCompare(String(y[1].name)));
     const form = (id, t) => `<form class="contact" data-form="tpl" data-id="${esc(id || "")}" style="gap:8px">
         <label class="lbl">Name<input class="field" name="name" value="${esc(t.name || "")}" required placeholder="First touch: HR"></label>
-        <label class="lbl">Subject<input class="field" name="subject" value="${esc(t.subject || "")}" required></label>
+        <label class="lbl">Type<select class="sel" name="channel">${[["email", "Email"], ["linkedin_note", "LinkedIn connection note (300 characters max)"], ["linkedin_msg", "LinkedIn message"]].map(([v, l]) => `<option value="${v}" ${(t.channel || "email") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <label class="lbl">Subject (email only)<input class="field" name="subject" value="${esc(t.subject || "")}"></label>
         <label class="lbl">Message<textarea class="field" name="body" rows="9" required>${esc(t.body || "")}</textarea></label>
         <div class="small muted">Merge fields: ${esc(MERGE_HELP)}</div>
         <div class="row-form"><button class="btn" type="submit">Save template</button><button class="btn ghost" type="button" data-act="tpl-cancel">Cancel</button>
           ${id ? `<button class="btn ghost" type="button" data-act="tpl-delete" data-id="${esc(id)}" style="margin-left:auto">${ic("trash")} Delete</button>` : ""}</div></form>`;
-    tb.innerHTML = (S.tplEdit === "new" ? form("", {}) : "") + (tpls.length ? tpls.map(([id, t]) => S.tplEdit === id ? form(id, t) : `<div class="contact"><div class="contact-top"><div class="nm"><b>${esc(t.name)}</b><span>${esc(t.subject)}</span></div>${canWrite() ? `<button class="icon-btn" type="button" data-act="tpl-edit" data-id="${esc(id)}" aria-label="Edit ${esc(t.name)}">${ic("edit")}</button>` : ""}</div><div class="small muted" style="white-space:pre-wrap;max-height:4.6em;overflow:hidden">${esc(t.body)}</div></div>`).join("") : (S.tplEdit === "new" ? "" : `<div class="small muted">No templates yet. Click New to write one.</div>`));
+    tb.innerHTML = (S.tplEdit === "new" ? form("", {}) : "") + (tpls.length ? tpls.map(([id, t]) => S.tplEdit === id ? form(id, t) : `<div class="contact"><div class="contact-top"><div class="nm"><b>${esc(t.name)}</b><span>${t.channel && t.channel !== "email" ? `<span class="chip">${t.channel === "linkedin_note" ? "LinkedIn note" : "LinkedIn message"}</span> ` : ""}${esc(t.subject || "")}</span></div>${canWrite() ? `<button class="icon-btn" type="button" data-act="tpl-edit" data-id="${esc(id)}" aria-label="Edit ${esc(t.name)}">${ic("edit")}</button>` : ""}</div><div class="small muted" style="white-space:pre-wrap;max-height:4.6em;overflow:hidden">${esc(t.body)}</div></div>`).join("") : (S.tplEdit === "new" ? "" : `<div class="small muted">No templates yet. Click New to write one.</div>`));
   }
   function sigFromForm() {
     const f = $("sig-form"); if (!f) return mySig();
@@ -3025,6 +3037,34 @@ a.un-title:hover { text-decoration: underline; }
   }
   function srcTip(r) { return [`${r.src.how}: ${r.src.raw}`, r.detail ? `Detail: ${r.detail}` : "", r.lastForm ? `Last form: ${r.lastForm}` : "", `Guest: ${r.name}${r.title ? ", " + r.title : ""}`].filter(Boolean).join("\n"); }
   const srcTag = (e) => { const r = meetingSource(e); return r ? `<a class="src-tag ${r.src.out ? "out" : "in"}" href="${esc(hsContactUrl(r.id))}" target="_blank" rel="noopener" title="${esc(srcTip(r))}">${ic(r.src.out ? "out" : "spark")}${esc(r.src.label)}</a>` : ""; };
+
+  // ---------- LinkedIn (manual send, daily acceptance check, no tasks) ----------
+  const LI_DEFAULT = {
+    linkedin_note: "Hi {first_name}, I work with HR and staffing teams on texting candidates and employees. Would be glad to connect. {my_first_name}",
+    linkedin_msg: "Thanks for connecting, {first_name}. Quick question: how is {company} reaching hourly candidates today, mostly calls and email, or text too? Happy to share what we're seeing work.\n\n{my_first_name}",
+  };
+  const liUrl = (a, c) => c.linkedin_url || `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent([c.name, a.company_name].filter(Boolean).join(" "))}`;
+  const liTemplate = (channel) => { const t = [...S.templates.values()].filter((x) => x.channel === channel).sort((x, y) => String(x.name).localeCompare(String(y.name)))[0]; return t ? t.body : LI_DEFAULT[channel]; };
+  function liControls(accId, a, c) {
+    const href = esc(liUrl(a, c)); const rw = canWrite();
+    if (!c.linkedin_sent) return `<span class="li-row">${rw ? `<a class="btn ghost sm-btn" href="${href}" target="_blank" rel="noopener" data-act="li-note" data-acc="${esc(accId)}" data-id="${esc(c.id)}" title="Copies your connection note and opens LinkedIn">${ic("out")} Connect</a><button class="btn ghost sm-btn" type="button" data-act="li-sent" data-acc="${esc(accId)}" data-id="${esc(c.id)}">Mark sent</button>` : '<span class="li-state">LinkedIn: not sent</span>'}</span>`;
+    if (!c.linkedin_accepted) return `<span class="li-row"><span class="li-state">${ic("out")} Connect sent${c.linkedin_sent_at ? " " + esc(fmtDate(localDay(c.linkedin_sent_at))) : ""}</span>${rw ? `<button class="btn ghost sm-btn" type="button" data-act="li-accepted" data-acc="${esc(accId)}" data-id="${esc(c.id)}">${ic("check")} Accepted</button><button class="btn ghost sm-btn" type="button" data-act="li-unsend" data-acc="${esc(accId)}" data-id="${esc(c.id)}" title="Undo Connect sent">Undo</button>` : ""}</span>`;
+    return `<span class="li-row"><span class="li-state ok">${ic("check")} Connected${c.linkedin_accepted_at ? " " + esc(fmtDate(localDay(c.linkedin_accepted_at))) : ""}${c.linkedin_messaged_at ? ` · messaged ${esc(fmtDate(localDay(c.linkedin_messaged_at)))}` : ""}</span>${rw ? `<a class="btn ghost sm-btn" href="${href}" target="_blank" rel="noopener" data-act="li-msg" data-acc="${esc(accId)}" data-id="${esc(c.id)}" title="Copies your LinkedIn message, opens LinkedIn and logs the touch">${ic("mail")} ${c.linkedin_messaged_at ? "Message again" : "Message"}</a>` : ""}</span>`;
+  }
+  // Must run synchronously inside the click so the browser allows the copy.
+  function liCopy(accId, cid, channel) {
+    const a = S.accounts.get(accId); const c = contactOf(a, cid); if (!a || !c) return;
+    const text = mergeFields(liTemplate(channel), a, c).replace(/\{\w+\}/g, "").trim();
+    const warn = channel === "linkedin_note" && text.length > 300 ? ` It's ${text.length} characters; LinkedIn allows 300, so trim it before sending.` : "";
+    const done = () => toast(channel === "linkedin_note" ? `Connection note copied. In LinkedIn: Connect → Add a note → paste → Send. Then click Mark sent.${warn}` : `Message copied. Paste it in LinkedIn and send. Logged as a LinkedIn touch.`);
+    try { navigator.clipboard.writeText(text).then(done, () => toast("Couldn't copy here. Open your LinkedIn template in Settings and copy it from there.")); } catch { toast("Couldn't copy here. Open your LinkedIn template in Settings and copy it from there."); }
+  }
+  async function liUpdate(accId, cid, patch, act) {
+    const a = S.accounts.get(accId); const c = contactOf(a, cid); if (!a || !c) return;
+    const ok = await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((x) => x.id === cid ? { ...x, ...patch } : x), updated_at: nowIso() }));
+    if (ok && act) logActivity(accId, { ...act, contact_id: c.id, contact_name: c.name });
+  }
+  const liMatch = (c, f) => f === "awaiting" ? !!c.linkedin_sent && !c.linkedin_accepted : f === "accepted" ? !!c.linkedin_accepted && !c.linkedin_messaged_at : true;
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
     if (e.target.closest("#theme-btn")) { S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]; store.set("theme", S.theme); applyTheme(S.theme); return; }
@@ -3051,7 +3091,7 @@ a.un-title:hover { text-decoration: underline; }
       case "sync": syncSalesforce(); break;
       case "add-account": S.addAccount = true; $("na-owner").value = S.myOwner || "Jeremy"; renderAccounts(); $("na-name").focus(); break;
       case "cancel-account": S.addAccount = false; renderAccounts(); break;
-      case "af-clear": S.af = { close: "any", cfrom: "", cto: "", stage: "all", added: "any", src: "all", sort: S.af.sort || "added" }; storeJ.set("af", S.af); S._fSeg = null; renderAccounts(); break;
+      case "af-clear": S.af = { close: "any", cfrom: "", cto: "", stage: "all", added: "any", src: "all", sort: S.af.sort || "added", li: "any" }; storeJ.set("af", S.af); S._fSeg = null; renderAccounts(); break;
       case "edit-task": S.editTask = id; renderDetail(); { const f = document.querySelector(`form[data-form="edit-task"] input[name="title"]`); if (f) f.focus(); } break;
       case "cancel-edit-task": S.editTask = null; renderDetail(); break;
       case "delete-task": { const t = S.tasks.get(id); if (!t) break; const ok = await w(() => taskRef(id).delete()); if (ok) toast("Task deleted", () => w(() => taskRef(id).set(t))); break; }
@@ -3062,6 +3102,12 @@ a.un-title:hover { text-decoration: underline; }
       case "champion": { const aid = b.dataset.acc || accId; if (!S.accounts.get(aid)) break; const ok = await w(() => acctRef(aid).update({ champion_id: id, updated_at: nowIso() })); if (ok) { const ch = contactOf(S.accounts.get(aid), id); if (ch) logActivity(aid, { type: "change", summary: `Champion set to ${ch.name}` }); } if (ok) toast("Champion set. Tasks without a contact now go to them."); break; }
       case "primary": { const a = S.accounts.get(accId); if (!a) break; await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => ({ ...c, is_primary: c.id === id })), updated_at: nowIso() })); break; }
       case "email": openCompose(b.dataset.acc || accId, id); break;
+      case "li-note": liCopy(b.dataset.acc || accId, id, "linkedin_note"); break;
+      case "li-sent": { const aid = b.dataset.acc || accId; const c0 = contactOf(S.accounts.get(aid), id); await liUpdate(aid, id, { linkedin_sent: true, linkedin_sent_at: nowIso() }, { type: "linkedin", summary: `LinkedIn connect sent to ${c0 ? c0.name : "contact"}` }); break; }
+      case "li-accepted": { const aid = b.dataset.acc || accId; const c0 = contactOf(S.accounts.get(aid), id); await liUpdate(aid, id, { linkedin_accepted: true, linkedin_accepted_at: nowIso() }, { type: "change", summary: `${c0 ? c0.name : "Contact"} accepted your LinkedIn connect` }); break; }
+      case "li-unsend": { const aid = b.dataset.acc || accId; await liUpdate(aid, id, { linkedin_sent: false, linkedin_sent_at: null, linkedin_accepted: false, linkedin_accepted_at: null }, null); break; }
+      case "li-msg": { const aid = b.dataset.acc || accId; liCopy(aid, id, "linkedin_msg"); const c0 = contactOf(S.accounts.get(aid), id); liUpdate(aid, id, { linkedin_messaged_at: nowIso() }, { type: "linkedin", summary: `LinkedIn message sent to ${c0 ? c0.name : "contact"}` }); break; }
+      case "li-filter": S.af.li = "awaiting"; storeJ.set("af", S.af); S._fSeg = null; renderAccounts(); break;
       case "log-call": openCallLog(b.dataset.acc || accId, id, "", "call"); break;
       case "log-call-acct": openCallLog(accId, "", "", "call"); break;
       case "book-meeting": openCallLog(accId, "", "", "meeting"); break;
@@ -3143,7 +3189,7 @@ a.un-title:hover { text-decoration: underline; }
   });
   document.addEventListener("change", async (e) => {
     const el = e.target;
-    const afMap = { "af-close": "close", "af-from": "cfrom", "af-to": "cto", "af-stage": "stage", "af-added": "added", "af-src": "src", "af-sort": "sort" };
+    const afMap = { "af-close": "close", "af-from": "cfrom", "af-to": "cto", "af-stage": "stage", "af-added": "added", "af-src": "src", "af-sort": "sort", "af-li": "li" };
     if (afMap[el.id]) { S.af[afMap[el.id]] = el.value; storeJ.set("af", S.af); if (el.id !== "af-from" && el.id !== "af-to") S._fSeg = null; renderAccounts(); return; }
     if (el.closest && el.closest("#cl-form")) {
       readCallLog();
@@ -3214,8 +3260,10 @@ a.un-title:hover { text-decoration: underline; }
       return;
     }
     if (f.dataset.form === "tpl") {
-      const data = { name: fv(f, "name").trim(), subject: fv(f, "subject").trim(), body: fv(f, "body"), updated_at: nowIso(), updated_by: S.myOwner || "" };
-      if (!data.name || !data.subject || !data.body.trim()) return;
+      const data = { name: fv(f, "name").trim(), channel: fv(f, "channel") || "email", subject: fv(f, "subject").trim(), body: fv(f, "body"), updated_at: nowIso(), updated_by: S.myOwner || "" };
+      if (!data.name || !data.body.trim()) return;
+      if (data.channel === "email" && !data.subject) { toast("Email templates need a subject."); return; }
+      if (data.channel === "linkedin_note" && data.body.trim().length > 300) { toast(`Connection notes max out at 300 characters on LinkedIn. This one is ${data.body.trim().length}.`); return; }
       const id = f.dataset.id || rid("tpl");
       if (!f.dataset.id) { data.created_at = nowIso(); data.created_by = S.myOwner || ""; }
       const ok = await w(() => f.dataset.id ? S.db.collection("templates").doc(id).update(data) : S.db.collection("templates").doc(id).set(data));
