@@ -905,7 +905,7 @@ a.ds:hover { border-color: var(--blue); }
       capSubscribe();
       const t0 = new Date(); t0.setHours(0, 0, 0, 0); const done = capTouches(solo, { s: t0, e: new Date(t0.getTime() + 864e5) });
       const rate = capCfg().touches_per_h; const tgt = op == null ? null : Math.round(op * rate);
-      const tip = op == null ? "" : `About ${hrs(op)} open after meetings, prep, lunch and personal blocks, admin, and estimated deal and inbound work, at ${rate} touches an hour. Calls, emails and LinkedIn connects or messages logged today count. Assumptions are in Settings.`;
+      const tip = op == null ? "" : `About ${hrs(op)} open after meetings, prep, lunch and personal blocks, admin, inbound, and deal work (${S._dealWhy || ""}), at ${rate} touches an hour. Calls, emails and LinkedIn connects or messages logged today count. Assumptions are in Settings.`;
       opCell = `<a class="ds ${tgt != null && tgt > 0 && done >= tgt ? "good" : ""}" href="#dash" title="${esc(tip)}"><b class="num">${tgt == null ? "–" : `${done}<span class="of">/${tgt}</span>`}</b><span>${tgt === 0 ? "outbound · booked solid" : "outbound touches"}</span></a>`;
     }
     el.innerHTML = (isToday ? cell(left, left === 1 ? "meeting left" : "meetings left") : cell(evs ? evs.length : null, "meetings tomorrow")) + cell(ext, "external") + opCell + cell(c.due, "tasks due") + cell(c.over, "overdue", c.over ? "bad" : "");
@@ -3350,7 +3350,7 @@ a.ds:hover { border-color: var(--blue); }
   // Measured: Google Calendar meetings, checked against Zoom (actual length, who joined). Estimated: deal work, quoting, inbound follow-up.
   const ZOOM = "Zoom for Claude";
   const OWNER_FULL = { Jeremy: ["jeremy", "o'hara"], David: ["david", "walker"] };
-  const CAP_DEF = { hours: { Jeremy: 40, David: 40 }, ext_prep_min: 10, noshow_min: 25, inbound_min: 20, sq_h: 0.5, proposal_h: 1, negotiating_h: 1.5, quote_h: 1, admin_h: 1, touches_per_h: 10,
+  const CAP_DEF = { hours: { Jeremy: 40, David: 40 }, ext_prep_min: 10, noshow_min: 25, inbound_min: 20, sq_h: 0.5, proposal_h: 1, negotiating_h: 1.5, quote_h: 1, admin_h: 1, touches_per_h: 10, task_min: 15,
     away_words: "conference, summit, trade show, tradeshow, expo, SIA, offsite, off-site, PTO, vacation, holiday, out of office, OOO, sick",
     personal_words: "lunch, pickup, pick up, drop off, dropoff, school, doctor, dentist, appointment, haircut, gym, personal, travel, commute, errand" };
   const wordsRe = (txt) => { const w = String(txt || "").split(",").map((x) => x.trim()).filter(Boolean).map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*")); return w.length ? new RegExp("\\b(?:" + w.join("|") + ")\\b", "i") : /$^/; };
@@ -3733,15 +3733,32 @@ a.ds:hover { border-color: var(--blue); }
     for (const e of evs) if (e.mtg || e.ooo) { mm += clip(new Date(e.s).getTime(), new Date(e.e).getTime()); if (e.extDomains.length) mm += cfg.ext_prep_min; }
     const d8 = new Date(); d8.setHours(8, 0, 0, 0); const d17 = new Date(); d17.setHours(17, 0, 0, 0);
     for (const e of evs) if (!e.mtg && !e.ooo && PE.test(e.title)) { const a = Math.max(d8.getTime(), new Date(e.s).getTime()), b = Math.min(d17.getTime(), new Date(e.e).getTime()); if (b > a) mm += clip(a, b); }
-    // Deal work: only deals touched in the last 7 days, spread over the week.
-    const H = SF_STAGE_H(cfg); let dealH = 0; const since = addDays(today(), -7);
-    for (const [, a] of S.accounts) {
-      if (a.band !== "deal" || a.sf_excluded || a.sf_closed || a.owner !== owner) continue;
-      const last = [a.last_touch_at ? localDay(a.last_touch_at) : "", a.last_activity_date || ""].sort().pop();
-      if (last >= since) dealH += H[a.stage] || 0;
+    // Deal work: open deal tasks when there are any (due today + overdue, overdue capped at 1h);
+    // otherwise the estimate from deals touched in the last 7 days. Never both, so the same work isn't counted twice.
+    const t = today(); let dueN = 0, overN = 0;
+    for (const [, x] of S.tasks) {
+      if (x.status !== "open" || !x.due_date || x.due_date > t) continue;
+      const a = S.accounts.get(x.account_id);
+      if (!a || a.band !== "deal" || a.owner !== owner || a.sf_excluded) continue;
+      if (x.due_date === t) dueN++; else overN++;
+    }
+    let dealH;
+    if (dueN + overN) {
+      const overH = Math.min(1, (overN * cfg.task_min) / 60);
+      dealH = (dueN * cfg.task_min) / 60 + overH;
+      S._dealWhy = `${dueN} deal task${dueN === 1 ? "" : "s"} due today${overN ? ` and ${overN} overdue (counted up to 1h)` : ""} at ${cfg.task_min} min each: ${hrs(dealH)}`;
+    } else {
+      const H = SF_STAGE_H(cfg); let wkH = 0; const since = addDays(t, -7);
+      for (const [, a] of S.accounts) {
+        if (a.band !== "deal" || a.sf_excluded || a.sf_closed || a.owner !== owner) continue;
+        const last = [a.last_touch_at ? localDay(a.last_touch_at) : "", a.last_activity_date || ""].sort().pop();
+        if (last >= since) wkH += H[a.stage] || 0;
+      }
+      dealH = wkH / 5;
+      S._dealWhy = `no deal tasks due, so deal work is estimated from deals touched this week: ${hrs(dealH)}`;
     }
     const wk = capWeeks().slice(-1)[0]; const inb = capInbound(owner, wk);
-    return Math.max(0, day - mm / 60 - dealH / 5 - (inb ? inb.hours / 5 : 0) - cfg.admin_h);
+    return Math.max(0, day - mm / 60 - dealH - (inb ? inb.hours / 5 : 0) - cfg.admin_h);
   }
   function renderCapSettings() {
     const el = $("cap-settings"); if (!el) return;
@@ -3758,8 +3775,8 @@ a.ds:hover { border-color: var(--blue); }
       <div class="eyebrow">Meetings</div>
       <div class="cap-grid">${num("cap-prep", c.ext_prep_min, "Prep and wrap-up per external meeting", "min")}${num("cap-ns", c.noshow_min, "No-show cost (prep, waiting, email and call)", "min")}</div>
       <div class="eyebrow">Deal work, per deal worked that week</div>
-      <div class="small muted">A deal counts as worked when its stage or amount changed, you met with the account, or it had cockpit activity or a completed task that week. Pushing only the close date doesn't count.</div>
-      <div class="cap-grid">${num("cap-sq", c.sq_h, "Sales Qualified", "hours", 0.25)}${num("cap-pr", c.proposal_h, "Proposal", "hours", 0.25)}${num("cap-ng", c.negotiating_h, "Negotiating", "hours", 0.25)}${num("cap-q", c.quote_h, "Building a quote (once, on reaching Proposal)", "hours", 0.25)}</div>
+      <div class="small muted">Today uses your open deal tasks (due today, plus overdue up to 1 hour) when there are any; otherwise it uses these weekly hours. A deal counts as worked when its stage or amount changed, you met with the account, or it had cockpit activity or a completed task that week. Pushing only the close date doesn't count.</div>
+      <div class="cap-grid">${num("cap-task", c.task_min, "Per open deal task (Today)", "min")}${num("cap-sq", c.sq_h, "Sales Qualified", "hours", 0.25)}${num("cap-pr", c.proposal_h, "Proposal", "hours", 0.25)}${num("cap-ng", c.negotiating_h, "Negotiating", "hours", 0.25)}${num("cap-q", c.quote_h, "Building a quote (once, on reaching Proposal)", "hours", 0.25)}</div>
       <div class="eyebrow">Inbound</div>
       <div class="cap-grid">${num("cap-inb", c.inbound_min, "Follow-up per new MQL", "min")}</div>
       <div class="eyebrow">Outbound</div>
@@ -3769,7 +3786,7 @@ a.ds:hover { border-color: var(--blue); }
   }
   async function saveCapSettings(reset) {
     const v = (id) => { const x = Number(($(id) || {}).value); return Number.isFinite(x) && x >= 0 ? x : null; };
-    const c = reset ? { ...CAP_DEF } : { hours: Object.fromEntries(OWNERS.map((o) => [o, v("cap-h-" + o) ?? CAP_DEF.hours[o]])), ext_prep_min: v("cap-prep") ?? CAP_DEF.ext_prep_min, noshow_min: v("cap-ns") ?? CAP_DEF.noshow_min, sq_h: v("cap-sq") ?? CAP_DEF.sq_h, proposal_h: v("cap-pr") ?? CAP_DEF.proposal_h, negotiating_h: v("cap-ng") ?? CAP_DEF.negotiating_h, quote_h: v("cap-q") ?? CAP_DEF.quote_h, inbound_min: v("cap-inb") ?? CAP_DEF.inbound_min, admin_h: v("cap-adm") ?? CAP_DEF.admin_h, touches_per_h: v("cap-tph") || CAP_DEF.touches_per_h, away_words: (($("cap-away") || {}).value || "").trim() || CAP_DEF.away_words, personal_words: (($("cap-pers") || {}).value || "").trim() || CAP_DEF.personal_words };
+    const c = reset ? { ...CAP_DEF } : { hours: Object.fromEntries(OWNERS.map((o) => [o, v("cap-h-" + o) ?? CAP_DEF.hours[o]])), ext_prep_min: v("cap-prep") ?? CAP_DEF.ext_prep_min, noshow_min: v("cap-ns") ?? CAP_DEF.noshow_min, sq_h: v("cap-sq") ?? CAP_DEF.sq_h, proposal_h: v("cap-pr") ?? CAP_DEF.proposal_h, negotiating_h: v("cap-ng") ?? CAP_DEF.negotiating_h, quote_h: v("cap-q") ?? CAP_DEF.quote_h, inbound_min: v("cap-inb") ?? CAP_DEF.inbound_min, admin_h: v("cap-adm") ?? CAP_DEF.admin_h, touches_per_h: v("cap-tph") || CAP_DEF.touches_per_h, task_min: v("cap-task") ?? CAP_DEF.task_min, away_words: (($("cap-away") || {}).value || "").trim() || CAP_DEF.away_words, personal_words: (($("cap-pers") || {}).value || "").trim() || CAP_DEF.personal_words };
     if (await w(() => S.db.collection("meta").doc("settings").set({ ...S.settings, capacity: { ...c, updated_by: S.myOwner || "", updated_at: nowIso() } }))) { if (reset && document.activeElement) document.activeElement.blur(); toast(reset ? "Assumptions reset." : "Assumptions saved."); S.cap.cal.clear(); S.cap.at = 0; }
   }
   // ---------- events ----------
