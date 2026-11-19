@@ -632,6 +632,7 @@ table.reps { min-width: 420px; }
 .cap-words .field { width: 100%; }
 .cap-form { display: grid; gap: 12px; }
 a.ds { text-decoration: none; color: inherit; }
+.ds .of { font-size: .62em; color: var(--muted); font-weight: 500; margin-left: 1px; }
 a.ds:hover { border-color: var(--blue); }
 .cap-grid { align-items: end; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; }
 .cap-in { display: grid; gap: 4px; }
@@ -899,7 +900,14 @@ a.ds:hover { border-color: var(--blue); }
     const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v == null ? "–" : v}</b><span>${l}</span></div>`;
     const solo = S.myOwner && S.owner !== "all" ? (S.owner === "mine" ? S.myOwner : otherOwner()) : null;
     const op = solo && isToday ? openToday(solo) : null;
-    const opCell = solo && isToday ? `<a class="ds ${op != null && op < 1 ? "bad" : ""}" href="#dash" title="Workday minus meetings, prep, lunch and personal blocks, admin, and estimated deal and inbound work. Assumptions are in Settings."><b class="num">${op == null ? "–" : hrs(op)}</b><span>open for outbound</span></a>` : "";
+    let opCell = "";
+    if (solo && isToday) {
+      capSubscribe();
+      const t0 = new Date(); t0.setHours(0, 0, 0, 0); const done = capTouches(solo, { s: t0, e: new Date(t0.getTime() + 864e5) });
+      const rate = capCfg().touches_per_h; const tgt = op == null ? null : Math.round(op * rate);
+      const tip = op == null ? "" : `About ${hrs(op)} open after meetings, prep, lunch and personal blocks, admin, and estimated deal and inbound work, at ${rate} touches an hour. Calls, emails and LinkedIn connects or messages logged today count. Assumptions are in Settings.`;
+      opCell = `<a class="ds ${tgt != null && tgt > 0 && done >= tgt ? "good" : ""}" href="#dash" title="${esc(tip)}"><b class="num">${tgt == null ? "–" : `${done}<span class="of">/${tgt}</span>`}</b><span>${tgt === 0 ? "outbound · booked solid" : "outbound touches"}</span></a>`;
+    }
     el.innerHTML = (isToday ? cell(left, left === 1 ? "meeting left" : "meetings left") : cell(evs ? evs.length : null, "meetings tomorrow")) + cell(ext, "external") + opCell + cell(c.due, "tasks due") + cell(c.over, "overdue", c.over ? "bad" : "");
   }
   function accountForEvent(e) {
@@ -3342,7 +3350,7 @@ a.ds:hover { border-color: var(--blue); }
   // Measured: Google Calendar meetings, checked against Zoom (actual length, who joined). Estimated: deal work, quoting, inbound follow-up.
   const ZOOM = "Zoom for Claude";
   const OWNER_FULL = { Jeremy: ["jeremy", "o'hara"], David: ["david", "walker"] };
-  const CAP_DEF = { hours: { Jeremy: 40, David: 40 }, ext_prep_min: 10, noshow_min: 25, inbound_min: 20, sq_h: 0.5, proposal_h: 1, negotiating_h: 1.5, quote_h: 1, admin_h: 1,
+  const CAP_DEF = { hours: { Jeremy: 40, David: 40 }, ext_prep_min: 10, noshow_min: 25, inbound_min: 20, sq_h: 0.5, proposal_h: 1, negotiating_h: 1.5, quote_h: 1, admin_h: 1, touches_per_h: 10,
     away_words: "conference, summit, trade show, tradeshow, expo, SIA, offsite, off-site, PTO, vacation, holiday, out of office, OOO, sick",
     personal_words: "lunch, pickup, pick up, drop off, dropoff, school, doctor, dentist, appointment, haircut, gym, personal, travel, commute, errand" };
   const wordsRe = (txt) => { const w = String(txt || "").split(",").map((x) => x.trim()).filter(Boolean).map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*")); return w.length ? new RegExp("\\b(?:" + w.join("|") + ")\\b", "i") : /$^/; };
@@ -3445,8 +3453,8 @@ a.ds:hover { border-color: var(--blue); }
     (S.capUnsub || []).forEach((u) => { try { u(); } catch {} });
     S.capActKey = since;
     S.capUnsub = [
-      S.db.collection("activity").where("at", ">=", since).limit(1000).onSnapshot((snap) => { S.capActs = snap.docs.map((d) => d.data()); renderCapacity(); }, () => {}),
-      S.db.collection("notes").where("kind", "==", "email").limit(1000).onSnapshot((snap) => { S.capEmails = snap.docs.map((d) => d.data()).filter((n) => String(n.created_at || "") >= since); renderCapacity(); }, () => {}),
+      S.db.collection("activity").where("at", ">=", since).limit(1000).onSnapshot((snap) => { S.capActs = snap.docs.map((d) => d.data()); renderCapacity(); renderDayStrip(); }, () => {}),
+      S.db.collection("notes").where("kind", "==", "email").limit(1000).onSnapshot((snap) => { S.capEmails = snap.docs.map((d) => d.data()).filter((n) => String(n.created_at || "") >= since); renderCapacity(); renderDayStrip(); }, () => {}),
       S.db.collection("capacity").limit(200).onSnapshot((snap) => { S.capDocs = new Map(snap.docs.map((d) => [d.id, d.data()])); renderCapacity(); }, () => {}),
     ];
   }
@@ -3641,6 +3649,7 @@ a.ds:hover { border-color: var(--blue); }
     const sel = rows.find((r) => r.wk.k === S.cap.week) || rows[rows.length - 1];
     const prior = rows.slice(0, -1).filter((r) => r.m); const avg = (k) => prior.length ? prior.reduce((s, r) => s + r[k], 0) / prior.length : null;
     const tile = (v, l, sub, cls) => `<div class="ds ${cls || ""}"><b class="num">${v}</b><span>${l}</span>${sub ? `<span class="dl">${sub}</span>` : ""}</div>`;
+    const expTouches = (r) => Math.round(r.open * cfg.touches_per_h);
     const tph = (r) => (r.open >= 1 ? (r.touches / r.open).toFixed(1) : "–");
     $("cap-strip").innerHTML = (S.cap.loading ? `<div class="small muted cap-load"><span class="spinner"></span> Updating…</div>` : "") +
       tile(hrs(sel.avail), "available", (sel.cur ? "This week" : "Week of " + wkLabel(sel.wk)) + (sel.m && sel.m.awayDays ? ` · ${sel.m.awayDays} day${sel.m.awayDays === 1 ? "" : "s"} away` : sel.m && sel.m.oooH ? ` · ${hrs(sel.m.oooH)} OOO` : "")) +
@@ -3649,7 +3658,7 @@ a.ds:hover { border-color: var(--blue); }
       tile(hrs(sel.inbH), "inbound (est.)", sel.i ? `${sel.i.n} MQL${sel.i.n === 1 ? "" : "s"}` : "") +
       tile(hrs(sel.admH), "admin & personal", `${hrs(sel.adminH)} admin · ${hrs(sel.personalH)} blocks`) +
       tile(hrs(sel.open), "open for outbound", avg("open") != null ? `avg ${hrs(avg("open"))}` : "", sel.open < 5 ? "bad" : "good") +
-      tile(sel.touches, "outbound touches", `${tph(sel)} per open hour`);
+      tile(`${sel.touches}<span class="of">/${expTouches(sel)}</span>`, "outbound touches", `expected at ${cfg.touches_per_h}/hr · actual ${tph(sel)}/hr`, sel.touches >= expTouches(sel) && expTouches(sel) > 0 ? "good" : "");
     // Stacked hours by week
     $("cap-legend").innerHTML = CAP_SER.map(([k, l, c]) => `<span class="lg"><i class="${k === "open" ? "hatch" : ""}" style="background-color:${c}"></i>${l}</span>`).join("");
     const maxH = Math.max(...rows.map((r) => Math.max(r.avail, r.intH + r.extH + r.dealH + r.inbH + r.admH)), 10);
@@ -3669,7 +3678,7 @@ a.ds:hover { border-color: var(--blue); }
         acc += v;
       });
       if (r.over > 0.5) bars += `<text x="${cx}" y="${y(acc) - 4}" class="ax" text-anchor="middle">+${hrs(r.over)}</text>`;
-      bars += `<text x="${cx}" y="${H - 26}" class="ax" text-anchor="middle">${esc(r.cur ? "This wk" : wkLabel(r.wk))}</text><text x="${cx}" y="${H - 10}" class="ax ax2" text-anchor="middle">${r.touches} touches</text>`;
+      bars += `<text x="${cx}" y="${H - 26}" class="ax" text-anchor="middle">${esc(r.cur ? "This wk" : wkLabel(r.wk))}</text><text x="${cx}" y="${H - 10}" class="ax ax2" text-anchor="middle">${r.touches}/${expTouches(r)} touches</text>`;
       bars += `<rect x="${cx - gap / 2}" y="${T}" width="${gap}" height="${ph + 30}" fill="transparent" class="hit" data-i="${i}" data-capweek="${r.wk.k}"/>`;
     });
     $("cap-chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Hours by week: meetings, deal work, inbound and time open for outbound"><defs><pattern id="cap-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--surface)" stroke-width="2" stroke-opacity=".45"/></pattern></defs>${g}${bars}</svg><div class="tip" id="cap-tip" hidden></div>`;
@@ -3682,7 +3691,7 @@ a.ds:hover { border-color: var(--blue); }
       tip.style.left = Math.min(box.width - 190, Math.max(0, evm.clientX - box.left + 12)) + "px"; tip.style.top = Math.max(0, evm.clientY - box.top - 20) + "px";
     });
     svg.addEventListener("mouseleave", () => (tip.hidden = true));
-    $("cap-table").innerHTML = `<table class="book"><thead><tr><th>Week of</th><th class="r">Available</th><th class="r">Internal</th><th class="r">External</th><th class="r">Deal work</th><th class="r">Inbound</th><th class="r">Admin &amp; personal</th><th class="r">Open</th><th class="r">Touches</th><th class="r">Per open hr</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}</td><td class="r num">${hrs(r.avail)}</td><td class="r num">${hrs(r.intH)}</td><td class="r num">${hrs(r.extH)}</td><td class="r num">${hrs(r.dealH)}</td><td class="r num">${hrs(r.inbH)}</td><td class="r num">${hrs(r.admH)}</td><td class="r num"><b>${hrs(r.open)}</b></td><td class="r num">${r.touches}</td><td class="r num">${tph(r)}</td></tr>`).join("")}</tbody></table>`;
+    $("cap-table").innerHTML = `<table class="book"><thead><tr><th>Week of</th><th class="r">Available</th><th class="r">Internal</th><th class="r">External</th><th class="r">Deal work</th><th class="r">Inbound</th><th class="r">Admin &amp; personal</th><th class="r">Open</th><th class="r">Expected touches</th><th class="r">Touches</th><th class="r">Per open hr</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}</td><td class="r num">${hrs(r.avail)}</td><td class="r num">${hrs(r.intH)}</td><td class="r num">${hrs(r.extH)}</td><td class="r num">${hrs(r.dealH)}</td><td class="r num">${hrs(r.inbH)}</td><td class="r num">${hrs(r.admH)}</td><td class="r num"><b>${hrs(r.open)}</b></td><td class="r num">${expTouches(r)}</td><td class="r num">${r.touches}</td><td class="r num">${tph(r)}</td></tr>`).join("")}</tbody></table>`;
     // Calendar vs Zoom for the selected week
     $("cap-zh").textContent = `Calendar vs Zoom · ${sel.cur ? "this week" : "week of " + wkLabel(sel.wk)}`;
     const m = sel.m; const fm = (mm) => (mm < 60 ? Math.round(mm) + " min" : hrs(mm / 60));
@@ -3753,11 +3762,14 @@ a.ds:hover { border-color: var(--blue); }
       <div class="cap-grid">${num("cap-sq", c.sq_h, "Sales Qualified", "hours", 0.25)}${num("cap-pr", c.proposal_h, "Proposal", "hours", 0.25)}${num("cap-ng", c.negotiating_h, "Negotiating", "hours", 0.25)}${num("cap-q", c.quote_h, "Building a quote (once, on reaching Proposal)", "hours", 0.25)}</div>
       <div class="eyebrow">Inbound</div>
       <div class="cap-grid">${num("cap-inb", c.inbound_min, "Follow-up per new MQL", "min")}</div>
+      <div class="eyebrow">Outbound</div>
+      <div class="cap-grid">${num("cap-tph", c.touches_per_h, "Touches per open hour", "touches", 1)}</div>
+      <div class="small muted">Sets today's outbound target. A starting point for calls by hand plus emails and LinkedIn: about 12–15 dials, 6–10 personal emails, or 15–20 connection requests an hour. Activity shows your actual rate to tune it.</div>
       <div class="row-form"><button class="btn" type="submit">Save assumptions</button><button class="btn ghost" type="button" data-act="cap-reset">Reset to defaults</button></div></form>`;
   }
   async function saveCapSettings(reset) {
     const v = (id) => { const x = Number(($(id) || {}).value); return Number.isFinite(x) && x >= 0 ? x : null; };
-    const c = reset ? { ...CAP_DEF } : { hours: Object.fromEntries(OWNERS.map((o) => [o, v("cap-h-" + o) ?? CAP_DEF.hours[o]])), ext_prep_min: v("cap-prep") ?? CAP_DEF.ext_prep_min, noshow_min: v("cap-ns") ?? CAP_DEF.noshow_min, sq_h: v("cap-sq") ?? CAP_DEF.sq_h, proposal_h: v("cap-pr") ?? CAP_DEF.proposal_h, negotiating_h: v("cap-ng") ?? CAP_DEF.negotiating_h, quote_h: v("cap-q") ?? CAP_DEF.quote_h, inbound_min: v("cap-inb") ?? CAP_DEF.inbound_min, admin_h: v("cap-adm") ?? CAP_DEF.admin_h, away_words: (($("cap-away") || {}).value || "").trim() || CAP_DEF.away_words, personal_words: (($("cap-pers") || {}).value || "").trim() || CAP_DEF.personal_words };
+    const c = reset ? { ...CAP_DEF } : { hours: Object.fromEntries(OWNERS.map((o) => [o, v("cap-h-" + o) ?? CAP_DEF.hours[o]])), ext_prep_min: v("cap-prep") ?? CAP_DEF.ext_prep_min, noshow_min: v("cap-ns") ?? CAP_DEF.noshow_min, sq_h: v("cap-sq") ?? CAP_DEF.sq_h, proposal_h: v("cap-pr") ?? CAP_DEF.proposal_h, negotiating_h: v("cap-ng") ?? CAP_DEF.negotiating_h, quote_h: v("cap-q") ?? CAP_DEF.quote_h, inbound_min: v("cap-inb") ?? CAP_DEF.inbound_min, admin_h: v("cap-adm") ?? CAP_DEF.admin_h, touches_per_h: v("cap-tph") || CAP_DEF.touches_per_h, away_words: (($("cap-away") || {}).value || "").trim() || CAP_DEF.away_words, personal_words: (($("cap-pers") || {}).value || "").trim() || CAP_DEF.personal_words };
     if (await w(() => S.db.collection("meta").doc("settings").set({ ...S.settings, capacity: { ...c, updated_by: S.myOwner || "", updated_at: nowIso() } }))) { if (reset && document.activeElement) document.activeElement.blur(); toast(reset ? "Assumptions reset." : "Assumptions saved."); S.cap.cal.clear(); S.cap.at = 0; }
   }
   // ---------- events ----------
