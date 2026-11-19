@@ -29,6 +29,7 @@
   --gong: #9B3DB4; --gong-soft: #F8EAFC;
   --deal-soft: #E1F2FF; --deal-ink: #0A5E99;
   --tgt-soft: #DDF8EC; --tgt-ink: #0B7A4B;
+  --c-call: #0A78C2; --c-li: #0E9A5F; --c-email: #B04FCC;
   --bar: #1D4277; --bar-ink: #FFFFFF; --bar-muted: #AFC3E2; --bar-seg: #16365F; --bar-seg-on: #FFFFFF; --bar-seg-on-ink: #1D4277;
   --font-head: 'Alexandria', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Raleway', 'Helvetica Neue', Arial, sans-serif;
@@ -40,7 +41,7 @@
     --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
     --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
     --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6;
+    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8;
     --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
     color-scheme: dark;
   }
@@ -49,7 +50,7 @@
   --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
   --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
   --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6;
+  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8;
   --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
   color-scheme: dark;
 }
@@ -569,6 +570,45 @@ a.un-title:hover { text-decoration: underline; }
 .li-state svg.i { width: 13px; height: 13px; }
 .ds.btnlike { cursor: pointer; text-align: left; font: inherit; color: inherit; }
 .ds.btnlike:hover { border-color: var(--blue); }
+
+/* Activity dashboard */
+.dash-strip .ds { min-width: 118px; }
+@media (max-width: 640px) { .dash-strip { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } .dash-strip .ds { min-width: 0; } }
+.tip[hidden] { display: none; }
+.bar-in { max-width: 1320px; }
+.ds .dl { font-size: 11px; color: var(--muted); }
+.ds .dl.up { color: var(--tgt-ink); }
+.ds .dl.down { color: var(--bad); }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .dash-grid { grid-template-columns: minmax(0, 1fr); } }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); }
+.legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+.legend i, .tip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.chart-wrap { position: relative; }
+.chart-wrap svg { width: 100%; height: auto; display: block; }
+.chart-wrap .gl { stroke: var(--line); stroke-width: 1; }
+.chart-wrap .ax { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.chart-wrap .hit:hover { fill: color-mix(in srgb, var(--blue) 8%, transparent); }
+.tip { position: absolute; z-index: 5; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; min-width: 140px; box-shadow: 0 4px 16px rgba(12,21,36,.12); display: grid; gap: 3px; }
+.tip div { display: flex; align-items: center; gap: 6px; }
+.tip .num { margin-left: auto; font-weight: 600; }
+.tip .tt { border-top: 1px solid var(--line); padding-top: 3px; margin-top: 2px; }
+.chart-table summary { cursor: pointer; font-size: 12.5px; color: var(--link); margin-top: 6px; }
+.chart-table .book { min-width: 0; }
+.hbars { display: grid; gap: 8px; }
+.hb { display: grid; grid-template-columns: 120px minmax(0, 1fr) 32px; gap: 10px; align-items: center; font-size: 13px; }
+.hb-l { color: var(--ink); }
+.hb-track { height: 10px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.hb-fill { display: block; height: 100%; background: var(--c-call); border-radius: 0 4px 4px 0; }
+.hb-fill.muted { background: color-mix(in srgb, var(--muted) 60%, transparent); }
+.hb-v { text-align: right; font-weight: 600; }
+.moves { list-style: none; margin: 0; padding: 0; display: grid; }
+.moves li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.moves li:first-child { border-top: 0; }
+.moves a { color: var(--heading); font-weight: 600; text-decoration: none; }
+.moves a:hover { text-decoration: underline; }
+.moves .mv-when { margin-left: auto; }
+table.reps { min-width: 420px; }
 </style>
 
 <header class="bar">
@@ -581,6 +621,7 @@ a.un-title:hover { text-decoration: underline; }
       <a href="#mqls" id="nav-mqls"><span class="dot inb" aria-hidden="true"></span>MQLs</a>
       <a href="#signals" id="nav-signals">Signals</a>
       <a href="#prospect" id="nav-prospect">Find targets</a>
+      <a href="#dash" id="nav-dash">Activity</a>
     </nav>
     <div class="bar-right">
       <button type="button" class="theme-btn" id="theme-btn" aria-label="Theme"></button>
@@ -605,6 +646,7 @@ a.un-title:hover { text-decoration: underline; }
   <section id="view-email" hidden></section>
   <section id="view-mqls" hidden></section>
   <section id="view-signals" hidden></section>
+  <section id="view-dash" hidden></section>
 </main>
 <input type="file" id="od-file" accept=".csv,text/csv" hidden>
 <div class="modal" id="compose" hidden></div>
@@ -1147,7 +1189,7 @@ a.un-title:hover { text-decoration: underline; }
   }
 
   // ---------- routing ----------
-  const VIEWS = ["today", "accounts", "account", "prospect", "email", "mqls", "signals"];
+  const VIEWS = ["today", "accounts", "account", "prospect", "email", "mqls", "signals", "dash"];
   const kindOf = (a) => (a && a.band === "deal" ? "deal" : "outbound");
   const listHash = (a) => (kindOf(a) === "deal" ? "#deals" : "#targets");
   function parseHash() {
@@ -1158,6 +1200,7 @@ a.un-title:hover { text-decoration: underline; }
     if (h === "email") return { view: "email", id: null };
     if (h === "mqls") return { view: "mqls", id: null };
     if (h === "signals") return { view: "signals", id: null };
+    if (h === "dash") return { view: "dash", id: null };
     const m = h.match(/^account-([A-Za-z0-9-]+)$/); if (m) return { view: "account", id: m[1] };
     return { view: "today", id: null };
   }
@@ -1168,7 +1211,7 @@ a.un-title:hover { text-decoration: underline; }
   }
   function showView(r) {
     for (const v of VIEWS) $("view-" + v).hidden = (isList(r.view) ? "accounts" : r.view) !== v;
-    for (const n of ["today", "deals", "targets", "mqls", "signals", "prospect"]) $("nav-" + n).removeAttribute("aria-current");
+    for (const n of ["today", "deals", "targets", "mqls", "signals", "prospect", "dash"]) $("nav-" + n).removeAttribute("aria-current");
     const n = navFor(r); if (n && $("nav-" + n)) $("nav-" + n).setAttribute("aria-current", "page");
   }
   function route() {
@@ -2287,7 +2330,7 @@ a.un-title:hover { text-decoration: underline; }
       if (L.meeting) patch.stage = "Meeting booked";
       else if (L.outcome === "Connected" && ["Target", "Contacted"].includes(a.stage)) patch.stage = "Engaged";
       else if (a.stage === "Target") patch.stage = "Contacted";
-      if (patch.stage && patch.stage !== a.stage) logActivity(L.accId, { type: "change", summary: `Stage: ${a.stage || "—"} → ${patch.stage}` });
+      if (patch.stage && patch.stage !== a.stage) logActivity(L.accId, { type: "change", field: "stage", from: a.stage || "", to: patch.stage, summary: `Stage: ${a.stage || "—"} → ${patch.stage}` });
     }
     const ok = await w(() => acctRef(L.accId).update(patch));
     if (!ok) { L.busy = false; renderCallLog(); return; }
@@ -2435,7 +2478,7 @@ a.un-title:hover { text-decoration: underline; }
     if (mode === "send") {
       const cs = (a.contacts || []).map((x) => x.id === c.id ? { ...x, last_emailed_at: ts, email_count: (x.email_count || 0) + 1, status: cStatus(x.status) === "Not started" ? "Contacted" : x.status } : x);
       const patch = { contacts: cs, updated_at: ts, last_touch_at: ts, last_touch_type: "email" };
-      if (a.band !== "deal" && a.stage === "Target") patch.stage = "Contacted";
+      if (a.band !== "deal" && a.stage === "Target") { patch.stage = "Contacted"; logActivity(cp.accId, { type: "change", field: "stage", from: "Target", to: "Contacted", summary: "Stage: Target → Contacted" }); }
       acctRef(cp.accId).update(patch).catch(() => {});
       if (cp.follow) await addTask(cp.accId, `Follow up with ${c.name} on “${subj.slice(0, 80)}”`, addDays(today(), cp.followDays), c.id, "manual");
     }
@@ -3065,6 +3108,198 @@ a.un-title:hover { text-decoration: underline; }
     if (ok && act) logActivity(accId, { ...act, contact_id: c.id, contact_name: c.name });
   }
   const liMatch = (c, f) => f === "awaiting" ? !!c.linkedin_sent && !c.linkedin_accepted : f === "accepted" ? !!c.linkedin_accepted && !c.linkedin_messaged_at : true;
+  // ---------- Activity dashboard (outbound) ----------
+  S.dash = { key: "", acts: [], emails: [], loaded: false, unsub: [] };
+  S.dashF = Object.assign({ period: "week", scope: "targets" }, storeJ.get("dashF") || {});
+  const DASH_PERIODS = [["today", "Today"], ["week", "This week"], ["lastweek", "Last week"], ["month", "This month"], ["30", "Last 30 days"]];
+  const mondayOf = (d) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); return x; };
+  function dashRange() {
+    const now = new Date(); const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let s, e; const day = 864e5;
+    switch (S.dashF.period) {
+      case "today": s = t0; e = new Date(t0.getTime() + day); break;
+      case "lastweek": e = mondayOf(now); s = new Date(e.getTime() - 7 * day); break;
+      case "month": s = new Date(now.getFullYear(), now.getMonth(), 1); e = new Date(t0.getTime() + day); break;
+      case "30": s = new Date(t0.getTime() - 29 * day); e = new Date(t0.getTime() + day); break;
+      default: s = mondayOf(now); e = new Date(t0.getTime() + day);
+    }
+    const len = e - s; return { s, e, ps: new Date(s.getTime() - len), pe: s };
+  }
+  function dashSubscribe() {
+    if (!S.db) return;
+    const { ps } = dashRange(); const since = ps.toISOString(); const key = since.slice(0, 10);
+    if (S.dash.key === key) return;
+    S.dash.unsub.forEach((u) => { try { u(); } catch {} });
+    S.dash = { key, acts: [], emails: [], loaded: false, unsub: [], la: false, le: false };
+    const done = () => { if (S.dash.la && S.dash.le) { S.dash.loaded = true; renderDash(); } };
+    S.dash.unsub.push(S.db.collection("activity").where("at", ">=", since).limit(1000).onSnapshot((snap) => { S.dash.acts = snap.docs.map((d) => d.data()); S.dash.la = true; done(); }, () => { S.dash.la = true; done(); }));
+    S.dash.unsub.push(S.db.collection("notes").where("kind", "==", "email").limit(1000).onSnapshot((snap) => { S.dash.emails = snap.docs.map((d) => d.data()).filter((n) => String(n.created_at || "") >= since); S.dash.le = true; done(); }, () => { S.dash.le = true; done(); }));
+  }
+  const firstName = (n) => String(n || "").split(/\s+/)[0];
+  const actorOk = (name) => { if (S.owner === "all" || !S.myOwner) return true; return firstName(name) === (S.owner === "mine" ? S.myOwner : otherOwner()); };
+  function inScope(accId) {
+    if (S.dashF.scope === "all") return true;
+    const a = S.accounts.get(accId); if (!a) return true; // deleted accounts still count
+    return a.band !== "deal" || a.origin === "outbound" || a.origin === "inbound";
+  }
+  function stageMove(x) {
+    if (x.field === "stage") return { from: x.from || "", to: x.to || "" };
+    const m = /^Stage: (.*) → (.*)$/.exec(x.summary || ""); return m ? { from: m[1], to: m[2] } : null;
+  }
+  // Every countable event in a window, tagged by kind.
+  function dashEvents(s, e) {
+    const S0 = s.toISOString(), E0 = e.toISOString(); const out = [];
+    for (const x of S.dash.acts) {
+      if (!(x.at >= S0 && x.at < E0) || !inScope(x.account_id)) continue;
+      const base = { at: x.at, by: x.by, acc: x.account_id, contact: x.contact_name || "" };
+      if (x.type === "call") out.push({ ...base, k: "call", outcome: x.outcome || "" });
+      else if (x.type === "meeting") out.push({ ...base, k: "meeting" });
+      else if (x.type === "linkedin" && /connect sent/i.test(x.summary || "")) out.push({ ...base, k: "li" });
+      else if (x.type === "linkedin" && /message sent/i.test(x.summary || "")) out.push({ ...base, k: "limsg" });
+      else if (x.type === "change" && /accepted your LinkedIn connect/i.test(x.summary || "")) out.push({ ...base, k: "liacc" });
+      else if (x.type === "change") { const mv = stageMove(x); if (mv) out.push({ ...base, k: "stage", from: mv.from, to: mv.to }); }
+      else if (x.type === "system" && /Became an active deal/i.test(x.summary || "")) { const a = S.accounts.get(x.account_id); out.push({ ...base, k: "converted", by: a ? a.owner : x.by }); }
+    }
+    for (const n of S.dash.emails) {
+      if (!(n.created_at >= S0 && n.created_at < E0) || !inScope(n.account_id)) continue;
+      if (/^Emailed /.test(n.body || "")) out.push({ at: n.created_at, by: n.author, acc: n.account_id, k: "email" });
+    }
+    for (const [id, a] of S.accounts) {
+      const c = a.created_at || ""; if (!(c >= S0 && c < E0)) continue;
+      if (a.band === "deal" && !a.origin) continue; // Salesforce-synced deals aren't "new accounts added"
+      out.push({ at: c, by: a.created_by_name || a.owner, acc: id, k: "newacct", src: a.source || "manual" });
+    }
+    for (const [, t] of S.tasks) {
+      const c = t.completed_at || ""; if (t.status !== "done" || !(c >= S0 && c < E0) || !inScope(t.account_id)) continue;
+      out.push({ at: c, by: t.completed_by || "", acc: t.account_id, k: "task" });
+    }
+    return out.filter((x) => actorOk(x.by));
+  }
+  function dashMetrics(ev) {
+    const c = (k) => ev.filter((x) => x.k === k).length;
+    const calls = ev.filter((x) => x.k === "call");
+    const uniq = (pred) => new Set(ev.filter(pred).map((x) => x.acc)).size;
+    return {
+      calls: calls.length, connects: calls.filter((x) => x.outcome === "Connected").length,
+      vm: calls.filter((x) => x.outcome === "Left voicemail").length, na: calls.filter((x) => x.outcome === "No answer").length, wrong: calls.filter((x) => x.outcome === "Wrong number").length,
+      emails: c("email"), li: c("li"), liacc: c("liacc"), limsg: c("limsg"), meetings: c("meeting"), newacct: c("newacct"), tasks: c("task"), converted: c("converted"),
+      engaged: uniq((x) => x.k === "stage" && x.to === "Engaged"), nurture: uniq((x) => x.k === "stage" && x.to === "Nurture"), dq: uniq((x) => x.k === "stage" && x.to === "Disqualified"),
+      touched: uniq((x) => ["call", "email", "li", "limsg", "meeting"].includes(x.k)),
+      touches: ev.filter((x) => ["call", "email", "li", "limsg", "meeting"].includes(x.k)).length,
+    };
+  }
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) + "%" : "—");
+  function dashShell() {
+    $("view-dash").innerHTML = `<div class="page">
+      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outbound</span></div><h1>Activity</h1><div class="sub" id="dash-sub"></div></div>
+        <div class="head-r"><div class="filters">
+          <label class="lbl" for="df-period">Period<select class="sel" id="df-period">${DASH_PERIODS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></label>
+          <label class="lbl" for="df-scope">Accounts<select class="sel" id="df-scope"><option value="targets">Targets & outbound-sourced deals</option><option value="all">All accounts</option></select></label></div></div></div>
+      <div class="day-strip dash-strip" id="dash-strip"></div>
+      <div id="dash-hero"></div>
+      <div class="dash-grid">
+        <section class="panel"><div class="panel-head"><h2>Touches by day</h2><div class="legend" id="dash-legend"></div></div><div class="panel-body"><div class="chart-wrap" id="dash-chart"></div><details class="chart-table"><summary>Show as a table</summary><div id="dash-table"></div></details></div></section>
+        <section class="panel"><div class="panel-head"><h2>Calls by outcome</h2><span class="small muted" id="dash-connect"></span></div><div class="panel-body" id="dash-calls"></div></section>
+      </div>
+      <div class="dash-grid">
+        <section class="panel"><div class="panel-head"><h2>Account movement</h2><span class="small muted">Stage changes in this period</span></div><div class="panel-body" id="dash-moves"></div></section>
+        <section class="panel"><div class="panel-head"><h2>Target pipeline now</h2><span class="small muted" id="dash-cov"></span></div><div class="panel-body" id="dash-pipe"></div></section>
+      </div>
+      <section class="panel" id="dash-reps-panel"><div class="panel-head"><h2>By rep</h2><span class="small muted">Who did the work, in this period</span></div><div class="table-wrap" id="dash-reps"></div></section>
+    </div>`;
+    $("df-period").value = S.dashF.period; $("df-scope").value = S.dashF.scope;
+  }
+  function renderDash() {
+    if (S.route.view !== "dash") return;
+    if (!$("dash-strip")) dashShell();
+    dashSubscribe();
+    const { s, e, ps, pe } = dashRange();
+    const lbl = (DASH_PERIODS.find(([v]) => v === S.dashF.period) || [, ""])[1];
+    const who = S.owner === "all" || !S.myOwner ? "Jeremy and David" : S.owner === "mine" ? `You (${S.myOwner})` : otherOwner();
+    $("dash-sub").textContent = `${who} · ${lbl.toLowerCase()} (${fmtDate(ymd(s))}–${fmtDate(ymd(new Date(e.getTime() - 1)))}). Counts start when the cockpit began logging activity.`;
+    if (!S.db) { $("dash-strip").innerHTML = ""; $("dash-hero").innerHTML = `<div class="empty">Open the cockpit in claude.ai to see activity.</div>`; return; }
+    if (!S.dash.loaded) { $("dash-strip").innerHTML = `<div class="small muted"><span class="spinner"></span> Loading activity…</div>`; return; }
+    const ev = dashEvents(s, e), pv = dashEvents(ps, pe); const m = dashMetrics(ev), p = dashMetrics(pv);
+    const delta = (k) => { const d = m[k] - p[k]; return d === 0 ? `<span class="dl">same as before</span>` : `<span class="dl ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${Math.abs(d)} vs prior</span>`; };
+    const tile = (k, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${m[k]}</b><span>${l}</span>${delta(k)}</div>`;
+    $("dash-strip").innerHTML = tile("calls", "calls") + tile("emails", "emails sent") + tile("li", "LinkedIn connects") + tile("meetings", "meetings booked", m.meetings ? "good" : "") + tile("newacct", "new accounts") + tile("engaged", "newly engaged") + tile("nurture", "recycled to nurture") + tile("dq", "disqualified");
+    // Hero: coverage + rates
+    const t = today(); const active = [...S.accounts.values()].filter((a) => a.band !== "deal" && !["Nurture", "Disqualified"].includes(a.stage) && ownerMatch(a.owner));
+    const covered = active.filter((a) => a.last_touch_at && daysBetween(localDay(a.last_touch_at), t) <= 14).length;
+    $("dash-hero").innerHTML = `<div class="upnext"><div class="un-main"><div class="un-lab">${esc(lbl)}</div>
+        <div class="un-title">${m.touches} touch${m.touches === 1 ? "" : "es"} across ${m.touched} account${m.touched === 1 ? "" : "s"}</div>
+        <div class="un-when">${m.converted ? `${m.converted} outbound account${m.converted === 1 ? "" : "s"} became Salesforce opportunities. ` : ""}${m.tasks} task${m.tasks === 1 ? "" : "s"} completed.</div></div>
+      <div class="un-prep"><dl class="un-facts">
+        <div><dt>Connect rate</dt><dd>${pct(m.connects, m.calls)} <span class="un-muted">(${m.connects}/${m.calls})</span></dd></div>
+        <div><dt>LinkedIn accepted</dt><dd>${m.liacc} <span class="un-muted">of ${m.li} sent</span></dd></div>
+        <div><dt>LinkedIn messages</dt><dd>${m.limsg}</dd></div>
+        <div><dt>Coverage (14 days)</dt><dd>${covered} of ${active.length} active targets · ${pct(covered, active.length)}</dd></div>
+      </dl></div></div>`;
+    renderDashChart(ev, s, e);
+    // Calls by outcome: single-series horizontal bars
+    const outs = [["Connected", m.connects], ["Left voicemail", m.vm], ["No answer", m.na], ["Wrong number", m.wrong]];
+    const omax = Math.max(1, ...outs.map(([, v]) => v));
+    $("dash-connect").textContent = m.calls ? `${pct(m.connects, m.calls)} connect rate` : "";
+    $("dash-calls").innerHTML = m.calls ? `<div class="hbars">${outs.map(([l, v]) => `<div class="hb" title="${esc(l)}: ${v} of ${m.calls} calls"><span class="hb-l">${esc(l)}</span><span class="hb-track"><span class="hb-fill" style="width:${v ? Math.max(2, (v / omax) * 100) : 0}%"></span></span><span class="hb-v num">${v}</span></div>`).join("")}</div>` : `<div class="small muted">No calls logged in this period. Calls come from Log call in the cockpit.</div>`;
+    // Movement list
+    const moves = ev.filter((x) => (x.k === "stage" && ["Engaged", "Meeting booked", "Nurture", "Disqualified", "Target"].includes(x.to)) || x.k === "converted" || x.k === "meeting").sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    const mvLabel = (x) => x.k === "converted" ? ["Became a deal", "deal"] : x.k === "meeting" ? ["Meeting booked", "good"] : x.to === "Nurture" ? ["Recycled to nurture", "warn"] : x.to === "Disqualified" ? ["Disqualified", "bad"] : x.to === "Target" ? ["Reopened", ""] : [x.to, "good"];
+    $("dash-moves").innerHTML = moves.length ? `<ul class="moves">${moves.slice(0, 40).map((x) => { const a = S.accounts.get(x.acc); const [l, cls] = mvLabel(x); return `<li><span class="chip ${cls}">${esc(l)}</span><a href="#account-${esc(x.acc)}">${esc(a ? a.company_name : "Deleted account")}</a>${x.k === "stage" && x.from ? `<span class="small muted">from ${esc(x.from)}</span>` : ""}<span class="small muted mv-when">${esc(firstName(x.by) || "")} · ${esc(fmtDate(localDay(x.at)))}</span></li>`; }).join("")}</ul>` : `<div class="small muted">No stage changes in this period.</div>`;
+    // Pipeline snapshot
+    const stages = OUT_STAGES.map((st) => [st, active.concat([...S.accounts.values()].filter((a) => a.band !== "deal" && ["Nurture", "Disqualified"].includes(a.stage) && ownerMatch(a.owner))).filter((a) => a.stage === st).length]);
+    const smax = Math.max(1, ...stages.map(([, v]) => v));
+    $("dash-cov").textContent = `${active.length} active`;
+    $("dash-pipe").innerHTML = `<div class="hbars">${stages.map(([l, v]) => `<div class="hb" title="${esc(l)}: ${v} accounts"><span class="hb-l">${esc(l)}</span><span class="hb-track"><span class="hb-fill ${["Nurture", "Disqualified"].includes(l) ? "muted" : ""}" style="width:${v ? Math.max(2, (v / smax) * 100) : 0}%"></span></span><span class="hb-v num">${v}</span></div>`).join("")}</div>`;
+    // By rep
+    const repsPanel = $("dash-reps-panel");
+    if (S.owner !== "all" && S.myOwner) { repsPanel.hidden = true; } else {
+      repsPanel.hidden = false;
+      const evAll = ev; const by = (r) => dashMetrics(evAll.filter((x) => firstName(x.by) === r));
+      const mj = by("Jeremy"), md = by("David");
+      const rows = [["Calls", "calls"], ["Connects", "connects"], ["Emails sent", "emails"], ["LinkedIn connects", "li"], ["LinkedIn accepted", "liacc"], ["LinkedIn messages", "limsg"], ["Meetings booked", "meetings"], ["New accounts", "newacct"], ["Newly engaged", "engaged"], ["Recycled to nurture", "nurture"], ["Disqualified", "dq"], ["Tasks completed", "tasks"]];
+      $("dash-reps").innerHTML = `<table class="book reps"><thead><tr><th>Metric</th><th class="r">Jeremy</th><th class="r">David</th><th class="r">Team</th></tr></thead><tbody>${rows.map(([l, k]) => `<tr><td>${l}</td><td class="r num">${mj[k]}</td><td class="r num">${md[k]}</td><td class="r num"><b>${m[k]}</b></td></tr>`).join("")}</tbody></table>`;
+    }
+  }
+  // Stacked bars by day: calls (blue), LinkedIn (green), emails (purple). Validated palette, 2px gaps, legend + tooltip + table.
+  function renderDashChart(ev, s, e) {
+    const day = 864e5; let start = s; if (e - s < 7 * day) start = new Date(e.getTime() - 7 * day);
+    const days = []; for (let d = new Date(start); d < e; d = new Date(d.getTime() + day)) days.push(ymd(d));
+    const SER = [["call", "Calls", "var(--c-call)"], ["li", "LinkedIn", "var(--c-li)"], ["email", "Emails", "var(--c-email)"]];
+    const evW = dashEvents(start, e);
+    const data = days.map((d) => { const r = { d }; for (const [k] of SER) r[k] = evW.filter((x) => (k === "li" ? x.k === "li" || x.k === "limsg" : x.k === k) && localDay(x.at) === d).length; r.total = SER.reduce((a, [k]) => a + r[k], 0); return r; });
+    const maxT = Math.max(...data.map((r) => r.total), 0);
+    $("dash-legend").innerHTML = SER.map(([, l, c]) => `<span class="lg"><i style="background:${c}"></i>${l}</span>`).join("");
+    $("dash-table").innerHTML = `<table class="book"><thead><tr><th>Day</th>${SER.map(([, l]) => `<th class="r">${l}</th>`).join("")}<th class="r">Total</th></tr></thead><tbody>${data.map((r) => `<tr><td>${esc(fmtDate(r.d))}</td>${SER.map(([k]) => `<td class="r num">${r[k]}</td>`).join("")}<td class="r num">${r.total}</td></tr>`).join("")}</tbody></table>`;
+    if (!maxT) { $("dash-chart").innerHTML = `<div class="empty small"><span class="bubble">No calls, emails or LinkedIn touches yet in this period.</span></div>`; return; }
+    const step = maxT <= 5 ? 1 : maxT <= 10 ? 2 : maxT <= 25 ? 5 : maxT <= 50 ? 10 : 20; const ymax = Math.ceil(maxT / step) * step;
+    const W = 720, H = 220, L = 34, R = 8, T = 10, B = 26; const pw = W - L - R, ph = H - T - B;
+    const bw = Math.max(6, Math.min(36, (pw / days.length) * 0.62)); const gap = pw / days.length;
+    const y = (v) => T + ph - (v / ymax) * ph;
+    let g = ""; for (let v = 0; v <= ymax; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="gl"/><text x="${L - 6}" y="${y(v) + 4}" class="ax" text-anchor="end">${v}</text>`;
+    const every = days.length > 16 ? Math.ceil(days.length / 10) : 1;
+    let bars = "";
+    data.forEach((r, i) => {
+      const cx = L + gap * i + gap / 2; let acc = 0;
+      const segs = SER.filter(([k]) => r[k] > 0);
+      segs.forEach(([k, , c], j) => {
+        const y1 = y(acc + r[k]), y0 = y(acc); const h = Math.max(1, y0 - y1 - (j < segs.length - 1 ? 2 : 0));
+        bars += `<rect x="${cx - bw / 2}" y="${y1}" width="${bw}" height="${h}" rx="${j === segs.length - 1 ? 3 : 1}" fill="${c}"/>`; acc += r[k];
+      });
+      if (i % every === 0 || i === days.length - 1) bars += `<text x="${cx}" y="${H - 8}" class="ax" text-anchor="middle">${esc(fmtDate(r.d).replace(/, \d{4}$/, ""))}</text>`;
+      bars += `<rect x="${cx - gap / 2}" y="${T}" width="${gap}" height="${ph}" fill="transparent" class="hit" data-i="${i}"/>`;
+    });
+    $("dash-chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Calls, LinkedIn and email touches by day">${g}${bars}</svg><div class="tip" id="dash-tip" hidden></div>`;
+    const svg = $("dash-chart").querySelector("svg"); const tip = $("dash-tip");
+    svg.addEventListener("mousemove", (evm) => {
+      const h = evm.target.closest(".hit"); if (!h) { tip.hidden = true; return; }
+      const r = data[Number(h.dataset.i)];
+      tip.innerHTML = `<b>${esc(fmtDate(r.d))}</b>${SER.map(([k, l, c]) => `<div><i style="background:${c}"></i>${l}<span class="num">${r[k]}</span></div>`).join("")}<div class="tt"><span>Total</span><span class="num">${r.total}</span></div>`;
+      tip.hidden = false; const box = $("dash-chart").getBoundingClientRect();
+      tip.style.left = Math.min(box.width - 150, Math.max(0, evm.clientX - box.left + 12)) + "px"; tip.style.top = Math.max(0, evm.clientY - box.top - 20) + "px";
+    });
+    svg.addEventListener("mouseleave", () => (tip.hidden = true));
+  }
+
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
     if (e.target.closest("#theme-btn")) { S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]; store.set("theme", S.theme); applyTheme(S.theme); return; }
@@ -3213,6 +3448,7 @@ a.un-title:hover { text-decoration: underline; }
       $("cp-subject").value = cp.subject; $("cp-body").value = cp.body; renderCompose(); return;
     }
     if (el.id === "cp-follow" || el.id === "cp-days") { readCompose(); return; }
+    if (el.id === "df-period" || el.id === "df-scope") { S.dashF[el.id === "df-period" ? "period" : "scope"] = el.value; storeJ.set("dashF", S.dashF); renderDash(); return; }
     const mfMap = { "mf-show": "show", "mf-days": "days", "mf-junk": "junk", "mf-sort": "sort" };
     if (mfMap[el.id]) { S.mqlF[mfMap[el.id]] = el.value; storeJ.set("mqlF", S.mqlF); renderMqls(); return; }
     const sfMap = { "sf-show": "show", "sf-days": "days", "sf-size": "size", "sf-topic": "topic" };
@@ -3239,7 +3475,7 @@ a.un-title:hover { text-decoration: underline; }
     }
     const act = el.dataset && el.dataset.actChange; if (!act) return;
     const accId = el.dataset.acc || S.route.id; const a = S.accounts.get(accId); if (!a) return;
-    if (act === "stage" && await w(() => acctRef(accId).update({ stage: el.value, updated_at: nowIso() }))) logActivity(accId, { type: "change", summary: `Stage: ${a.stage || "—"} → ${el.value}` });
+    if (act === "stage" && await w(() => acctRef(accId).update({ stage: el.value, updated_at: nowIso() }))) logActivity(accId, { type: "change", field: "stage", from: a.stage || "", to: el.value, summary: `Stage: ${a.stage || "—"} → ${el.value}` });
     if (act === "owner" && await w(() => acctRef(accId).update({ owner: el.value, updated_at: nowIso() }))) logActivity(accId, { type: "change", summary: `Owner: ${a.owner || "—"} → ${el.value}` });
     if (act === "champion" && await w(() => acctRef(accId).update({ champion_id: el.value || null, updated_at: nowIso() }))) { const ch = contactOf(a, el.value); logActivity(accId, { type: "change", summary: ch ? `Champion set to ${ch.name}` : "Champion cleared" }); }
     const cc = contactOf(a, el.dataset.id);
@@ -3311,7 +3547,7 @@ a.un-title:hover { text-decoration: underline; }
     }
   });
 
-  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); renderProspect(); renderEmailSettings(); renderMqls(); renderSignals(); }
+  function renderAll() { renderOwnerSeg(); renderBanner(); renderToday(); renderAccounts(); renderDetail(); renderProspect(); renderEmailSettings(); renderMqls(); renderSignals(); renderDash(); }
 
   // ---------- boot ----------
   S.route = parseHash(); showView(S.route);
