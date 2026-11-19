@@ -30,6 +30,7 @@
   --deal-soft: #E1F2FF; --deal-ink: #0A5E99;
   --tgt-soft: #DDF8EC; --tgt-ink: #0B7A4B;
   --c-call: #0A78C2; --c-li: #0E9A5F; --c-email: #B04FCC;
+  --k-int: #6250d6; --k-ext: #eb6834; --k-deal: #0A78C2; --k-inb: #c98500; --k-open: #0E9A5F;
   --bar: #1D4277; --bar-ink: #FFFFFF; --bar-muted: #AFC3E2; --bar-seg: #16365F; --bar-seg-on: #FFFFFF; --bar-seg-on-ink: #1D4277;
   --font-head: 'Alexandria', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Raleway', 'Helvetica Neue', Arial, sans-serif;
@@ -41,7 +42,7 @@
     --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
     --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
     --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8;
+    --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8; --k-int: #9085e9; --k-ext: #d95926; --k-deal: #2E9BE6; --k-inb: #c98500; --k-open: #1FAF72;
     --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
     color-scheme: dark;
   }
@@ -50,7 +51,7 @@
   --bg: #0C1524; --surface: #132036; --surface-2: #1A2A45; --ink: #E8EDF5; --heading: #F2F6FB; --muted: #9AA9C0; --line: #26385A;
   --link: #5CC0FF; --btn: #069FFF; --btn-ink: #0C1524; --btn-2: #1F3253; --btn-2-ink: #D9E6F7; --focus: #5CC0FF;
   --ok: #3FE3A0; --ok-soft: #0F3427; --bad: #FF8A93; --bad-soft: #3B1A20; --warn: #F2C35B; --warn-soft: #382B10;
-  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8;
+  --gong: #E6A2F5; --gong-soft: #31203D; --deal-soft: #12304F; --deal-ink: #8FD0FF; --tgt-soft: #0F3427; --tgt-ink: #4BE3A6; --c-call: #2E9BE6; --c-li: #1FAF72; --c-email: #C05AD8; --k-int: #9085e9; --k-ext: #d95926; --k-deal: #2E9BE6; --k-inb: #c98500; --k-open: #1FAF72;
   --bar: #102446; --bar-ink: #FFFFFF; --bar-muted: #93A8C8; --bar-seg: #0A1830; --bar-seg-on: #E8EDF5; --bar-seg-on-ink: #102446;
   color-scheme: dark;
 }
@@ -609,6 +610,30 @@ a.un-title:hover { text-decoration: underline; }
 .moves a:hover { text-decoration: underline; }
 .moves .mv-when { margin-left: auto; }
 table.reps { min-width: 420px; }
+
+/* Capacity */
+.cap { display: grid; gap: 14px; margin-top: 10px; padding-top: 22px; border-top: 1px solid var(--line); }
+.cap-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; justify-content: space-between; }
+.cap-h { font-family: var(--font-head); font-weight: 500; font-size: 22px; color: var(--heading); margin: 0 0 2px; }
+.cap-head .head-r { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cap-load { grid-column: 1 / -1; }
+.cap-note { margin-top: 6px; }
+.chart-wrap .ax2 { font-size: 10.5px; opacity: .85; }
+.chart-wrap .sel-week { fill: color-mix(in srgb, var(--blue) 7%, transparent); stroke: color-mix(in srgb, var(--blue) 35%, transparent); stroke-width: 1; pointer-events: none; }
+.chart-wrap .hit { cursor: pointer; }
+.legend i.hatch, .tip i.hatch { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.5) 0 2px, transparent 2px 5px); }
+.cap-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0 0 12px; }
+.cap-facts dt { font-size: 11.5px; color: var(--muted); }
+.cap-facts dd { margin: 2px 0 0; font-weight: 600; color: var(--heading); font-size: 14px; }
+.cap-l { margin: 10px 0 2px; }
+.cap-form { display: grid; gap: 12px; }
+a.ds { text-decoration: none; color: inherit; }
+a.ds:hover { border-color: var(--blue); }
+.cap-grid { align-items: end; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; }
+.cap-in { display: grid; gap: 4px; }
+.cap-num { display: flex; align-items: center; gap: 8px; }
+.cap-num .field { width: 90px; }
+@media (max-width: 600px) { .cap-facts { grid-template-columns: minmax(0, 1fr); } }
 </style>
 
 <header class="bar">
@@ -867,7 +892,10 @@ table.reps { min-width: 420px; }
     const left = evs && isToday ? evs.filter((e) => new Date(e.e).getTime() > Date.now()).length : null;
     const ext = evs ? evs.filter((e) => e.extDomains.length).length : null;
     const cell = (v, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${v == null ? "–" : v}</b><span>${l}</span></div>`;
-    el.innerHTML = (isToday ? cell(left, left === 1 ? "meeting left" : "meetings left") : cell(evs ? evs.length : null, "meetings tomorrow")) + cell(ext, "external") + cell(c.due, "tasks due") + cell(c.over, "overdue", c.over ? "bad" : "");
+    const solo = S.myOwner && S.owner !== "all" ? (S.owner === "mine" ? S.myOwner : otherOwner()) : null;
+    const op = solo && isToday ? openToday(solo) : null;
+    const opCell = solo && isToday ? `<a class="ds ${op != null && op < 1 ? "bad" : ""}" href="#dash" title="Workday minus meetings, prep, and estimated deal and inbound work. Assumptions are in Settings."><b class="num">${op == null ? "–" : hrs(op)}</b><span>open for outbound</span></a>` : "";
+    el.innerHTML = (isToday ? cell(left, left === 1 ? "meeting left" : "meetings left") : cell(evs ? evs.length : null, "meetings tomorrow")) + cell(ext, "external") + opCell + cell(c.due, "tasks due") + cell(c.over, "overdue", c.over ? "bad" : "");
   }
   function accountForEvent(e) {
     const idx = domainIndex();
@@ -2491,18 +2519,20 @@ table.reps { min-width: 420px; }
   // ---------- Email settings view ----------
   function buildEmailShell() {
     $("view-email").innerHTML = `<div style="display:grid;gap:18px">
-      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outreach</span></div><h1>Settings</h1><div class="sub">Your email signature, shared templates, and what the cockpit may change in HubSpot.</div></div><div class="head-r"><span class="conn-pill" id="gm-conn"></span><a class="btn ghost" href="#targets">${ic("back")} Target Accounts</a></div></div>
+      <div class="day-head"><div><div class="eyebrow"><span class="kind tgt">Outreach</span></div><h1>Settings</h1><div class="sub">Your email signature, shared templates, HubSpot permissions, and capacity assumptions.</div></div><div class="head-r"><span class="conn-pill" id="gm-conn"></span><a class="btn ghost" href="#targets">${ic("back")} Target Accounts</a></div></div>
       <div class="detail-grid">
         <div class="panel"><div class="panel-head"><h2 id="sig-h">Your signature</h2></div><div class="panel-body" id="sig-body"></div></div>
         <div class="panel"><div class="panel-head"><h2>Templates</h2><button class="btn ghost" type="button" data-act="tpl-new">${ic("plus")} New</button></div><div class="panel-body" id="tpl-body"></div></div>
       </div>
-      <div class="panel"><div class="panel-head"><h2>HubSpot updates</h2></div><div class="panel-body" id="hs-settings"></div></div></div>`;
+      <div class="panel"><div class="panel-head"><h2>HubSpot updates</h2></div><div class="panel-body" id="hs-settings"></div></div>
+      <div class="panel" id="cap-set"><div class="panel-head"><h2>Capacity assumptions</h2><a class="small" href="#dash">See capacity</a></div><div class="panel-body" id="cap-settings"></div></div></div>`;
     S._sigFor = null;
   }
   function renderEmailSettings() {
     if (S.route.view !== "email") return;
     if (!$("sig-body")) buildEmailShell();
     renderHubspotSettings();
+    renderCapSettings();
     const gc = $("gm-conn"); gc.className = "conn-pill " + (S.gm.state === "ok" ? "ok" : S.gm.state === "bad" ? "bad" : ""); gc.textContent = S.gm.state === "ok" ? "Gmail connected" : S.gm.state === "bad" ? "Gmail unavailable" : "Checking Gmail…";
     const sb = $("sig-body");
     if (!S.myOwner) sb.innerHTML = `<div class="small muted">Pick who you are in the top bar to set up your signature.</div>`;
@@ -3206,6 +3236,7 @@ table.reps { min-width: 420px; }
         <section class="panel"><div class="panel-head"><h2>Target pipeline now</h2><span class="small muted" id="dash-cov"></span></div><div class="panel-body" id="dash-pipe"></div></section>
       </div>
       <section class="panel" id="dash-reps-panel"><div class="panel-head"><h2>By rep</h2><span class="small muted">Who did the work, in this period</span></div><div class="table-wrap" id="dash-reps"></div></section>
+      ${capShell()}
     </div>`;
     $("df-period").value = S.dashF.period; $("df-scope").value = S.dashF.scope;
   }
@@ -3218,7 +3249,7 @@ table.reps { min-width: 420px; }
     const who = S.owner === "all" || !S.myOwner ? "Jeremy and David" : S.owner === "mine" ? `You (${S.myOwner})` : otherOwner();
     $("dash-sub").textContent = `${who} · ${lbl.toLowerCase()} (${fmtDate(ymd(s))}–${fmtDate(ymd(new Date(e.getTime() - 1)))}). Counts start when the cockpit began logging activity.`;
     if (!S.db) { $("dash-strip").innerHTML = ""; $("dash-hero").innerHTML = `<div class="empty">Open the cockpit in claude.ai to see activity.</div>`; return; }
-    if (!S.dash.loaded) { $("dash-strip").innerHTML = `<div class="small muted"><span class="spinner"></span> Loading activity…</div>`; return; }
+    if (!S.dash.loaded) { $("dash-strip").innerHTML = `<div class="small muted"><span class="spinner"></span> Loading activity…</div>`; renderCapacity(); return; }
     const ev = dashEvents(s, e), pv = dashEvents(ps, pe); const m = dashMetrics(ev), p = dashMetrics(pv);
     const delta = (k) => { const d = m[k] - p[k]; return d === 0 ? `<span class="dl">same as before</span>` : `<span class="dl ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${Math.abs(d)} vs prior</span>`; };
     const tile = (k, l, cls) => `<div class="ds ${cls || ""}"><b class="num">${m[k]}</b><span>${l}</span>${delta(k)}</div>`;
@@ -3236,6 +3267,7 @@ table.reps { min-width: 420px; }
         <div><dt>Coverage (14 days)</dt><dd>${covered} of ${active.length} active targets · ${pct(covered, active.length)}</dd></div>
       </dl></div></div>`;
     renderDashChart(ev, s, e);
+    renderCapacity();
     // Calls by outcome: single-series horizontal bars
     const outs = [["Connected", m.connects], ["Left voicemail", m.vm], ["No answer", m.na], ["Wrong number", m.wrong]];
     const omax = Math.max(1, ...outs.map(([, v]) => v));
@@ -3300,9 +3332,380 @@ table.reps { min-width: 420px; }
     svg.addEventListener("mouseleave", () => (tip.hidden = true));
   }
 
+  // ---------- Capacity: where the week's hours went, and what was left for outbound ----------
+  // Measured: Google Calendar meetings, checked against Zoom (actual length, who joined). Estimated: deal work, quoting, inbound follow-up.
+  const ZOOM = "Zoom for Claude";
+  const OWNER_FULL = { Jeremy: ["jeremy", "o'hara"], David: ["david", "walker"] };
+  const CAP_DEF = { hours: { Jeremy: 40, David: 40 }, ext_prep_min: 10, noshow_min: 25, inbound_min: 20, sq_h: 0.5, proposal_h: 1, negotiating_h: 1.5, quote_h: 1 };
+  const capCfg = () => { const c = (S.settings && S.settings.capacity) || {}; return { ...CAP_DEF, ...c, hours: { ...CAP_DEF.hours, ...(c.hours || {}) } }; };
+  const CAP_WEEKS = 8;
+  const CAP_SER = [["int", "Internal meetings", "var(--k-int)"], ["ext", "External meetings", "var(--k-ext)"], ["deal", "Deal work (est.)", "var(--k-deal)"], ["inb", "Inbound follow-up (est.)", "var(--k-inb)"], ["open", "Open for outbound", "var(--k-open)"]];
+  S.cap = { cal: new Map(), calErr: {}, zoom: null, zoomErr: "", zoomAt: 0, sf: null, sfErr: "", hs: null, hsErr: "", loading: false, at: 0, week: "", rep: "" };
+  S.capDocs = new Map(); S.capActs = []; S.capEmails = []; S.capActKey = "";
+  const capWeeks = () => { const m0 = mondayOf(new Date()); const out = []; for (let i = CAP_WEEKS - 1; i >= 0; i--) { const s = new Date(m0); s.setDate(s.getDate() - 7 * i); const e = new Date(s); e.setDate(e.getDate() + 7); out.push({ k: ymd(s), s, e }); } return out; };
+  const capRep = () => (S.owner === "all" || !S.myOwner ? (S.cap.rep || S.myOwner || "Jeremy") : S.owner === "mine" ? S.myOwner : otherOwner());
+  const zoomNums = (txt) => { const out = new Set(); String(txt || "").replace(/zoom\.us\/(?:j|my|w)\/(\d{9,11})/gi, (_, n) => out.add(n)).replace(/Meeting ID:?\s*([\d ]{11,13})/gi, (_, n) => out.add(n.replace(/\s/g, ""))); return out; };
+  const normTopic = (t) => String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const ownerIn = (rec, o) => (rec.attendee_list || rec.attendees || []).some((x) => { const n = String(x.user_name || x.display_name || "").toLowerCase(); return OWNER_FULL[o].every((p) => n.includes(p)); });
+  const mins = (a, b) => Math.max(0, (new Date(b) - new Date(a)) / 6e4);
+  function capParse(p, owner) {
+    const email = CAL_EMAIL[owner]; const out = [];
+    for (const e of (p && (p.events || p.items)) || []) {
+      if (!e || e.status === "cancelled" || e.eventType === "WORKING_LOCATION") continue;
+      const att = e.attendees || [];
+      const me = att.find((x) => x.self || (x.email || "").toLowerCase() === email);
+      if (me && me.responseStatus === "declined") continue;
+      if (!(e.start && e.start.dateTime)) {
+        if (e.eventType === "OUT_OF_OFFICE" && e.start && e.start.date) out.push({ id: e.id, allDayOoo: true, from: e.start.date, to: (e.end && e.end.date) || e.start.date, title: e.summary || "Out of office" });
+        continue;
+      }
+      const others = att.filter((x) => { const em = (x.email || "").toLowerCase(); return em && em !== email && !x.resource && !em.includes("resource.calendar.google.com"); });
+      const extEmails = [...new Set(others.map((x) => (x.email || "").toLowerCase()).filter((em) => em.includes("@") && !em.endsWith("@textus.com")))];
+      const cd = e.conferenceData || {};
+      const nums = zoomNums([e.location, e.description, cd.conferenceId, ...(cd.entryPoints || []).map((x) => x.uri)].join(" "));
+      if (cd.conferenceId && /^\d{9,11}$/.test(cd.conferenceId)) nums.add(cd.conferenceId);
+      out.push({ id: e.id, s: e.start.dateTime, e: (e.end && e.end.dateTime) || e.start.dateTime, title: e.summary || "(busy)", mtg: others.length > 0, ext: extEmails.length > 0, extDomains: [...new Set(extEmails.map((x) => x.split("@")[1]))], nums: [...nums], ooo: e.eventType === "OUT_OF_OFFICE" });
+    }
+    return out;
+  }
+  async function pool(jobs, n) { const res = []; let i = 0; await Promise.all(Array.from({ length: n }, async () => { while (i < jobs.length) { const j = i++; res[j] = await jobs[j](); } })); return res; }
+  async function capLoadCal(owner, weeks) {
+    await pool(weeks.map((wk) => async () => {
+      const key = owner + "|" + wk.k; const cur = wk.e > new Date();
+      if (S.cap.cal.has(key) && !cur) return;
+      try {
+        let token = null, guard = 0, evs = [];
+        do {
+          const input = { calendarId: CAL_EMAIL[owner], startTime: `${wk.k}T00:00:00`, endTime: `${ymd(new Date(wk.e.getTime() - 864e5))}T23:59:59`, orderBy: "startTime", pageSize: 250 };
+          if (token) input.pageToken = token;
+          const p = await callTool(GCAL, "list_events", input);
+          evs = evs.concat(capParse(p, owner)); token = p && p.nextPageToken; guard++;
+        } while (token && guard < 6);
+        S.cap.cal.set(key, evs); delete S.cap.calErr[owner];
+      } catch (e) { S.cap.calErr[owner] = owner === S.myOwner ? errText(e, GCAL) : `Couldn't read ${owner}'s calendar. ${owner} can share it with you in Google Calendar (See all event details).`; }
+    }), 3);
+  }
+  async function capLoadZoom(weeks) {
+    if (S.cap.zoom && Date.now() - S.cap.zoomAt < 10 * 60e3) return;
+    try {
+      let recs = [], token = null, guard = 0;
+      const filters = { and: [{ gte: { key: "meeting_start_time", value: weeks[0].s.toISOString() } }, { lte: { key: "meeting_start_time", value: new Date().toISOString() } }] };
+      do {
+        const input = { datasource_filters: [{ datasource: "zoom_meeting", filters }], page_size: 100 };
+        if (token) input.next_page_token = token;
+        const p = await callTool(ZOOM, "search", input);
+        recs = recs.concat(((p && p.data) || []).filter((r) => r.meeting_start_time && r.meeting_end_time));
+        token = p && p.has_more ? p.next_page_token : null; guard++;
+      } while (token && guard < 12);
+      S.cap.zoom = recs; S.cap.zoomErr = ""; S.cap.zoomAt = Date.now();
+    } catch (e) { S.cap.zoom = null; S.cap.zoomErr = errText(e, "Zoom"); }
+  }
+  async function capLoadSf() {
+    if (S.cap.sf && Date.now() - S.cap.sfAt < 30 * 60e3) return;
+    try {
+      const ids = Object.values(SF_USERS).map((x) => `'${x}'`).join(",");
+      const recs = await soql(`SELECT Id, OwnerId, StageName, IsClosed, CreatedDate, (SELECT StageName, CreatedDate FROM OpportunityHistories ORDER BY CreatedDate ASC) FROM Opportunity WHERE OwnerId IN (${ids}) AND RecordType.DeveloperName = 'New_Business' AND (IsClosed = false OR CloseDate = LAST_N_DAYS:90) LIMIT 1000`);
+      const byId = Object.fromEntries(Object.entries(SF_USERS).map(([k, v]) => [v, k]));
+      S.cap.sf = recs.map((r) => ({ id: r.Id, owner: byId[r.OwnerId] || "", hist: ((r.OpportunityHistories && r.OpportunityHistories.records) || []).map((h) => ({ st: h.StageName, t: new Date(h.CreatedDate).getTime() })), created: new Date(r.CreatedDate).getTime(), stage: r.StageName }));
+      S.cap.sfAt = Date.now(); S.cap.sfErr = "";
+    } catch (e) { S.cap.sfErr = errText(e, SF); }
+  }
+  async function capLoadHs(weeks) {
+    if (S.cap.hs && Date.now() - S.cap.hsAt < 30 * 60e3) return;
+    try {
+      const filters = [{ propertyName: "hs_v2_date_entered_marketingqualifiedlead", operator: "GTE", value: weeks[0].k }, { propertyName: "hubspot_owner_id", operator: "IN", values: Object.values(HS_OWNER) }];
+      let rows = [], offset, guard = 0, total = 0;
+      do {
+        const input = { objectType: "CONTACT", filterGroups: [{ filters }], properties: ["hubspot_owner_id", "hs_v2_date_entered_marketingqualifiedlead"], limit: 200, chatInsights: HS_INSIGHTS };
+        if (offset) input.offset = offset;
+        const p = await callTool(HSP, "search_crm_objects", input);
+        rows = rows.concat(((p && p.results) || []).map((r) => { const pr = r.properties || r; return { owner: HS_OWNER_NAME[String(pr.hubspot_owner_id || "")] || "", at: pr.hs_v2_date_entered_marketingqualifiedlead || "" }; }));
+        total = (p && p.total) || rows.length; offset = p && p.offset && rows.length < total ? p.offset : null; guard++;
+      } while (offset && guard < 6);
+      S.cap.hs = rows; S.cap.hsAt = Date.now(); S.cap.hsErr = "";
+    } catch (e) { S.cap.hsErr = errText(e, HSP); }
+  }
+  function capSubscribe() {
+    if (!S.db) return;
+    const since = capWeeks()[0].s.toISOString(); if (S.capActKey === since) return;
+    (S.capUnsub || []).forEach((u) => { try { u(); } catch {} });
+    S.capActKey = since;
+    S.capUnsub = [
+      S.db.collection("activity").where("at", ">=", since).limit(1000).onSnapshot((snap) => { S.capActs = snap.docs.map((d) => d.data()); renderCapacity(); }, () => {}),
+      S.db.collection("notes").where("kind", "==", "email").limit(1000).onSnapshot((snap) => { S.capEmails = snap.docs.map((d) => d.data()).filter((n) => String(n.created_at || "") >= since); renderCapacity(); }, () => {}),
+      S.db.collection("capacity").limit(200).onSnapshot((snap) => { S.capDocs = new Map(snap.docs.map((d) => [d.id, d.data()])); renderCapacity(); }, () => {}),
+    ];
+  }
+  async function loadCapacity(force) {
+    if (!S.mcp || S.cap.loading) return;
+    if (!force && Date.now() - S.cap.at < 10 * 60e3) return;
+    if (force) { S.cap.zoomAt = 0; S.cap.sfAt = 0; S.cap.hsAt = 0; }
+    S.cap.loading = true; renderCapacity();
+    const weeks = capWeeks(); const rep = capRep();
+    const reps = S.owner === "all" || !S.myOwner ? OWNERS.slice() : [rep];
+    await Promise.all([...reps.map((o) => capLoadCal(o, weeks)), S.myOwner ? capLoadZoom(weeks) : null, capLoadSf(), capLoadHs(weeks)]);
+    S.cap.loading = false; S.cap.at = Date.now();
+    renderCapacity(); saveCapDocs();
+  }
+  // One week of meetings for one rep: scheduled vs what Zoom says happened.
+  function capMeetings(owner, wk) {
+    const cfg = capCfg(); const evs = S.cap.cal.get(owner + "|" + wk.k);
+    if (!evs) return null;
+    const now = Date.now(); const ws = wk.s.getTime(), we = wk.e.getTime();
+    const zoomOk = owner === S.myOwner && Array.isArray(S.cap.zoom);
+    const zrecs = zoomOk ? S.cap.zoom.filter((r) => { const t = new Date(r.meeting_start_time).getTime(); return t >= ws && t < we; }) : [];
+    const used = new Set(); const items = [];
+    let oooH = 0;
+    for (const e of evs) {
+      if (e.allDayOoo) { for (let d = new Date(Math.max(ws, new Date(e.from + "T00:00:00").getTime())); d.getTime() < Math.min(we, new Date(e.to + "T00:00:00").getTime()); d.setDate(d.getDate() + 1)) if (d.getDay() % 6) oooH += cfg.hours[owner] / 5; continue; }
+      if (e.ooo) { oooH += mins(e.s, e.e) / 60; continue; }
+      if (!e.mtg) continue;
+      const it = { title: e.title, s: e.s, e: e.e, ext: e.ext, sched: mins(e.s, e.e), status: "", min: 0, actual: null, domains: e.extDomains };
+      const past = new Date(e.e).getTime() < now;
+      let z = null;
+      if (zoomOk) {
+        const day = localDay(e.s);
+        const cand = zrecs.filter((r) => !used.has(r.meeting_uuid) && localDay(r.meeting_start_time) === day);
+        const byNum = cand.filter((r) => e.nums.includes(String(r.meeting_number)) || e.nums.includes(String(r.original_meeting_number || "")));
+        const near = (arr) => arr.sort((a, b) => Math.abs(new Date(a.meeting_start_time) - new Date(e.s)) - Math.abs(new Date(b.meeting_start_time) - new Date(e.s)))[0];
+        z = near(byNum) || near(cand.filter((r) => Math.abs(new Date(r.meeting_start_time) - new Date(e.s)) <= 20 * 6e4 && (normTopic(r.topic) === normTopic(e.title) || (normTopic(e.title).length > 6 && normTopic(r.topic).includes(normTopic(e.title))))));
+      }
+      if (z) {
+        used.add(z.meeting_uuid);
+        const act = mins(z.meeting_start_time, z.meeting_end_time);
+        if (!ownerIn(z, owner)) { it.status = "skipped"; it.min = 0; }
+        else if (e.ext && z.has_external_user === false) { it.status = "noshow"; it.min = cfg.noshow_min; it.actual = act; }
+        else { it.status = "held"; it.min = act; it.actual = act; it.as = z.meeting_start_time; it.ae = z.meeting_end_time; }
+      } else if (!past) { it.status = "upcoming"; it.min = it.sched; }
+      else if (zoomOk && e.nums.length) { it.status = "unverified"; it.min = it.sched; }
+      else { it.status = "scheduled"; it.min = it.sched; }
+      if (e.ext && ["held", "upcoming", "unverified", "scheduled"].includes(it.status)) it.prep = cfg.ext_prep_min;
+      items.push(it);
+    }
+    // Zoom time with no calendar invite (instant calls, personal rooms)
+    for (const r of zrecs) {
+      if (used.has(r.meeting_uuid) || !ownerIn(r, owner)) continue;
+      const act = mins(r.meeting_start_time, r.meeting_end_time); if (act < 5 || (r.attendee_count || 0) < 2) continue;
+      items.push({ title: r.topic || "Zoom meeting", s: r.meeting_start_time, e: r.meeting_end_time, ext: !!r.has_external_user, sched: 0, status: "unscheduled", min: act, actual: act, as: r.meeting_start_time, ae: r.meeting_end_time });
+    }
+    // Double-booked time counts once: clip each meeting against time already counted.
+    items.sort((a, b) => new Date(a.as || a.s) - new Date(b.as || b.s));
+    let edge = 0; let intM = 0, extM = 0, prepM = 0, nsM = 0;
+    for (const it of items) {
+      if (it.status === "noshow") { nsM += it.min; continue; }
+      if (!it.min) continue;
+      const a = new Date(it.as || it.s).getTime(), b = it.as ? new Date(it.ae).getTime() : a + it.min * 6e4;
+      const counted = Math.max(0, (b - Math.max(a, edge)) / 6e4); edge = Math.max(edge, b);
+      it.counted = counted;
+      if (it.ext) extM += counted; else intM += counted;
+      prepM += it.prep || 0;
+    }
+    return { zoom: zoomOk, items, oooH, intM, extM: extM + prepM + nsM, prepM, nsM,
+      schedM: items.filter((x) => x.sched).reduce((s, x) => s + x.sched, 0),
+      actualM: items.filter((x) => x.status === "held" || x.status === "unscheduled").reduce((s, x) => s + x.actual, 0),
+      heldSchedM: items.filter((x) => x.status === "held").reduce((s, x) => s + x.sched, 0),
+      noshows: items.filter((x) => x.status === "noshow"), skipped: items.filter((x) => x.status === "skipped"), unsched: items.filter((x) => x.status === "unscheduled"),
+      long: items.filter((x) => x.status === "held" && x.actual - x.sched >= 10), unverified: items.filter((x) => x.status === "unverified") };
+  }
+  // Stored Zoom-checked weeks let the other rep see your measured meeting time without your Zoom login.
+  function saveCapDocs() {
+    if (!S.db || !S.myOwner || !Array.isArray(S.cap.zoom)) return;
+    for (const wk of capWeeks()) {
+      const m = capMeetings(S.myOwner, wk); if (!m) continue;
+      const id = S.myOwner + "_" + wk.k; const prev = S.capDocs.get(id);
+      const doc = { owner: S.myOwner, week: wk.k, zoom: true, oooH: m.oooH, intM: Math.round(m.intM), extM: Math.round(m.extM), prepM: m.prepM, nsM: m.nsM, schedM: Math.round(m.schedM), actualM: Math.round(m.actualM), heldSchedM: Math.round(m.heldSchedM),
+        noshows: m.noshows.map((x) => ({ title: x.title, s: x.s })), skipped: m.skipped.map((x) => ({ title: x.title, s: x.s, sched: x.sched })), unsched: m.unsched.map((x) => ({ title: x.title, s: x.s, actual: Math.round(x.actual), ext: x.ext })), long: m.long.map((x) => ({ title: x.title, s: x.s, sched: x.sched, actual: Math.round(x.actual) })), unverifiedN: m.unverified.length };
+      if (prev && prev.intM === doc.intM && prev.extM === doc.extM && prev.nsM === doc.nsM && prev.schedM === doc.schedM) continue;
+      S.db.collection("capacity").doc(id).set({ ...doc, computed_at: nowIso() }).catch(() => {});
+    }
+  }
+  const SF_STAGE_H = (cfg) => ({ "Sales Qualified": cfg.sq_h, Proposal: cfg.proposal_h, Negotiating: cfg.negotiating_h });
+  function capDeals(owner, wk) {
+    if (!S.cap.sf) return null;
+    const cfg = capCfg(); const H = SF_STAGE_H(cfg); const ws = wk.s.getTime(), we = wk.e.getTime();
+    let hours = 0, quotes = 0, open = 0; const byStage = { "Sales Qualified": 0, Proposal: 0, Negotiating: 0 };
+    for (const o of S.cap.sf) {
+      if (o.owner !== owner) continue;
+      const h = o.hist.length ? o.hist : [{ st: o.stage, t: o.created }];
+      const before = h.filter((x) => x.t < ws); const within = h.filter((x) => x.t >= ws && x.t < we);
+      const stages = [...(before.length ? [before[before.length - 1].st] : []), ...within.map((x) => x.st)].filter((st) => H[st] != null);
+      if (!stages.length) continue;
+      const top = stages.reduce((a, b) => (H[b] > H[a] ? b : a)); hours += H[top]; byStage[top]++; open++;
+      const firstQ = h.find((x) => x.st === "Proposal" || x.st === "Negotiating");
+      if (firstQ && firstQ.t >= ws && firstQ.t < we) { quotes++; hours += cfg.quote_h; }
+    }
+    return { hours, quotes, open, byStage };
+  }
+  function capInbound(owner, wk) {
+    if (!S.cap.hs) return null;
+    const n = S.cap.hs.filter((r) => r.owner === owner && r.at && new Date(r.at) >= wk.s && new Date(r.at) < wk.e).length;
+    return { n, hours: (n * capCfg().inbound_min) / 60 };
+  }
+  function capTouches(owner, wk) {
+    const S0 = wk.s.toISOString(), E0 = wk.e.toISOString(); let n = 0;
+    for (const x of S.capActs) {
+      if (!(x.at >= S0 && x.at < E0) || firstName(x.by) !== owner) continue;
+      if (x.type === "call" || x.type === "meeting" || (x.type === "linkedin" && /connect sent|message sent/i.test(x.summary || ""))) n++;
+    }
+    for (const e of S.capEmails) if (e.created_at >= S0 && e.created_at < E0 && firstName(e.author) === owner && /^Emailed /.test(e.body || "")) n++;
+    return n;
+  }
+  function capWeek(owner, wk) {
+    const cfg = capCfg(); let m = capMeetings(owner, wk);
+    const stored = S.capDocs.get(owner + "_" + wk.k);
+    if ((!m || !m.zoom) && stored && stored.zoom) m = { ...stored, zoom: true, stored: true, noshows: stored.noshows || [], skipped: stored.skipped || [], unsched: stored.unsched || [], long: stored.long || [], unverified: { length: stored.unverifiedN || 0 } };
+    const d = capDeals(owner, wk), i = capInbound(owner, wk);
+    const avail = Math.max(0, cfg.hours[owner] - (m ? m.oooH : 0));
+    const intH = m ? m.intM / 60 : 0, extH = m ? m.extM / 60 : 0, dealH = d ? d.hours : 0, inbH = i ? i.hours : 0;
+    const open = Math.max(0, avail - intH - extH - dealH - inbH);
+    const touches = capTouches(owner, wk);
+    return { wk, m, d, i, avail, intH, extH, dealH, inbH, open, over: Math.max(0, intH + extH + dealH + inbH - avail), touches, cur: wk.e > new Date() };
+  }
+  function groupLong(arr) {
+    const g = new Map();
+    for (const x of arr) { const k = x.title; const cur = g.get(k) || { title: k, n: 0, extra: 0, sched: x.sched, actual: x.actual }; cur.n++; cur.extra += x.actual - x.sched; g.set(k, cur); }
+    return [...g.values()].sort((a, b) => b.extra - a.extra);
+  }
+  const hrs = (h) => (h == null ? "–" : h >= 10 ? Math.round(h) + "h" : (Math.round(h * 2) / 2).toString().replace(/\.0$/, "") + "h");
+  const wkLabel = (wk) => fmtDate(wk.k).replace(/, \d{4}$/, "");
+  function capShell() {
+    return `<section class="cap" id="cap">
+      <div class="cap-head"><div><h2 class="cap-h">Capacity</h2><div class="sub" id="cap-sub"></div></div>
+        <div class="head-r"><span id="cap-rep"></span><button class="btn ghost" type="button" data-act="cap-refresh">${ic("sync")} Refresh</button><a class="btn ghost" href="#email">${ic("gear")} Assumptions</a></div></div>
+      <div class="day-strip dash-strip" id="cap-strip"></div>
+      <div class="dash-grid">
+        <section class="panel"><div class="panel-head"><h2>Hours by week</h2><div class="legend" id="cap-legend"></div></div><div class="panel-body"><div class="chart-wrap" id="cap-chart"></div><div class="small muted cap-note">Click a week to check it against Zoom. Touches = calls, emails, LinkedIn connects and messages logged in the cockpit.</div><details class="chart-table"><summary>Show as a table</summary><div class="table-wrap" id="cap-table"></div></details></div></section>
+        <section class="panel"><div class="panel-head"><h2 id="cap-zh">Calendar vs Zoom</h2></div><div class="panel-body" id="cap-zoom"></div></section>
+      </div></section>`;
+  }
+  function renderCapacity() {
+    if (S.route.view !== "dash" || !$("cap")) return;
+    capSubscribe();
+    const rep = capRep(); const cfg = capCfg();
+    $("cap-rep").innerHTML = S.owner === "all" || !S.myOwner ? `<span class="tabs" role="group" aria-label="Rep">${OWNERS.map((o) => `<button type="button" data-caprep="${o}" aria-pressed="${o === rep}">${o}</button>`).join("")}</span>` : "";
+    if (!S.mcp) { $("cap-strip").innerHTML = `<div class="empty">Open the cockpit in claude.ai to measure capacity.</div>`; return; }
+    if (!S.cap.at && !S.cap.loading) setTimeout(() => loadCapacity(false), 0);
+    const weeks = capWeeks(); const rows = weeks.map((wk) => capWeek(rep, wk));
+    const haveCal = rows.some((r) => r.m);
+    const zoomState = rep !== S.myOwner ? (rows.some((r) => r.m && r.m.stored) ? `Zoom-checked weeks shared by ${rep}.` : `Zoom checks appear once ${rep} opens this tab.`) : S.cap.zoomErr ? "Zoom unavailable: " + S.cap.zoomErr : Array.isArray(S.cap.zoom) ? "Meetings checked against Zoom." : "";
+    $("cap-sub").textContent = `${rep} · last ${CAP_WEEKS} weeks · ${cfg.hours[rep]}h week. Meetings come from the calendar. ${zoomState}`;
+    const errs = [S.cap.calErr[rep], S.cap.sfErr && "Deal work: " + S.cap.sfErr, S.cap.hsErr && "Inbound: " + S.cap.hsErr].filter(Boolean);
+    if (!haveCal) { $("cap-strip").innerHTML = S.cap.loading ? `<div class="small muted"><span class="spinner"></span> Reading ${CAP_WEEKS} weeks of calendar${rep === S.myOwner ? ", Zoom" : ""}, Salesforce and HubSpot…</div>` : errs.map((x) => `<div class="err">${esc(x)}</div>`).join(""); $("cap-chart").innerHTML = ""; $("cap-zoom").innerHTML = ""; return; }
+    const sel = rows.find((r) => r.wk.k === S.cap.week) || rows[rows.length - 1];
+    const prior = rows.slice(0, -1).filter((r) => r.m); const avg = (k) => prior.length ? prior.reduce((s, r) => s + r[k], 0) / prior.length : null;
+    const tile = (v, l, sub, cls) => `<div class="ds ${cls || ""}"><b class="num">${v}</b><span>${l}</span>${sub ? `<span class="dl">${sub}</span>` : ""}</div>`;
+    const tph = (r) => (r.open >= 1 ? (r.touches / r.open).toFixed(1) : "–");
+    $("cap-strip").innerHTML = (S.cap.loading ? `<div class="small muted cap-load"><span class="spinner"></span> Updating…</div>` : "") +
+      tile(hrs(sel.avail), "available", (sel.cur ? "This week" : "Week of " + wkLabel(sel.wk)) + (sel.m && sel.m.oooH ? ` · ${hrs(sel.m.oooH)} OOO` : "")) +
+      tile(hrs(sel.intH + sel.extH), "in meetings", avg("intH") != null ? `avg ${hrs(avg("intH") + avg("extH"))}` : "") +
+      tile(hrs(sel.dealH), "deal work (est.)", sel.d ? `${sel.d.open} open deal${sel.d.open === 1 ? "" : "s"}${sel.d.quotes ? ` · ${sel.d.quotes} quote${sel.d.quotes === 1 ? "" : "s"}` : ""}` : "") +
+      tile(hrs(sel.inbH), "inbound (est.)", sel.i ? `${sel.i.n} MQL${sel.i.n === 1 ? "" : "s"}` : "") +
+      tile(hrs(sel.open), "open for outbound", avg("open") != null ? `avg ${hrs(avg("open"))}` : "", sel.open < 5 ? "bad" : "good") +
+      tile(sel.touches, "outbound touches", `${tph(sel)} per open hour`);
+    // Stacked hours by week
+    $("cap-legend").innerHTML = CAP_SER.map(([k, l, c]) => `<span class="lg"><i class="${k === "open" ? "hatch" : ""}" style="background-color:${c}"></i>${l}</span>`).join("");
+    const maxH = Math.max(...rows.map((r) => Math.max(r.avail, r.intH + r.extH + r.dealH + r.inbH)), 10);
+    const step = maxH <= 20 ? 5 : 10; const ymax = Math.ceil(maxH / step) * step;
+    const W = 720, H = 250, L = 34, R = 8, T = 10, B = 44; const pw = W - L - R, ph = H - T - B; const gap = pw / rows.length; const bw = Math.min(46, gap * 0.6);
+    const y = (v) => T + ph - (v / ymax) * ph;
+    let g = ""; for (let v = 0; v <= ymax; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="gl"/><text x="${L - 6}" y="${y(v) + 4}" class="ax" text-anchor="end">${v}h</text>`;
+    let bars = "";
+    rows.forEach((r, i) => {
+      const cx = L + gap * i + gap / 2; let acc = 0;
+      if (r.wk.k === sel.wk.k) bars += `<rect x="${cx - gap / 2 + 2}" y="${T}" width="${gap - 4}" height="${ph}" rx="6" class="sel-week"/>`;
+      const vals = [["int", r.intH], ["ext", r.extH], ["deal", r.dealH], ["inb", r.inbH], ["open", r.open]].filter(([, v]) => v > 0.05);
+      vals.forEach(([k, v], j) => {
+        const c = CAP_SER.find((s) => s[0] === k)[2]; const y1 = y(acc + v), y0 = y(acc); const h = Math.max(1, y0 - y1 - (j < vals.length - 1 ? 2 : 0));
+        bars += `<rect x="${cx - bw / 2}" y="${y1}" width="${bw}" height="${h}" rx="${j === vals.length - 1 ? 3 : 1}" fill="${c}" ${k === "open" ? 'class="open-seg"' : ""}/>`;
+        if (k === "open") bars += `<rect x="${cx - bw / 2}" y="${y1}" width="${bw}" height="${h}" rx="3" fill="url(#cap-hatch)" pointer-events="none"/>`;
+        acc += v;
+      });
+      if (r.over > 0.5) bars += `<text x="${cx}" y="${y(acc) - 4}" class="ax" text-anchor="middle">+${hrs(r.over)}</text>`;
+      bars += `<text x="${cx}" y="${H - 26}" class="ax" text-anchor="middle">${esc(r.cur ? "This wk" : wkLabel(r.wk))}</text><text x="${cx}" y="${H - 10}" class="ax ax2" text-anchor="middle">${r.touches} touches</text>`;
+      bars += `<rect x="${cx - gap / 2}" y="${T}" width="${gap}" height="${ph + 30}" fill="transparent" class="hit" data-i="${i}" data-capweek="${r.wk.k}"/>`;
+    });
+    $("cap-chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Hours by week: meetings, deal work, inbound and time open for outbound"><defs><pattern id="cap-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--surface)" stroke-width="2" stroke-opacity=".45"/></pattern></defs>${g}${bars}</svg><div class="tip" id="cap-tip" hidden></div>`;
+    const svg = $("cap-chart").querySelector("svg"); const tip = $("cap-tip");
+    svg.addEventListener("mousemove", (evm) => {
+      const h = evm.target.closest(".hit"); if (!h) { tip.hidden = true; return; }
+      const r = rows[Number(h.dataset.i)];
+      tip.innerHTML = `<b>Week of ${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}</b>${CAP_SER.map(([k, l, c]) => `<div><i class="${k === "open" ? "hatch" : ""}" style="background-color:${c}"></i>${l}<span class="num">${hrs({ int: r.intH, ext: r.extH, deal: r.dealH, inb: r.inbH, open: r.open }[k])}</span></div>`).join("")}<div class="tt"><span>Touches</span><span class="num">${r.touches}</span></div>`;
+      tip.hidden = false; const box = $("cap-chart").getBoundingClientRect();
+      tip.style.left = Math.min(box.width - 190, Math.max(0, evm.clientX - box.left + 12)) + "px"; tip.style.top = Math.max(0, evm.clientY - box.top - 20) + "px";
+    });
+    svg.addEventListener("mouseleave", () => (tip.hidden = true));
+    $("cap-table").innerHTML = `<table class="book"><thead><tr><th>Week of</th><th class="r">Available</th><th class="r">Internal</th><th class="r">External</th><th class="r">Deal work</th><th class="r">Inbound</th><th class="r">Open</th><th class="r">Touches</th><th class="r">Per open hr</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(wkLabel(r.wk))}${r.cur ? " (planned)" : ""}</td><td class="r num">${hrs(r.avail)}</td><td class="r num">${hrs(r.intH)}</td><td class="r num">${hrs(r.extH)}</td><td class="r num">${hrs(r.dealH)}</td><td class="r num">${hrs(r.inbH)}</td><td class="r num"><b>${hrs(r.open)}</b></td><td class="r num">${r.touches}</td><td class="r num">${tph(r)}</td></tr>`).join("")}</tbody></table>`;
+    // Calendar vs Zoom for the selected week
+    $("cap-zh").textContent = `Calendar vs Zoom · ${sel.cur ? "this week" : "week of " + wkLabel(sel.wk)}`;
+    const m = sel.m; const fm = (mm) => (mm < 60 ? Math.round(mm) + " min" : hrs(mm / 60));
+    const when = (s) => `${fmtDate(localDay(s)).replace(/, \d{4}$/, "")} ${fmtTime(s)}`;
+    const list = (arr, fn) => arr.length ? `<ul class="moves">${arr.slice(0, 8).map(fn).join("")}</ul>` : "";
+    if (!m) { $("cap-zoom").innerHTML = `<div class="small muted">No calendar for this week.</div>`; }
+    else if (!m.zoom) {
+      $("cap-zoom").innerHTML = `<div class="small muted">${rep === S.myOwner ? (S.cap.zoomErr ? esc(S.cap.zoomErr) + " Showing calendar time as booked." : S.cap.loading ? "Checking Zoom…" : "Showing calendar time as booked.") : `Only ${rep} can check ${rep}'s meetings against Zoom. When ${rep} opens this tab, the checked weeks are saved here for you.`}</div>
+        <dl class="cap-facts"><div><dt>Booked meeting time</dt><dd>${fm(m.schedM)}</dd></div><div><dt>Prep for external meetings</dt><dd>${fm(m.prepM || 0)}</dd></div></dl>`;
+    } else {
+      const diff = m.actualM - m.heldSchedM - (m.unsched || []).reduce((s, x) => s + x.actual, 0);
+      $("cap-zoom").innerHTML = `<dl class="cap-facts">
+          <div><dt>Booked on calendar</dt><dd>${fm(m.schedM)}</dd></div>
+          <div><dt>Actually in Zoom</dt><dd>${fm(m.actualM)}</dd></div>
+          <div><dt>Held meetings ran</dt><dd>${Math.abs(diff) < 5 ? "on time" : `${diff > 0 ? "+" : "−"}${fm(Math.abs(diff))} vs booked`}</dd></div>
+          <div><dt>No-shows</dt><dd>${m.noshows.length}${m.noshows.length ? ` · ${fm(m.nsM)} lost to prep, waiting, follow-up` : ""}</dd></div>
+          <div><dt>Invites you didn't join</dt><dd>${m.skipped.length}${m.skipped.length ? ` · ${fm(m.skipped.reduce((s, x) => s + x.sched, 0))} freed` : ""}</dd></div>
+          <div><dt>Zoom calls with no invite</dt><dd>${m.unsched.length}${m.unsched.length ? ` · ${fm(m.unsched.reduce((s, x) => s + x.actual, 0))}` : ""}</dd></div>
+        </dl>
+        ${m.noshows.length ? `<div class="eyebrow cap-l">No-shows · ${cfg.noshow_min} min each</div>${list(m.noshows, (x) => `<li><span class="chip warn">No-show</span><span>${esc(x.title)}</span><span class="small muted mv-when">${esc(when(x.s))}</span></li>`)}` : ""}
+        ${m.long.length ? `<div class="eyebrow cap-l">Ran long</div>${list(groupLong(m.long), (x) => `<li><span class="chip">+${Math.round(x.extra)} min</span><span>${esc(x.title)}${x.n > 1 ? ` <span class="small muted">×${x.n}</span>` : ""}</span><span class="small muted mv-when">${x.n > 1 ? "in total" : `${Math.round(x.sched)}→${Math.round(x.actual)} min`}</span></li>`)}` : ""}
+        ${m.unsched.length ? `<div class="eyebrow cap-l">Not on the calendar</div>${list(m.unsched, (x) => `<li><span class="chip">${x.ext ? "External" : "Internal"}</span><span>${esc(x.title)}</span><span class="small muted mv-when">${Math.round(x.actual)} min · ${esc(when(x.s))}</span></li>`)}` : ""}
+        ${m.skipped.length ? `<div class="eyebrow cap-l">On the calendar, not joined</div>${list(m.skipped, (x) => `<li><span class="chip">Skipped</span><span>${esc(x.title)}</span><span class="small muted mv-when">${esc(when(x.s))}</span></li>`)}` : ""}
+        ${m.unverified.length ? `<div class="small muted">${m.unverified.length} past Zoom meeting${m.unverified.length === 1 ? "" : "s"} on the calendar didn't show up in Zoom, so ${m.unverified.length === 1 ? "it counts" : "they count"} as booked.</div>` : ""}
+        ${m.stored ? `<div class="small muted">Checked against ${esc(rep)}'s Zoom.</div>` : ""}`;
+    }
+    if (errs.length) $("cap-zoom").insertAdjacentHTML("beforeend", errs.map((x) => `<div class="err" style="margin-top:8px">${esc(x)}</div>`).join(""));
+  }
+  // Today: rough hours left for outbound, from today's calendar and this week's estimates.
+  function openToday(owner) {
+    if (!calReady() || S.cal.day !== "today") return null;
+    const cfg = capCfg(); const day = cfg.hours[owner] / 5;
+    if (S.cal.allDay.some((a) => a.ooo && a.owner === owner)) return 0;
+    let mm = 0, edge = 0;
+    for (const e of S.cal.events.filter((x) => x.owners.includes(owner) && !x.focus)) {
+      if (e.ooo) { mm += mins(e.s, e.e); continue; }
+      if (!e.mtg) continue;
+      const a = new Date(e.s).getTime(), b = new Date(e.e).getTime(); mm += Math.max(0, (b - Math.max(a, edge)) / 6e4); edge = Math.max(edge, b);
+      if (e.extDomains.length) mm += cfg.ext_prep_min;
+    }
+    const H = SF_STAGE_H(cfg); let dealH = 0;
+    for (const [, a] of S.accounts) if (a.band === "deal" && !a.sf_excluded && !a.sf_closed && a.owner === owner) dealH += H[a.stage] || 0;
+    const wk = capWeeks().slice(-1)[0]; const inb = capInbound(owner, wk);
+    return Math.max(0, day - mm / 60 - dealH / 5 - (inb ? inb.hours / 5 : 0));
+  }
+  function renderCapSettings() {
+    const el = $("cap-settings"); if (!el) return;
+    if (el.contains(document.activeElement)) return;
+    const c = capCfg();
+    const num = (id, v, l, unit, stepv) => `<label class="lbl cap-in" for="${id}">${l}<span class="cap-num"><input class="field num" id="${id}" type="number" min="0" step="${stepv || 1}" value="${esc(v)}"><span class="small muted">${unit}</span></span></label>`;
+    el.innerHTML = `<form id="cap-form" class="cap-form">
+      <div class="small muted">Starting estimates. Meetings are measured from the calendar and Zoom; these cover the work around them. Shared by Jeremy and David.</div>
+      <div class="cap-grid">${OWNERS.map((o) => num("cap-h-" + o, c.hours[o], `${o}'s selling week`, "hours")).join("")}</div>
+      <div class="eyebrow">Meetings</div>
+      <div class="cap-grid">${num("cap-prep", c.ext_prep_min, "Prep and wrap-up per external meeting", "min")}${num("cap-ns", c.noshow_min, "No-show cost (prep, waiting, email and call)", "min")}</div>
+      <div class="eyebrow">Deal work per open deal, per week</div>
+      <div class="cap-grid">${num("cap-sq", c.sq_h, "Sales Qualified", "hours", 0.25)}${num("cap-pr", c.proposal_h, "Proposal", "hours", 0.25)}${num("cap-ng", c.negotiating_h, "Negotiating", "hours", 0.25)}${num("cap-q", c.quote_h, "Building a quote (once, on reaching Proposal)", "hours", 0.25)}</div>
+      <div class="eyebrow">Inbound</div>
+      <div class="cap-grid">${num("cap-inb", c.inbound_min, "Follow-up per new MQL", "min")}</div>
+      <div class="row-form"><button class="btn" type="submit">Save assumptions</button><button class="btn ghost" type="button" data-act="cap-reset">Reset to defaults</button></div></form>`;
+  }
+  async function saveCapSettings(reset) {
+    const v = (id) => { const x = Number(($(id) || {}).value); return Number.isFinite(x) && x >= 0 ? x : null; };
+    const c = reset ? { ...CAP_DEF } : { hours: Object.fromEntries(OWNERS.map((o) => [o, v("cap-h-" + o) ?? CAP_DEF.hours[o]])), ext_prep_min: v("cap-prep") ?? CAP_DEF.ext_prep_min, noshow_min: v("cap-ns") ?? CAP_DEF.noshow_min, sq_h: v("cap-sq") ?? CAP_DEF.sq_h, proposal_h: v("cap-pr") ?? CAP_DEF.proposal_h, negotiating_h: v("cap-ng") ?? CAP_DEF.negotiating_h, quote_h: v("cap-q") ?? CAP_DEF.quote_h, inbound_min: v("cap-inb") ?? CAP_DEF.inbound_min };
+    if (await w(() => S.db.collection("meta").doc("settings").set({ ...S.settings, capacity: { ...c, updated_by: S.myOwner || "", updated_at: nowIso() } }))) { if (reset && document.activeElement) document.activeElement.blur(); toast(reset ? "Assumptions reset." : "Assumptions saved."); }
+  }
   // ---------- events ----------
   document.addEventListener("click", async (e) => {
     if (e.target.closest("#theme-btn")) { S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]; store.set("theme", S.theme); applyTheme(S.theme); return; }
+    const cw = e.target.closest("[data-capweek]"); if (cw) { S.cap.week = cw.dataset.capweek; renderCapacity(); return; }
+    const cr = e.target.closest("[data-caprep]"); if (cr) { S.cap.rep = cr.dataset.caprep; renderCapacity(); if (!S.cap.cal.has(cr.dataset.caprep + "|" + capWeeks()[0].k)) loadCapacity(true); return; }
     const cd = e.target.closest("[data-calday]"); if (cd) { S.cal.day = cd.dataset.calday; store.set("calDay", S.cal.day); renderSchedule(); return; }
     const tlb = e.target.closest("[data-tl]"); if (tlb) { S.tlFilter = tlb.dataset.tl; S.tlAll = false; renderTimeline(); return; }
     const call = e.target.closest("a.call");
@@ -3359,6 +3762,8 @@ table.reps { min-width: 420px; }
       case "hs-assign": S.hsPending = { kind: "assign", id }; renderMqls(); break;
       case "hs-assign-yes": { const sel = $("as-" + id); if (sel) { b.disabled = true; await runAssign(id, sel.value); } break; }
       case "hs-undo": b.disabled = true; await hsUndo(id); break;
+      case "cap-refresh": loadCapacity(true); break;
+      case "cap-reset": await saveCapSettings(true); renderCapSettings(); break;
       case "mql-notfit": S.notfit = id; renderMqls(); break;
       case "mql-notfit-no": S.notfit = null; renderMqls(); renderSignals(); break;
       case "mql-notfit-yes": mqlAction("notfit", id); break;
@@ -3488,6 +3893,7 @@ table.reps { min-width: 420px; }
     const f = e.target; e.preventDefault();
     const accId = S.route.id;
     if (f.id === "cl-form") { saveCallLog(); return; }
+    if (f.id === "cap-form") { await saveCapSettings(false); if (document.activeElement) document.activeElement.blur(); renderCapSettings(); return; }
     if (f.id === "sig-form") {
       if (!S.myOwner) return;
       const sg = sigFromForm();
@@ -3578,7 +3984,7 @@ table.reps { min-width: 420px; }
       db.collection("templates").limit(200).onSnapshot((snap) => { S.templates = new Map(snap.docs.map((d) => [d.id, d.data()])); renderEmailSettings(); }, () => {});
       db.collection("signatures").limit(50).onSnapshot((snap) => { S.sigs = new Map(snap.docs.map((d) => [d.id, d.data()])); S._sigFor = null; renderEmailSettings(); }, () => {});
       db.collection("ondeck").limit(1000).onSnapshot((snap) => { S.ondeck = new Map(snap.docs.map((d) => [d.id, d.data()])); S.loaded.o = true; renderProspect(); }, () => { S.loaded.o = true; renderProspect(); });
-      db.doc("meta/settings").onSnapshot((snap) => { S.settings = (snap.exists && snap.data()) || {}; renderAccounts(); }, () => {});
+      db.doc("meta/settings").onSnapshot((snap) => { S.settings = (snap.exists && snap.data()) || {}; renderAccounts(); renderCapSettings(); renderCapacity(); renderDayStrip(); }, () => {});
       if (S.route.view === "account") { S.notesFor = null; subscribeNotes(S.route.id); }
     }
     renderAll();
