@@ -639,6 +639,11 @@ a.ds:hover { border-color: var(--blue); }
 .cap-num { display: flex; align-items: center; gap: 8px; }
 .cap-num .field { width: 90px; }
 @media (max-width: 600px) { .cap-facts { grid-template-columns: minmax(0, 1fr); } }
+
+.d-topnav { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.d-step { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.d-step [aria-disabled] { opacity: .45; pointer-events: none; }
+.d-step .flip svg { transform: scaleX(-1); }
 </style>
 
 <header class="bar">
@@ -1258,6 +1263,7 @@ a.ds:hover { border-color: var(--blue); }
   }
   function route() {
     const r = parseHash();
+    if (r.id !== S.route.id && r.view === "account" && S.route.view === "account") window.scrollTo(0, 0);
     if (r.id !== S.route.id) { S.editTask = null; S.editContact = null; S.addContact = false; S.confirmDelete = false; S.gong = { running: false, err: "" }; }
     S.route = r; showView(r);
     if (r.view === "account") { subscribeNotes(r.id); buildDetailShell(); }
@@ -1475,34 +1481,40 @@ a.ds:hover { border-color: var(--blue); }
         <span class="result-note" id="acc-note"></span>`;
     }
   }
+  // The account list for a band, with the current search, filters and sort: used by the list and by Next/Previous on an account.
+  function accListRows(seg) {
+    const t = today();
+    const all = [...S.accounts.entries()].filter(([, a]) => !a.sf_excluded && ownerMatch(a.owner));
+    const q = S.q.trim().toLowerCase();
+    let rows = all.filter(([, a]) => kindOf(a) === seg);
+    const segTotal = rows.length;
+    if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""} ${a.sub_industry || ""} ${(a.contacts || []).map((c) => c.name + " " + (c.title || "")).join(" ")}`.toLowerCase().includes(q));
+    if (seg === "deal") {
+      if (S.af.src !== "all") rows = rows.filter(([, a]) => a.origin === S.af.src);
+      const r = closeRange();
+      if (r) rows = rows.filter(([, a]) => a.close_date && (!r[0] || a.close_date >= r[0]) && (!r[1] || a.close_date <= r[1]));
+    } else if (seg === "outbound") {
+      if (S.af.stage !== "all") rows = rows.filter(([, a]) => a.stage === S.af.stage);
+      const since = addedSince(); if (since) rows = rows.filter(([, a]) => localDay(a.created_at) >= since);
+      if (S.af.li !== "any") rows = rows.filter(([, a]) => (a.contacts || []).some((c) => liMatch(c, S.af.li)));
+    }
+    rows.sort((a, b) => {
+      const A = a[1], B = b[1];
+      if (A.band === "deal" && B.band === "deal") { if (!!A.sf_closed !== !!B.sf_closed) return A.sf_closed ? 1 : -1; return String(A.close_date || "9999").localeCompare(String(B.close_date || "9999")); }
+      if (seg === "outbound" && S.af.sort === "stale") return String(A.last_touch_at || "").localeCompare(String(B.last_touch_at || "")) || String(A.company_name || "").localeCompare(String(B.company_name || ""));
+      if (seg === "outbound") return String(B.created_at || "").localeCompare(String(A.created_at || ""));
+      return String(A.company_name || "").localeCompare(String(B.company_name || ""));
+    });
+    return { rows, segTotal };
+  }
   function renderAccounts() {
     if (!isList(S.route.view)) return;
     S.seg = S.route.view === "deals" ? "deal" : "outbound";
     if (!$("acc-table") || S._shellKind !== S.seg) buildAccountsShell();
     const t = today();
-    const all = [...S.accounts.entries()].filter(([, a]) => !a.sf_excluded && ownerMatch(a.owner));
-    const q = S.q.trim().toLowerCase();
-    let rows = all.filter(([, a]) => kindOf(a) === S.seg);
-    const segTotal = rows.length;
-    if (q) rows = rows.filter(([, a]) => `${a.company_name} ${a.domain} ${a.stage} ${a.sf_opportunity_name || ""} ${a.sub_industry || ""} ${(a.contacts || []).map((c) => c.name + " " + (c.title || "")).join(" ")}`.toLowerCase().includes(q));
-    if (S.seg === "deal") {
-      if (S.af.src !== "all") rows = rows.filter(([, a]) => a.origin === S.af.src);
-      const r = closeRange();
-      if (r) rows = rows.filter(([, a]) => a.close_date && (!r[0] || a.close_date >= r[0]) && (!r[1] || a.close_date <= r[1]));
-    } else if (S.seg === "outbound") {
-      if (S.af.stage !== "all") rows = rows.filter(([, a]) => a.stage === S.af.stage);
-      const since = addedSince(); if (since) rows = rows.filter(([, a]) => localDay(a.created_at) >= since);
-      if (S.af.li !== "any") rows = rows.filter(([, a]) => (a.contacts || []).some((c) => liMatch(c, S.af.li)));
-    }
+    const { rows, segTotal } = accListRows(S.seg);
     const open = new Map(); const overdue = new Set();
     for (const [, x] of openTasks()) { open.set(x.account_id, (open.get(x.account_id) || 0) + 1); if (x.due_date && x.due_date < t) overdue.add(x.account_id); }
-    rows.sort((a, b) => {
-      const A = a[1], B = b[1];
-      if (A.band === "deal" && B.band === "deal") { if (!!A.sf_closed !== !!B.sf_closed) return A.sf_closed ? 1 : -1; return String(A.close_date || "9999").localeCompare(String(B.close_date || "9999")); }
-      if (S.seg === "outbound" && S.af.sort === "stale") return String(A.last_touch_at || "").localeCompare(String(B.last_touch_at || "")) || String(A.company_name || "").localeCompare(String(B.company_name || ""));
-      if (S.seg === "outbound") return String(B.created_at || "").localeCompare(String(A.created_at || ""));
-      return String(A.company_name || "").localeCompare(String(B.company_name || ""));
-    });
     const last = S.settings.last_sf_sync;
     const syncLine = S.sync.err ? `<span class="sync-line err">${esc(S.sync.err)}</span>` : S.sync.running ? `<span class="sync-line"><span class="spinner"></span> ${esc(S.sync.msg)}</span>` : S.sync.msg ? `<span class="sync-line">${esc(S.sync.msg)}</span>` : last ? `<span class="sync-line">Salesforce synced ${esc(fmtWhen(last.at))}${last.by ? ` by ${esc(last.by)}` : ""}</span>` : `<span class="sync-line">Salesforce not synced yet</span>`;
     const ownerCell = (a) => `<td><span class="owner-dot" title="${esc(a.owner)}">${esc(initial(a.owner))}</span> <span class="small">${esc(a.owner || "")}</span></td>`;
@@ -1540,7 +1552,7 @@ a.ds:hover { border-color: var(--blue); }
           <button class="btn sec" type="button" data-act="sync" ${!canWrite() || S.sync.running || !S.mcp ? "disabled" : ""} title="${S.mcp ? "Pull open opportunities owned by Jeremy and David" : "Open in claude.ai to use Salesforce"}">${ic("sync")} Sync Salesforce</button>`
       : `<a class="btn ghost" href="#email">${ic("gear")} Settings</a>`;
     $("add-account-panel").hidden = !(S.addAccount && S.seg === "outbound");
-    renderAccHero(all, open, overdue);
+    renderAccHero([...S.accounts.entries()].filter(([, a]) => !a.sf_excluded && ownerMatch(a.owner)), open, overdue);
     renderAccFilters();
     const note = $("acc-note");
     if (note) {
@@ -1572,9 +1584,24 @@ a.ds:hover { border-color: var(--blue); }
   }
 
   // ---------- Account detail ----------
+  function stepTargets(id, a) {
+    const ids = accListRows(kindOf(a)).rows.map(([k]) => k); const i = ids.indexOf(id);
+    if (!ids.length) return null;
+    if (i < 0) return { i, n: ids.length, prev: null, next: ids[0] };
+    return { i, n: ids.length, prev: i > 0 ? ids[i - 1] : null, next: i < ids.length - 1 ? ids[i + 1] : null };
+  }
+  function renderStep(id, a) {
+    const el = $("d-step"); if (!el) return;
+    const st = stepTargets(id, a); if (!st) { el.innerHTML = ""; return; }
+    const nm = (k) => esc((S.accounts.get(k) || {}).company_name || "");
+    const label = a.band === "deal" ? "deal" : "target";
+    el.innerHTML = `${st.prev ? `<a class="btn ghost" href="#account-${esc(st.prev)}" title="Previous: ${nm(st.prev)} ( [ )">${ic("back")} Previous</a>` : `<span class="btn ghost" aria-disabled="true">${ic("back")} Previous</span>`}
+      <span class="small muted num">${st.i >= 0 ? `${st.i + 1} of ${st.n}` : `Not in the current list (${st.n})`}</span>
+      ${st.next ? `<a class="btn" href="#account-${esc(st.next)}" title="Next: ${nm(st.next)} ( ] )">${st.i < 0 ? "First" : "Next"} ${label} <span class="flip">${ic("back")}</span></a>` : `<span class="btn ghost" aria-disabled="true">Last one</span>`}`;
+  }
   function buildDetailShell() {
     $("view-account").innerHTML = `<div style="display:grid;gap:16px">
-      <a class="back" href="#deals" id="d-back">${ic("back")} Active Deals</a>
+      <div class="d-topnav"><a class="back" href="#deals" id="d-back">${ic("back")} Active Deals</a><div class="d-step" id="d-step"></div></div>
       <div id="d-head"></div>
       <div class="detail-grid">
         <div class="col">
@@ -1625,6 +1652,7 @@ a.ds:hover { border-color: var(--blue); }
     }
     const isDeal = a.band === "deal";
     const back = $("d-back"); if (back) { back.href = listHash(a); back.innerHTML = `${ic("back")} ${isDeal ? "Active Deals" : "Target Accounts"}`; }
+    renderStep(id, a);
     showView(S.route);
     const sfUrl = a.sf_opportunity_id ? `${SF_BASE}/lightning/r/Opportunity/${encodeURIComponent(a.sf_opportunity_id)}/view` : "";
     const openN = openTasks().filter(([, x]) => x.account_id === id).length;
@@ -3976,6 +4004,14 @@ a.ds:hover { border-color: var(--blue); }
     if (act === "linkedin-sent" && cc) logActivity(accId, el.checked ? { type: "linkedin", contact_id: cc.id, contact_name: cc.name, summary: `LinkedIn connect sent to ${cc.name}` } : { type: "change", contact_id: cc.id, contact_name: cc.name, summary: `LinkedIn sent unchecked for ${cc.name}` });
     if (act === "contact-status") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, status: el.value } : c), updated_at: nowIso() }));
     if (act === "linkedin-sent") await w(() => acctRef(accId).update({ contacts: (a.contacts || []).map((c) => c.id === el.dataset.id ? { ...c, linkedin_sent: el.checked } : c), updated_at: nowIso() }));
+  });
+  document.addEventListener("keydown", (e) => {
+    if (S.route.view !== "account" || e.metaKey || e.ctrlKey || e.altKey) return;
+    const tg = e.target; if (tg && (tg.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName))) return;
+    if (e.key !== "]" && e.key !== "[") return;
+    const a = S.accounts.get(S.route.id); if (!a) return;
+    const st = stepTargets(S.route.id, a); const to = st && (e.key === "]" ? st.next : st.prev);
+    if (to) { e.preventDefault(); location.hash = "#account-" + to; window.scrollTo(0, 0); }
   });
   document.addEventListener("submit", async (e) => {
     const f = e.target; e.preventDefault();
