@@ -396,6 +396,8 @@ a.v.call svg.i { width: 14px; height: 14px; }
 /* Theme switch */
 .theme-btn { display: inline-grid; place-items: center; border: 0; background: var(--bar-seg); color: var(--bar-ink); border-radius: 999px; width: 32px; height: 32px; padding: 0; font-family: var(--font-head); font-size: 12.5px; cursor: pointer; }
 .theme-btn:hover { filter: brightness(1.15); }
+a.theme-btn { text-decoration: none; }
+.theme-btn[aria-current] { background: var(--blue); color: #fff; }
 .theme-btn svg.i { width: 16px; height: 16px; }
 .today-tools .tabs { flex-wrap: wrap; border-radius: 18px; }
 /* Today: tasks beside calendar */
@@ -651,6 +653,7 @@ a.ds:hover { border-color: var(--blue); }
       <a href="#dash" id="nav-dash">Activity</a>
     </nav>
     <div class="bar-right">
+      <a class="theme-btn" id="nav-settings" href="#email" aria-label="Settings" title="Settings: signature, templates, HubSpot, capacity"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg></a>
       <button type="button" class="theme-btn" id="theme-btn" aria-label="Theme"></button>
       <div class="seg" role="group" aria-label="Owner" id="owner-seg">
         <button type="button" data-owner="mine" aria-pressed="true">Mine</button>
@@ -1241,7 +1244,8 @@ a.ds:hover { border-color: var(--blue); }
   }
   function showView(r) {
     for (const v of VIEWS) $("view-" + v).hidden = (isList(r.view) ? "accounts" : r.view) !== v;
-    for (const n of ["today", "deals", "targets", "mqls", "signals", "prospect", "dash"]) $("nav-" + n).removeAttribute("aria-current");
+    for (const n of ["today", "deals", "targets", "mqls", "signals", "prospect", "dash", "settings"]) $("nav-" + n).removeAttribute("aria-current");
+    if (r.view === "email") $("nav-settings").setAttribute("aria-current", "page");
     const n = navFor(r); if (n && $("nav-" + n)) $("nav-" + n).setAttribute("aria-current", "page");
   }
   function route() {
